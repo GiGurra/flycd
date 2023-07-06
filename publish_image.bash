@@ -41,13 +41,20 @@ if [[ $(git ls-remote --tags origin $TAG) ]]; then
   exit 1
 fi
 
-echo "Tagging commit with $TAG"
+echo "Tag is available, building image first to make sure it works"
+
+# Build the image
+IMAGE_NAME=gigurra/flycd:$TAG
+docker build -t $IMAGE_NAME .
 
 # Tag the commit
 git tag $TAG
 
 # Push the commit and tag to origin
 git push --tags origin master
+
+# Push the image to docker hub
+docker push $IMAGE_NAME
 
 
 
