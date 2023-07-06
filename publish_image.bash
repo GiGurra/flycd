@@ -35,6 +35,12 @@ if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
+# Check that the tag does not already exist on origin
+if [[ $(git ls-remote --tags origin $TAG) ]]; then
+  echo "Tag already exists on origin"
+  exit 1
+fi
+
 echo "Tagging commit with $TAG"
 
 # Tag the commit
