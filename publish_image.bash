@@ -20,3 +20,23 @@ if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
   exit 1
 fi
 
+# Check that we have a git tag for the current commit
+if [[ -z $(git tag --points-at HEAD) ]]; then
+  echo "Tag the current commit first"
+  exit 1
+fi
+
+# Check that the current commit is tagged with a SemVer tag
+if [[ ! $(git tag --points-at HEAD) =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "Tag the current commit with a SemVer tag first"
+  exit 1
+fi
+
+# Check that the current commit is tagged with a SemVer tag that matches the version in main.go
+if [[ $(git tag --points-at HEAD) != $(grep -oP '(?<=Version = ").*(?=")' main.go) ]]; then
+  echo "Tag the current commit with a SemVer tag that matches the version in main.go"
+  exit 1
+fi
+
+
+

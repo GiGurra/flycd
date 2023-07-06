@@ -2,6 +2,8 @@ package main
 
 import "os"
 
+const version = "0.0.1"
+
 func main() {
 	print("Starting FlyCD...")
 
