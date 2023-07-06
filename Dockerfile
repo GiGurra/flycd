@@ -16,10 +16,12 @@ RUN go install github.com/sclevine/yj/v5@v5.1.0
 # Copy over the app
 COPY . /flycd
 WORKDIR /flycd
+ENV PATH="/flycd:${PATH}"
 
 # Build the app
 RUN go build -o flycd
 
 # Run the app
-CMD ["./flycd"]
+ENTRYPOINT ["flycd"]
+#CMD ["flycd"]
 
