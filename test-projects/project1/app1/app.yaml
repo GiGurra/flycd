@@ -5,10 +5,11 @@ fly.toml:
   prepend: # merging not yet implemented
   append: # merging not yet implemented
   overwrite:
-    app: project1-app1
+    app: project1-app1-foobar12341
     primary_region: "arn" # default region for tests is Stockholm/Sweden
     services:
       - internal_port: 80
+        protocol: "tcp"
         force_https: true
         auto_stop_machines: true
         auto_start_machines: true
