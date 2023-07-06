@@ -1,0 +1,21 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output files
+*.out
+*.o
+
+# Dependency directories
+vendor/
+
+
+flycd
+
+.idea/
