@@ -35,5 +35,13 @@ if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
+echo "Tagging commit with $TAG"
+
+# Tag the commit
+git tag $TAG
+
+# Push the commit and tag to origin
+git push --tags origin master
+
 
 
