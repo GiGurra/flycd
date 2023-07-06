@@ -17,6 +17,12 @@ fly.toml:
           type: "requests"
           soft_limit: 200
           hard_limit: 250
+        ports:
+          - handlers: ["http"]
+            port: 80
+            force_https: true
+          - handlers: ["tls", "http"]
+            port: 443
 
 
 source:
