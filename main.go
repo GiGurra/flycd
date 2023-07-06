@@ -1,11 +1,14 @@
 package main
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
-const Version = "v0.0.4"
+const Version = "v0.0.5"
 
 func main() {
-	print("Starting FlyCD...")
+	fmt.Printf("Starting FlyCD %s...\n", Version)
 
 	// print all cli arguments
 	for _, arg := range os.Args[1:] {
