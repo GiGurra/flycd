@@ -1,0 +1,6 @@
+name: "project1"
+description: "test project for testing. lalala"
+
+apps-paths:
+  - app1
+  - app2
