@@ -1,6 +1,7 @@
 package flycd
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
@@ -91,7 +92,24 @@ func deployApp(path string) error {
 		}
 	} else {
 		println("App found, updating it")
-		err = deployExistingApp(tempDir, cfg.DeployParams)
+
+		// Compare the current deployed version with the new version
+		jsonConf, err := tempDir.RunCommand("flyctl", "config", "show")
+		if err != nil {
+			return fmt.Errorf("error running flyctl config show in folder %s: %w", path, err)
+		}
+
+		var deployedCfg AppConfig
+		err = json.Unmarshal([]byte(jsonConf), &deployedCfg)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling flyctl config show in folder %s: %w", path, err)
+		}
+
+		if deployedCfg.Env["FLYCD_APP_VERSION"] == version {
+			println("App is already up to date, skipping deploy")
+		} else {
+			err = deployExistingApp(tempDir, cfg.DeployParams)
+		}
 	}
 
 	fmt.Printf("not implemented")
