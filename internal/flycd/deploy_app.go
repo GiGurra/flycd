@@ -54,8 +54,11 @@ func deployApp(path string) error {
 			println("App not found, creating it")
 			err = deployNewApp(tempDir, cfg.LaunchParams)
 		} else {
-			return fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
+			err = fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
 		}
+	} else {
+		println("App found, updating it")
+		err = deployExistingApp(tempDir, cfg.DeployParams)
 	}
 
 	fmt.Printf("not implemented")
@@ -70,9 +73,10 @@ func deployNewApp(tempDir TempDir, lanchParams []string) error {
 	return err
 }
 
-func deployExistingApp(tempDir TempDir) error {
-
-	return fmt.Errorf("deployExistingApp not implemented")
+func deployExistingApp(tempDir TempDir, deployParams []string) error {
+	allParams := append([]string{"deploy"}, deployParams...)
+	_, err := tempDir.RunCommand("flyctl", allParams...)
+	return err
 }
 
 func readAppConfig(path string, err error) (AppConfig, error) {
