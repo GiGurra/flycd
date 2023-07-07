@@ -41,14 +41,8 @@ func deployApp(path string) error {
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
 
-	// Produce the fly.toml file
-	_, err = tempDir.RunCommand("sh", "-c", fmt.Sprintf("cat \"%s/fly.toml\"", tempDir))
-	if err != nil {
-		return fmt.Errorf("error reading fly.toml from folder %s: %w", path, err)
-	}
-
 	// execute 'cat app.yaml | yj -yt > fly.toml' on the command line
-	_, err = tempDir.RunCommand("sh", "-c", fmt.Sprintf("cat \"%s/app.yaml\" | yj -yt > \"%s/fly.toml\"", path, tempDir))
+	_, err = tempDir.RunCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml")
 	if err != nil {
 		return fmt.Errorf("error producing fly.toml from app.yaml in folder %s: %w", path, err)
 	}
