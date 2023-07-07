@@ -1,6 +1,18 @@
-
+############################
+## Basic configuration
 app: &app project1-app1-foobar12341
-description: "test app 1 for testing. lalala"
+
+# Point to a repo. You are expected to mount the necessary ssh keys to the container
+source:
+  repo: "git@github.com:username/repo"
+  path: "path/to/app" # optional
+  ref: "refs/heads/master" # only needed for git repos
+  type: "git" # other supported types: "file-system"
+
+############################
+## Optional configuration
+env:
+  ENV: "development"
 
 primary_region: "arn" # default region for tests is Stockholm/Sweden
 services:
@@ -20,12 +32,6 @@ services:
         force_https: true
       - handlers: ["tls", "http"]
         port: 443
-
-# Point to a repo. You are expected to mount the necessary ssh keys to the container
-source:
-  repo: "git@github.com:username/repo"
-  path: "path/to/app"
-  ref: "refs/heads/master"
 
 # Modify to your needs. By default, we will create a new fly.io
 # app without any user interaction/confirmation.
