@@ -2,6 +2,7 @@ package flycd
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
@@ -20,6 +21,12 @@ func deployApp(path string) error {
 		return err
 	}
 
+	// random uuid
+	version, err := newUUIDString()
+	if err != nil {
+		return fmt.Errorf("error generating uuid: %w", err)
+	}
+
 	switch cfg.Source.Type {
 	case "git":
 		_, err = tempDir.RunCommand("git", "clone", cfg.Source.Repo, "repo")
@@ -27,12 +34,23 @@ func deployApp(path string) error {
 			return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 		}
 		tempDir.Cwd = tempDir.Cwd + "/repo"
+
+		version, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
+		if err != nil {
+			return fmt.Errorf("error getting git commit hash: %w", err)
+		}
 	case "local":
 		// Copy the local folder to the temp tempDir
 		sourcePath := "."
 		if cfg.Source.Path != "" {
 			sourcePath = cfg.Source.Path
 		}
+
+		version, err = runCommand(path, "sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		if err != nil {
+			return fmt.Errorf("error getting git commit hash: %w", err)
+		}
+
 		_, err = runCommand(path, "sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
@@ -40,6 +58,21 @@ func deployApp(path string) error {
 	default:
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
+
+	version = strings.TrimSpace(version)
+	cfg.Env["FLYCD_APP_VERSION"] = version
+	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = cfg.Source.Type
+	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
+	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
+	cfg.Env["FLYCD_APP_SOURCE_REF"] = cfg.Source.Ref
+
+	// Write a new app.yaml file with the version
+	cfgBytes, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("error marshalling app.yaml: %w", err)
+	}
+
+	err = tempDir.WriteFile("app.yaml", string(cfgBytes))
 
 	// execute 'cat app.yaml | yj -yt > fly.toml' on the command line
 	_, err = tempDir.RunCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml")
@@ -98,4 +131,12 @@ func readAppConfig(path string, err error) (AppConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+func newUUIDString() (string, error) {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	return uuid.String(), nil
 }

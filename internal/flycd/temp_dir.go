@@ -39,3 +39,7 @@ func (t *TempDir) ReadFile(name string) (string, error) {
 	}
 	return string(data), nil
 }
+
+func (t *TempDir) WriteFile(name string, contents string) error {
+	return os.WriteFile(t.Cwd+"/"+name, []byte(contents), 0644)
+}
