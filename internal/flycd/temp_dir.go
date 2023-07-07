@@ -31,3 +31,11 @@ func NewTempDir() (TempDir, error) {
 func (t *TempDir) RunCommand(command string, args ...string) (string, error) {
 	return runCommand(t.Cwd, command, args...)
 }
+
+func (t *TempDir) ReadFile(name string) (string, error) {
+	data, err := os.ReadFile(t.Cwd + "/" + name)
+	if err != nil {
+		return "", fmt.Errorf("error reading file %s: %w", name, err)
+	}
+	return string(data), nil
+}

@@ -52,11 +52,27 @@ func deployApp(path string) error {
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "could not find app") {
 			println("App not found, creating it")
+			err = deployNewApp(tempDir, cfg.LaunchParams)
 		} else {
 			return fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
 		}
 	}
-	return nil
+
+	fmt.Printf("not implemented")
+	os.Exit(0)
+
+	return err
+}
+
+func deployNewApp(tempDir TempDir, lanchParams []string) error {
+	allParams := append([]string{"launch"}, lanchParams...)
+	_, err := tempDir.RunCommand("flyctl", allParams...)
+	return err
+}
+
+func deployExistingApp(tempDir TempDir) error {
+
+	return fmt.Errorf("deployExistingApp not implemented")
 }
 
 func readAppConfig(path string, err error) (AppConfig, error) {
