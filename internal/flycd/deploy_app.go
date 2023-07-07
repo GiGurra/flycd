@@ -29,7 +29,11 @@ func deployApp(path string) error {
 		tempDir.Cwd = tempDir.Cwd + "/repo"
 	case "local":
 		// Copy the local folder to the temp tempDir
-		_, err = tempDir.RunCommand("sh", "-c", fmt.Sprintf("cp -r \"%s\" \"%s\"", cfg.Source.Path, tempDir))
+		sourcePath := "."
+		if cfg.Source.Path != "" {
+			sourcePath = cfg.Source.Path
+		}
+		_, err = runCommand(path, "sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}

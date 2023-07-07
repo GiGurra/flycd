@@ -6,6 +6,7 @@ import (
 )
 
 func runCommand(cwd string, command string, args ...string) (string, error) {
+	fmt.Printf("%s$ %s %s\n", cwd, command, args)
 	cmd := exec.Command(command, args...)
 	cmd.Dir = cwd
 	out, err := cmd.Output()

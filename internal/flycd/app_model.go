@@ -44,19 +44,14 @@ type Source struct {
 
 func (s *Source) Validate() error {
 
-	if s.Repo == "" {
-		return fmt.Errorf("repo is required")
-	}
-
 	switch s.Type {
 	case "git":
+		if s.Repo == "" {
+			return fmt.Errorf("repo is required")
+		}
 	case "local":
 	default:
 		return fmt.Errorf("invalid source type: %s", s.Type)
-	}
-
-	if s.Path == "" {
-		return fmt.Errorf("path is required")
 	}
 
 	if s.Type == "git" && s.Ref == "" {
