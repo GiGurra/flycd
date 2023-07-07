@@ -10,7 +10,6 @@ import (
 
 func deployApp(path string) error {
 
-	// create a temp tempDir
 	tempDir, err := os.MkdirTemp("", "flycd")
 	if err != nil {
 		return fmt.Errorf("error creating temp tempDir: %w", err)
@@ -22,28 +21,11 @@ func deployApp(path string) error {
 		}
 	}(tempDir)
 
-	// read the original app.yaml file using a go yaml library
-	var cfg AppConfig
-
-	appYaml, err := os.ReadFile(path + "/app.yaml")
+	cfg, err := readAppConfig(path, err)
 	if err != nil {
-		return fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
+		return err
 	}
 
-	err = yaml.Unmarshal(appYaml, &cfg)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
-	}
-
-	fmt.Printf("app.yaml:\n%+v\n", cfg)
-
-	// Validate the app config
-	err = cfg.Validate()
-	if err != nil {
-		return fmt.Errorf("error validating app.yaml from folder %s: %w", path, err)
-	}
-
-	// Clone the git repo
 	switch cfg.Source.Type {
 	case "git":
 		_, err = runCommand(tempDir, "git", "clone", cfg.Source.Repo, "repo")
@@ -85,4 +67,25 @@ func deployApp(path string) error {
 		}
 	}
 	return nil
+}
+
+func readAppConfig(path string, err error) (AppConfig, error) {
+	var cfg AppConfig
+
+	appYaml, err := os.ReadFile(path + "/app.yaml")
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
+	}
+
+	err = yaml.Unmarshal(appYaml, &cfg)
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
+	}
+
+	err = cfg.Validate()
+	if err != nil {
+		return cfg, fmt.Errorf("error validating app.yaml from folder %s: %w", path, err)
+	}
+
+	return cfg, nil
 }
