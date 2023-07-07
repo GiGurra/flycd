@@ -43,9 +43,17 @@ fi
 
 echo "Tag is available, building image first to make sure it works"
 
+# Image name and tag
+IMAGE_NAME=gigurra/flycd:$TAG
+
+# Specify platform
+PLATFORM=linux/amd64
+
 # Build the image
 IMAGE_NAME=gigurra/flycd:$TAG
-docker build -t $IMAGE_NAME .
+
+# Build the Docker image
+docker build --platform $PLATFORM -t $IMAGE_NAME .
 
 # Tag the commit
 git tag $TAG
