@@ -36,13 +36,21 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		path := args[0]
 		fmt.Printf("Deploying from: %s\n", path)
-		err := flycd.Deploy(path)
+
+		force, err := cmd.Flags().GetBool("force")
+		if err != nil {
+			fmt.Printf("Error getting force flag: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = flycd.Deploy(path, force)
 		if err != nil {
 			fmt.Printf("Error deploying from %s: %v\n:", path, err)
 			os.Exit(1)
 		}
 	},
 }
+var deployCmdForceFlag = deployCmd.Flags().BoolP("force", "f", false, "Force re-deploy even if there are no changes")
 
 var monitorCmd = &cobra.Command{
 	Use:   "monitor",

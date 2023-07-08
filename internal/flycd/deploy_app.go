@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func deployApp(path string) error {
+func deployApp(path string, force bool) error {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
@@ -113,10 +113,12 @@ func deployApp(path string) error {
 			return fmt.Errorf("error unmarshalling flyctl config show in folder %s: %w", path, err)
 		}
 
-		if deployedCfg.Env["FLYCD_APP_VERSION"] == appVersion && deployedCfg.Env["FLYCD_CONFIG_VERSION"] == cfgVersion {
-			println("App is already up to date, skipping deploy")
-		} else {
+		if force ||
+			deployedCfg.Env["FLYCD_APP_VERSION"] != appVersion ||
+			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgVersion {
 			err = deployExistingApp(tempDir, cfg.DeployParams)
+		} else {
+			println("App is already up to date, skipping deploy")
 		}
 	}
 

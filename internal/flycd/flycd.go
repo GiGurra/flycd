@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func Deploy(path string) error {
+func Deploy(path string, force bool) error {
 
 	println("Traversing:", path)
 
@@ -16,18 +16,18 @@ func Deploy(path string) error {
 	if hasAppYaml {
 
 		fmt.Printf("Found app.yaml in %s, deploying app\n", path)
-		err2 := deployApp(path)
+		err2 := deployApp(path, force)
 		if err2 != nil {
 			return fmt.Errorf("error deploying app: %w", err2)
 		}
 
 	} else if hasProjectsDir {
 		println("Found projects dir, traversing only projects")
-		return Deploy(path + "/projects")
+		return Deploy(path+"/projects", force)
 	} else {
 		println("Found neither app.yaml nor projects dir, traversing all dirs")
 		for _, entry := range traversableCandidates {
-			err := Deploy(path + "/" + entry.Name())
+			err := Deploy(path+"/"+entry.Name(), force)
 			if err != nil {
 				return err
 			}
