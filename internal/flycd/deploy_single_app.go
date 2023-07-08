@@ -85,11 +85,18 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			}
 
 		} else if cfg.Source.Ref.Tag != "" {
-			return fmt.Errorf("tags not implemented")
+			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Tag)
+			if err != nil {
+				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
+			}
+			tempDir.Cwd = tempDir.Cwd + "/repo"
 
 		} else if cfg.Source.Ref.Branch != "" {
-			return fmt.Errorf("branches not implemented")
-
+			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch)
+			if err != nil {
+				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
+			}
+			tempDir.Cwd = tempDir.Cwd + "/repo"
 		} else {
 			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1")
 			if err != nil {
