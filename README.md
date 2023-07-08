@@ -75,3 +75,24 @@ FlyCD is built on the principle of bootstrapping itself.
 * Secrets
 * Machine types, ram & cpu modifications
 * fly.io native postgres, redis, etc...
+
+
+## Using it
+
+### Setting up your own config repo
+
+1. Fork this repo 
+2. Modify the contents of the `project` folder, and add the app specifications you like
+3. Run flycd deploy
+
+```
+flycd install tempflycd personal arn
+```
+
+### Installing FlyCD to your fly.io environment
+
+Note: Not yet implemented
+
+```
+flycd install tempflycd personal arn
+```
