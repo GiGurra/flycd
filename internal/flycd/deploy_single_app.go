@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -61,6 +62,8 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		var err error
 
 		if cfg.Source.Ref.Commit != "" {
+			// Shallow clone of specific commit
+			// https://stackoverflow.com/questions/31278902/how-to-shallow-clone-a-specific-commit-with-depth-1
 			err = tempDir.RunCommandStreamedPassthrough("git", "init")
 			if err != nil {
 				return fmt.Errorf("error initializing git repo: %w", err)
@@ -153,6 +156,14 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	_, err = tempDir.RunCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml")
 	if err != nil {
 		return fmt.Errorf("error producing fly.toml from app.yaml in folder %s: %w", path, err)
+	}
+
+	// Create docker ignore file matching git ignore, if it docker ignore file doesn't exists
+	if _, err := os.Stat(filepath.Join(tempDir.Cwd, ".dockerignore")); os.IsNotExist(err) {
+		_, err = tempDir.RunCommand("sh", "-c", "git ls-files -i --exclude-from=.gitignore | xargs -0 -I {} echo {} >> .dockerignore")
+		if err != nil {
+			return fmt.Errorf("error producing .dockerignore from .gitignore in folder %s: %w", path, err)
+		}
 	}
 
 	// Now run flyctl and check if the app exists
