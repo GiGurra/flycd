@@ -110,3 +110,62 @@ fly apps list
 NAME            OWNER           STATUS          PLATFORM        LATEST DEPLOY        
 tempflycd       personal        deployed        machines        30m3s ago  
 ```
+
+## Sample flycd app.yaml
+
+```yaml
+############################
+## Basic configuration
+app: &app example-project1-git-app-foobar12341
+
+# Point to a repo. You are expected to mount the necessary ssh keys to the container
+source:
+  repo: "https://github.com/GiGurra/flycd-nginx-test"
+  #path: "path/to/app" # optional
+  ref:
+    branch: "main"
+    #tag: "v1.2.3"
+    #commit: "fae2e1f1f578ddda681f09137dbae831bde84fe7"
+  type: "git"
+
+############################
+## Optional configuration
+env:
+  ENV: "development"
+
+primary_region: "arn" # default region for tests is Stockholm/Sweden
+services:
+  - internal_port: 80
+    protocol: "tcp"
+    force_https: true
+    auto_stop_machines: true
+    auto_start_machines: true
+    min_machines_running: 1
+    concurrency:
+      type: "requests"
+      soft_limit: 200
+      hard_limit: 250
+    ports:
+      - handlers: ["http"]
+        port: 80
+        force_https: true
+      - handlers: ["tls", "http"]
+        port: 443
+
+# Modify to your needs. By default, we will create a new fly.io
+# app without any user interaction/confirmation.
+# For the most simple apps, you probably don't need to modify these at all
+launch_params:
+  - "--ha=false"
+  - "--auto-confirm"
+  - "--now"
+  - "--copy-config"
+  - "--name"
+  - *app
+
+# Modify to your needs. By default, we will deploy the fly.io
+# app without any user interaction/confirmation.
+# For the most simple apps, you probably don't need to modify these at all
+deploy_params: []
+
+```
