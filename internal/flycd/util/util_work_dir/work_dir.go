@@ -1,4 +1,4 @@
-package flycd
+package util_work_dir
 
 import (
 	"flycd/internal/flycd/util/util_cmd"
@@ -26,6 +26,24 @@ func NewTempDir() (WorkDir, error) {
 	return WorkDir{
 		Root: tempDir,
 		Cwd:  tempDir,
+	}, nil
+}
+
+func NewWorkDir(path string) WorkDir {
+	return WorkDir{
+		Root: path,
+		Cwd:  path,
+	}
+}
+
+func CwDir() (WorkDir, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return WorkDir{}, fmt.Errorf("error getting current working directory: %w", err)
+	}
+	return WorkDir{
+		Root: cwd,
+		Cwd:  cwd,
 	}, nil
 }
 

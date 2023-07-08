@@ -2,7 +2,7 @@ package flycd
 
 import (
 	"encoding/json"
-	"flycd/internal/flycd/util/util_cmd"
+	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
@@ -12,7 +12,9 @@ import (
 
 func deployApp(path string) error {
 
-	tempDir, err := NewTempDir()
+	cfgDir := util_work_dir.NewWorkDir(path)
+
+	tempDir, err := util_work_dir.NewTempDir()
 	if err != nil {
 		return fmt.Errorf("error creating temp dir: %w", err)
 	}
@@ -23,7 +25,11 @@ func deployApp(path string) error {
 		return err
 	}
 
-	// random uuid
+	cfgVersion, err := cfgDir.RunCommand("git", "rev-parse", "HEAD")
+	if err != nil {
+		return fmt.Errorf("error getting git commit hash of cfg dir: %w", err)
+	}
+
 	appVersion, err := newUUIDString()
 	if err != nil {
 		return fmt.Errorf("error generating uuid: %w", err)
@@ -48,12 +54,12 @@ func deployApp(path string) error {
 			sourcePath = cfg.Source.Path
 		}
 
-		appVersion, err = util_cmd.Run(path, "sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		appVersion, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
 
-		_, err = util_cmd.Run(path, "sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
+		_, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
@@ -62,7 +68,7 @@ func deployApp(path string) error {
 	}
 
 	appVersion = strings.TrimSpace(appVersion)
-	cfg.Env["FLYCD_CONFIG_VERSION"] = appVersion
+	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgVersion
 	cfg.Env["FLYCD_APP_VERSION"] = appVersion
 	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
 	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
@@ -107,7 +113,7 @@ func deployApp(path string) error {
 			return fmt.Errorf("error unmarshalling flyctl config show in folder %s: %w", path, err)
 		}
 
-		if deployedCfg.Env["FLYCD_APP_VERSION"] == appVersion {
+		if deployedCfg.Env["FLYCD_APP_VERSION"] == appVersion && deployedCfg.Env["FLYCD_CONFIG_VERSION"] == cfgVersion {
 			println("App is already up to date, skipping deploy")
 		} else {
 			err = deployExistingApp(tempDir, cfg.DeployParams)
@@ -120,13 +126,13 @@ func deployApp(path string) error {
 	return err
 }
 
-func deployNewApp(tempDir WorkDir, launchParams []string) error {
+func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {
 	allParams := append([]string{"launch"}, launchParams...)
 	_, err := tempDir.RunCommand("flyctl", allParams...)
 	return err
 }
 
-func deployExistingApp(tempDir WorkDir, deployParams []string) error {
+func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) error {
 	allParams := append([]string{"deploy"}, deployParams...)
 	_, err := tempDir.RunCommand("flyctl", allParams...)
 	return err
