@@ -107,14 +107,9 @@ var installCmd = &cobra.Command{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,
-			Source: flycd.Source{
-				Type:             flycd.SourceTypeInlineDockerFile,
-				InlineDockerFile: "FROM nginx:latest",
-			},
-			LaunchParams: flycd.NewDefaultLaunchParams(appName, orgSlug),
-			Services: []flycd.Service{
-				flycd.NewDefaultServiceConfig(),
-			},
+			Source:        flycd.NewInlineDockerFileSource("FROM nginx:latest"),
+			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
+			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
 		}, false)
 		if err != nil {
 			fmt.Printf("Error creating dummy app: %v\n", err)

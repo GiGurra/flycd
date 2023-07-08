@@ -93,11 +93,18 @@ func NewDefaultLaunchParams(
 }
 
 type Source struct {
-	Repo             string     `yaml:"repo"`
-	Path             string     `yaml:"path"`
-	Ref              string     `yaml:"ref"`
-	Type             SourceType `yaml:"type"`
-	InlineDockerFile string     `yaml:"inline"`
+	Repo   string     `yaml:"repo"`
+	Path   string     `yaml:"path"`
+	Ref    string     `yaml:"ref"`
+	Type   SourceType `yaml:"type"`
+	Inline string     `yaml:"inline"`
+}
+
+func NewInlineDockerFileSource(inline string) Source {
+	return Source{
+		Type:   SourceTypeInlineDockerFile,
+		Inline: inline,
+	}
 }
 
 type SourceType string
@@ -118,7 +125,7 @@ func (s *Source) Validate() error {
 		}
 	case SourceTypeLocal:
 	case SourceTypeInlineDockerFile:
-		if s.InlineDockerFile == "" {
+		if s.Inline == "" {
 			return fmt.Errorf("inline docker file is required")
 		}
 	case SourceTypeDocker:

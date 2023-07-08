@@ -85,7 +85,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		}
 	case SourceTypeInlineDockerFile:
 		// Copy the local folder to the temp tempDir
-		err := tempDir.WriteFile("Dockerfile", cfg.Source.InlineDockerFile)
+		err := tempDir.WriteFile("Dockerfile", cfg.Source.Inline)
 		if err != nil {
 			return fmt.Errorf("error writing Dockerfile: %w", err)
 		}
