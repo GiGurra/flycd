@@ -88,7 +88,9 @@ FlyCD is built on the principle of bootstrapping itself.
 
 ### Installing flycd git-ops app to your fly.io env (not yet implemented)
 
-Not yet implemented. Just install a blank nginx server and creates an org token, prints it to your terminal.
+Not yet implemented.
+
+The following just installs a blank nginx server and creates an org token (prints it to your terminal).
 
 ```
 flycd install tempflycd personal arn
