@@ -60,7 +60,7 @@ FlyCD is built on the principle of bootstrapping itself.
 * Lots of implementation is still missing!
 * SUPER HACKY code right now, just a 1 day hack so far with most work delegated to shell commands instead of proper go
   libraries :D
-  * Lots of refactoring needed!
+    * Lots of refactoring needed!
 
 ## Current incomplete TODO list
 
@@ -70,20 +70,25 @@ FlyCD is built on the principle of bootstrapping itself.
 * better error handling :S
 * better logging
 * some status views or status APIs maybe
-  * if someone ever has time to build a UI :D
+    * if someone ever has time to build a UI :D
 * Volumes & mounts
 * Secrets
 * Machine types, ram & cpu modifications
 * fly.io native postgres, redis, etc...
 
-
 ## Using it
 
 ### Setting up your own config repo
 
-1. Fork this repo 
-2. Modify the contents of the `project` folder, and add the app specifications you like
-3. Run flycd deploy
+1. The two ways I'd recommend, either:
+    * Fork this repo and run `go install .`
+    * `go install github.com/gigurra/flycd@v0.0.6`
+2. Modify the contents of the `project` folder (or create one), and add the app specifications you like
+3. Run `flycd deploy projects`
+
+### Installing flycd git-ops app to your fly.io env (not yet implemented)
+
+Not yet implemented. Just install a blank nginx server and creates an org token, prints it to your terminal.
 
 ```
 flycd install tempflycd personal arn
