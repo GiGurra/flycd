@@ -117,10 +117,11 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			sourcePath = cfg.Source.Path
 		}
 
-		appHash, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		appHash, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", sourcePath))
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
+		appHash = strings.TrimSpace(appHash)
 
 		_, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
 		if err != nil {
