@@ -99,14 +99,6 @@ The following just installs a blank nginx server and creates an org token (print
 flycd install tempflycd personal arn
 ```
 
-### Installing FlyCD to your fly.io environment
-
-Note: Not yet implemented
-
-```
-flycd install tempflycd personal arn
-```
-
 ```
 fly apps list
 
