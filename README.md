@@ -67,7 +67,8 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
   libraries :D
     * Lots of refactoring needed!
 * This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
-  discussion thread over at fly.io community forums.
+  discussion thread over at fly.io community forums. 
+  * see https://community.fly.io/t/simple-self-contained-argocd-style-git-ops-with-fly-io-what-are-the-options-poc-flycd-app/14032
 
 ## Current incomplete TODO list
 
