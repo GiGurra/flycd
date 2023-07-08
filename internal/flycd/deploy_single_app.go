@@ -57,11 +57,43 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 
 	switch cfg.Source.Type {
 	case SourceTypeGit:
-		_, err = tempDir.RunCommand("git", "clone", cfg.Source.Repo, "repo")
-		if err != nil {
-			return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
+
+		var err error
+
+		if cfg.Source.Ref.Commit != "" {
+			err = tempDir.RunCommandStreamedPassthrough("git", "init")
+			if err != nil {
+				return fmt.Errorf("error initializing git repo: %w", err)
+			}
+
+			err = tempDir.RunCommandStreamedPassthrough("git", "remote", "add", "origin", cfg.Source.Repo)
+			if err != nil {
+				return fmt.Errorf("error adding git remote: %w", err)
+			}
+
+			err = tempDir.RunCommandStreamedPassthrough("git", "fetch", "--depth", "1", "origin", cfg.Source.Ref.Commit)
+			if err != nil {
+				return fmt.Errorf("error fetching git commit: %w", err)
+			}
+
+			err = tempDir.RunCommandStreamedPassthrough("git", "checkout", "FETCH_HEAD")
+			if err != nil {
+				return fmt.Errorf("error checking out git commit: %w", err)
+			}
+
+		} else if cfg.Source.Ref.Tag != "" {
+			return fmt.Errorf("tags not implemented")
+
+		} else if cfg.Source.Ref.Branch != "" {
+			return fmt.Errorf("branches not implemented")
+
+		} else {
+			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1")
+			if err != nil {
+				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
+			}
+			tempDir.Cwd = tempDir.Cwd + "/repo"
 		}
-		tempDir.Cwd = tempDir.Cwd + "/repo"
 
 		appVersion, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
 		if err != nil {
@@ -105,7 +137,9 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
 	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
 	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
-	cfg.Env["FLYCD_APP_SOURCE_REF"] = cfg.Source.Ref
+	cfg.Env["FLYCD_APP_SOURCE_REF_BRANCH"] = cfg.Source.Ref.Branch
+	cfg.Env["FLYCD_APP_SOURCE_REF_COMMIT"] = cfg.Source.Ref.Commit
+	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
 
 	// Write a new app.yaml file with the appVersion
 	cfgBytes, err := yaml.Marshal(cfg)
@@ -145,10 +179,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		return deployNewApp(tempDir, cfg.LaunchParams)
 	}
 
-	fmt.Printf("not implemented")
-	os.Exit(0)
-
-	return err
+	return nil
 }
 
 func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {

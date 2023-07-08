@@ -92,10 +92,20 @@ func NewDefaultLaunchParams(
 	return args
 }
 
+type GitRef struct {
+	Branch string `yaml:"branch"`
+	Tag    string `yaml:"tag"`
+	Commit string `yaml:"commit"`
+}
+
+func (g *GitRef) IsEmpty() bool {
+	return g.Branch == "" && g.Tag == "" && g.Commit == ""
+}
+
 type Source struct {
 	Repo   string     `yaml:"repo"`
 	Path   string     `yaml:"path"`
-	Ref    string     `yaml:"ref"`
+	Ref    GitRef     `yaml:"ref"`
 	Type   SourceType `yaml:"type"`
 	Inline string     `yaml:"inline"`
 }
@@ -132,10 +142,6 @@ func (s *Source) Validate() error {
 		return fmt.Errorf("docker source type not implemented")
 	default:
 		return fmt.Errorf("invalid source type: %s", s.Type)
-	}
-
-	if s.Type == SourceTypeGit && s.Ref == "" {
-		return fmt.Errorf("ref is required for git source type")
 	}
 
 	return nil

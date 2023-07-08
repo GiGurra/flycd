@@ -4,10 +4,13 @@ app: &app example-project1-git-app-foobar12341
 
 # Point to a repo. You are expected to mount the necessary ssh keys to the container
 source:
-  repo: "git@github.com:username/repo"
-  path: "path/to/app" # optional
-  ref: "refs/heads/master" # only needed for git repos
-  type: "git" # other supported types: "file-system"
+  repo: "https://github.com:GiGurra/flycd-nginx-test"
+  #path: "path/to/app" # optional
+  ref:
+    branch: "main"
+    #tag: "v1.2.3"
+    #commit: "abc123ab"
+  type: "git"
 
 ############################
 ## Optional configuration
