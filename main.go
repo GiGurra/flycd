@@ -2,6 +2,7 @@ package main
 
 import (
 	"flycd/internal/flycd"
+	"flycd/internal/flyctl"
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
@@ -75,12 +76,32 @@ var monitorCmd = &cobra.Command{
 	},
 }
 
+func OrgSlugArg() cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) != 1 {
+			return fmt.Errorf("accepts %d arg(s) = fly.io org slug, received %d. Use 'flyctl orgs list' to find yours", 1, len(args))
+		}
+		return nil
+	}
+}
+
 var installCmd = &cobra.Command{
-	Use:   "install",
+	Use:   "install <fly.io org slug>",
 	Short: "Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos",
+	Args:  OrgSlugArg(),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Printf("Installing flycd to your fly.io account")
+		fmt.Printf("Installing flycd to your fly.io account. Checking what orgs you have access to...\n")
+		orgSlug := args[0]
+
+		fmt.Printf("Step 1 is to create an organisation token with which flycd can access your fly.io account\n")
+		token, err := flyctl.CreateOrgToken(orgSlug)
+		if err != nil {
+			fmt.Printf("Error creating org token: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Token created: %s\n", token)
 
 		fmt.Printf("Not implemented yet, sorry :(\n")
 		os.Exit(1)
