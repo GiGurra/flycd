@@ -65,6 +65,12 @@ FlyCD is built on the principle of bootstrapping itself.
 ## Current incomplete TODO list
 
 * All of the above ☝️☝️☝️
+* ssh keys/credentials for cloning app repos
+* listening to webhooks, and figuring out which app/apps it relates to
+* better error handling :S
+* better logging
+* some status views or status APIs maybe
+  * if someone ever has time to build a UI :D
 * Volumes & mounts
 * Secrets
 * Machine types, ram & cpu modifications
