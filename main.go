@@ -79,17 +79,8 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos",
 	Run: func(cmd *cobra.Command, args []string) {
-		path, err := os.Getwd()
-		if err != nil {
-			fmt.Printf("Error getting current working directory: %v\n", err)
-			os.Exit(1)
-		}
 
-		if len(args) > 0 {
-			path = args[0]
-		}
-
-		fmt.Printf("Monitoring: %s\n", path)
+		fmt.Printf("Installing flycd to your fly.io account")
 
 		fmt.Printf("Not implemented yet, sorry :(\n")
 		os.Exit(1)
