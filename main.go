@@ -50,7 +50,8 @@ var deployCmd = &cobra.Command{
 		}
 	},
 }
-var deployCmdForceFlag = deployCmd.Flags().BoolP("force", "f", false, "Force re-deploy even if there are no changes")
+
+var _ any = deployCmd.Flags().BoolP("force", "f", false, "Force re-deploy even if there are no changes")
 
 var monitorCmd = &cobra.Command{
 	Use:   "monitor",
