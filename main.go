@@ -43,7 +43,7 @@ func main() {
 	fmt.Printf("Starting FlyCD %s...\n", Version)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 

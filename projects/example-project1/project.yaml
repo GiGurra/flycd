@@ -1,5 +1,5 @@
 name: "example-project1"
-description: "test project for testing. lalala"
+description: "test project for testing."
 
 apps-paths:
   - local_app

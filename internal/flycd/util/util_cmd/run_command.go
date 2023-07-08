@@ -1,4 +1,4 @@
-package flycd
+package util_cmd
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func runCommand(cwd string, command string, args ...string) (string, error) {
+func Run(cwd string, command string, args ...string) (string, error) {
 
 	if command == "sh" && len(args) > 0 && args[0] == "-c" {
 		fmt.Printf("%s$ %s\n", cwd, strings.Join(args[1:], " "))
@@ -22,7 +22,7 @@ func runCommand(cwd string, command string, args ...string) (string, error) {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			stdErr = string(exitErr.Stderr)
 		}
-		return string(out), fmt.Errorf("error running command %s \n %s: %w", command, stdErr, err)
+		return string(out), fmt.Errorf("error running util_cmd %s \n %s: %w", command, stdErr, err)
 	}
 
 	return string(out), nil

@@ -2,6 +2,7 @@ package flycd
 
 import (
 	"encoding/json"
+	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
@@ -23,7 +24,7 @@ func deployApp(path string) error {
 	}
 
 	// random uuid
-	version, err := newUUIDString()
+	appVersion, err := newUUIDString()
 	if err != nil {
 		return fmt.Errorf("error generating uuid: %w", err)
 	}
@@ -36,7 +37,7 @@ func deployApp(path string) error {
 		}
 		tempDir.Cwd = tempDir.Cwd + "/repo"
 
-		version, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
+		appVersion, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -47,12 +48,12 @@ func deployApp(path string) error {
 			sourcePath = cfg.Source.Path
 		}
 
-		version, err = runCommand(path, "sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		appVersion, err = util_cmd.Run(path, "sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
 
-		_, err = runCommand(path, "sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
+		_, err = util_cmd.Run(path, "sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
@@ -60,14 +61,15 @@ func deployApp(path string) error {
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
 
-	version = strings.TrimSpace(version)
-	cfg.Env["FLYCD_APP_VERSION"] = version
+	appVersion = strings.TrimSpace(appVersion)
+	cfg.Env["FLYCD_CONFIG_VERSION"] = appVersion
+	cfg.Env["FLYCD_APP_VERSION"] = appVersion
 	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
 	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
 	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
 	cfg.Env["FLYCD_APP_SOURCE_REF"] = cfg.Source.Ref
 
-	// Write a new app.yaml file with the version
+	// Write a new app.yaml file with the appVersion
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("error marshalling app.yaml: %w", err)
@@ -75,7 +77,7 @@ func deployApp(path string) error {
 
 	err = tempDir.WriteFile("app.yaml", string(cfgBytes))
 
-	// execute 'cat app.yaml | yj -yt > fly.toml' on the command line
+	// execute 'cat app.yaml | yj -yt > fly.toml' on the util_cmd line
 	_, err = tempDir.RunCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml")
 	if err != nil {
 		return fmt.Errorf("error producing fly.toml from app.yaml in folder %s: %w", path, err)
@@ -93,7 +95,7 @@ func deployApp(path string) error {
 	} else {
 		println("App found, updating it")
 
-		// Compare the current deployed version with the new version
+		// Compare the current deployed appVersion with the new appVersion
 		jsonConf, err := tempDir.RunCommand("flyctl", "config", "show")
 		if err != nil {
 			return fmt.Errorf("error running flyctl config show in folder %s: %w", path, err)
@@ -105,7 +107,7 @@ func deployApp(path string) error {
 			return fmt.Errorf("error unmarshalling flyctl config show in folder %s: %w", path, err)
 		}
 
-		if deployedCfg.Env["FLYCD_APP_VERSION"] == version {
+		if deployedCfg.Env["FLYCD_APP_VERSION"] == appVersion {
 			println("App is already up to date, skipping deploy")
 		} else {
 			err = deployExistingApp(tempDir, cfg.DeployParams)
@@ -118,13 +120,13 @@ func deployApp(path string) error {
 	return err
 }
 
-func deployNewApp(tempDir TempDir, lanchParams []string) error {
-	allParams := append([]string{"launch"}, lanchParams...)
+func deployNewApp(tempDir WorkDir, launchParams []string) error {
+	allParams := append([]string{"launch"}, launchParams...)
 	_, err := tempDir.RunCommand("flyctl", allParams...)
 	return err
 }
 
-func deployExistingApp(tempDir TempDir, deployParams []string) error {
+func deployExistingApp(tempDir WorkDir, deployParams []string) error {
 	allParams := append([]string{"deploy"}, deployParams...)
 	_, err := tempDir.RunCommand("flyctl", allParams...)
 	return err
@@ -152,9 +154,9 @@ func readAppConfig(path string, err error) (AppConfig, error) {
 }
 
 func newUUIDString() (string, error) {
-	uuid, err := uuid.NewRandom()
+	result, err := uuid.NewRandom()
 	if err != nil {
 		return "", err
 	}
-	return uuid.String(), nil
+	return result.String(), nil
 }

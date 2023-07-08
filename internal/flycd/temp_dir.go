@@ -1,38 +1,39 @@
 package flycd
 
 import (
+	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
 	"os"
 )
 
-type TempDir struct {
+type WorkDir struct {
 	Root string
 	Cwd  string
 }
 
-func (t *TempDir) Remove() {
+func (t *WorkDir) Remove() {
 	err := os.RemoveAll(t.Root)
 	if err != nil {
 		fmt.Printf("error removing temp dir %s: %s", t.Root, err)
 	}
 }
 
-func NewTempDir() (TempDir, error) {
+func NewTempDir() (WorkDir, error) {
 	tempDir, err := os.MkdirTemp("", "flycd")
 	if err != nil {
-		return TempDir{}, fmt.Errorf("error creating temp tempDir: %w", err)
+		return WorkDir{}, fmt.Errorf("error creating temp tempDir: %w", err)
 	}
-	return TempDir{
+	return WorkDir{
 		Root: tempDir,
 		Cwd:  tempDir,
 	}, nil
 }
 
-func (t *TempDir) RunCommand(command string, args ...string) (string, error) {
-	return runCommand(t.Cwd, command, args...)
+func (t *WorkDir) RunCommand(command string, args ...string) (string, error) {
+	return util_cmd.Run(t.Cwd, command, args...)
 }
 
-func (t *TempDir) ReadFile(name string) (string, error) {
+func (t *WorkDir) ReadFile(name string) (string, error) {
 	data, err := os.ReadFile(t.Cwd + "/" + name)
 	if err != nil {
 		return "", fmt.Errorf("error reading file %s: %w", name, err)
@@ -40,6 +41,6 @@ func (t *TempDir) ReadFile(name string) (string, error) {
 	return string(data), nil
 }
 
-func (t *TempDir) WriteFile(name string, contents string) error {
+func (t *WorkDir) WriteFile(name string, contents string) error {
 	return os.WriteFile(t.Cwd+"/"+name, []byte(contents), 0644)
 }
