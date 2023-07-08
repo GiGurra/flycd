@@ -7,9 +7,9 @@ source:
   repo: "https://github.com/GiGurra/flycd-nginx-test"
   #path: "path/to/app" # optional
   ref:
-    #branch: "main"
+    branch: "main"
     #tag: "v1.2.3"
-    commit: "fae2e1f1f578ddda681f09137dbae831bde84fe7"
+    #commit: "fae2e1f1f578ddda681f09137dbae831bde84fe7"
   type: "git"
 
 ############################
