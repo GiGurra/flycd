@@ -13,7 +13,7 @@ functionality is still to be implemented, the following are the features it aims
   and grabbing the latest versions (or specific versions) of your applications from git, and deploying them to fly.io.
 
 * FlyCD spec format is a strict superset of regular fly.io toml files. Although fly.io uses toml and flycd uses yaml,
-  yet are 1:1 convertible between, and who knows, flycd might use toml in the future if flycd author(s) stop hating
+  they are 1:1 convertible between, and who knows, flycd might use toml in the future if flycd author(s) stop hating
   toml :).
 
 ```
