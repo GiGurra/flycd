@@ -46,12 +46,13 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	}
 	defer tempDir.RemoveAll()
 
-	cfgVersion, err := cfgDir.RunCommand("git", "rev-parse", "HEAD")
+	cfgHash, err := cfgDir.RunCommand("sha1sum", "app.yaml")
 	if err != nil {
 		return fmt.Errorf("error getting git commit hash of cfg dir: %w", err)
 	}
+	cfgHash = strings.TrimSpace(cfgHash)
 
-	appVersion, err := newUUIDString()
+	appHash, err := newUUIDString()
 	if err != nil {
 		return fmt.Errorf("error generating uuid: %w", err)
 	}
@@ -105,7 +106,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			tempDir.Cwd = tempDir.Cwd + "/repo"
 		}
 
-		appVersion, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
+		appHash, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -116,7 +117,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			sourcePath = cfg.Source.Path
 		}
 
-		appVersion, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		appHash, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -132,7 +133,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			return fmt.Errorf("error writing Dockerfile: %w", err)
 		}
 
-		appVersion, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		appHash, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -141,9 +142,9 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
 
-	appVersion = strings.TrimSpace(appVersion)
-	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgVersion
-	cfg.Env["FLYCD_APP_VERSION"] = appVersion
+	appHash = strings.TrimSpace(appHash)
+	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgHash
+	cfg.Env["FLYCD_APP_VERSION"] = appHash
 	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
 	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
 	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
@@ -151,7 +152,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	cfg.Env["FLYCD_APP_SOURCE_REF_COMMIT"] = cfg.Source.Ref.Commit
 	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
 
-	// Write a new app.yaml file with the appVersion
+	// Write a new app.yaml file with the appHash
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("error marshalling app.yaml: %w", err)
@@ -186,8 +187,8 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		}
 
 		if force ||
-			deployedCfg.Env["FLYCD_APP_VERSION"] != appVersion ||
-			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgVersion {
+			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
+			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
 			return deployExistingApp(tempDir, cfg.DeployParams)
 		} else {
 			println("App is already up to date, skipping deploy")
