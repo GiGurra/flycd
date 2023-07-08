@@ -58,6 +58,8 @@ func (s *Source) Validate() error {
 			return fmt.Errorf("repo is required")
 		}
 	case SourceTypeLocal:
+	case SourceTypeDocker:
+		return fmt.Errorf("docker source type not implemented")
 	default:
 		return fmt.Errorf("invalid source type: %s", s.Type)
 	}
