@@ -87,7 +87,7 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
 
 1. The two ways I'd recommend, either:
     * Fork this repo and run `go install .`
-    * `go install github.com/gigurra/flycd@v0.0.6`
+    * `go install github.com/gigurra/flycd@v0.0.7`
 2. Modify the contents of the `project` folder (or create one), and add the app specifications you like
 3. Run `flycd deploy projects`
 
