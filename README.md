@@ -35,3 +35,4 @@ FlyCD is built on the principle of bootstrapping itself.
 * Lots of implementation is still missing!
 * SUPER HACKY code right now, just a 1 day hack so far with most work delegated to shell commands instead of proper go
   libraries :D
+  * Lots of refactoring needed!
