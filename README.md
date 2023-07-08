@@ -64,7 +64,7 @@ FlyCD is built on the principle of bootstrapping itself.
 
 ## Current incomplete TODO list
 
-* All of the above
+* All of the above ☝️☝️☝️
 * Volumes & mounts
 * Secrets
 * Machine types, ram & cpu modifications
