@@ -56,7 +56,7 @@ var _ any = deployCmd.Flags().BoolP("force", "f", false, "Force re-deploy even i
 
 var monitorCmd = &cobra.Command{
 	Use:   "monitor",
-	Short: "Monitor a single flycd app, or all flycd apps inside a folder (recursively)",
+	Short: "(Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc",
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
 		path, err := os.Getwd()

@@ -16,6 +16,32 @@ functionality is still to be implemented, the following are the features it aims
   yet are 1:1 convertible between, and who knows, flycd might use toml in the future if flycd author(s) stop hating
   toml :).
 
+```
+$flycd --help
+
+Starting FlyCD latest...
+Complete documentation is available at https://github.com/gigurra/flycd
+
+Usage:
+  flycd [flags]
+  flycd [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  deploy      Manually deploy a single flycd app, or all flycd apps inside a folder
+  help        Help about any command
+  install     Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos
+  monitor     (Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc
+  uninstall   Uninstall flycd from your fly.io account
+  upgrade     Upgrade your flycd installation in your fly.io account to the latest version
+
+Flags:
+  -h, --help   help for flycd
+
+Use "flycd [command] --help" for more information about a command.
+FlyCD latest exiting normally, bye!
+```
+
 ## Current state
 
 FlyCD is built on the principle of bootstrapping itself.
