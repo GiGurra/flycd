@@ -159,7 +159,7 @@ func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {
 
 func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) error {
 	allParams := append([]string{"deploy"}, deployParams...)
-	_, err := tempDir.RunCommand("flyctl", allParams...)
+	err := tempDir.RunCommandStreamedPassthrough("flyctl", allParams...)
 	return err
 }
 
