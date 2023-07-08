@@ -111,6 +111,17 @@ NAME            OWNER           STATUS          PLATFORM        LATEST DEPLOY
 tempflycd       personal        deployed        machines        30m3s ago  
 ```
 
+## Sample project structure
+
+```
+projects/
+└── example-project1
+    ├── local_app
+    │   ├── Dockerfile
+    │   └── app.yaml
+    └── x_git_app
+        └── app.yaml
+```
 ## Sample flycd app.yaml
 
 ```yaml
