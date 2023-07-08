@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func analyseFolder(path string) ([]os.DirEntry, bool, bool, error) {
+func analyseCfgFolder(path string) ([]os.DirEntry, bool, bool, error) {
 
 	entries, err := os.ReadDir(path)
 	if err != nil {

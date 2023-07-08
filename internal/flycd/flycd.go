@@ -11,7 +11,7 @@ func Deploy(path string, force bool) error {
 
 	println("Traversing:", path)
 
-	traversableCandidates, hasAppYaml, hasProjectsDir, err := analyseFolder(path)
+	traversableCandidates, hasAppYaml, hasProjectsDir, err := analyseCfgFolder(path)
 	if err != nil {
 		return fmt.Errorf("error analysing folder: %w", err)
 	}

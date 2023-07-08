@@ -92,7 +92,7 @@ var installCmd = &cobra.Command{
 
 		region := args[2]
 
-		fmt.Printf("Installing flycd with app name '%s' to org '%s'\n", orgSlug)
+		fmt.Printf("Installing flycd with app name '%s' to org '%s'\n", appName, orgSlug)
 
 		fmt.Printf("Check if flycd app already exists\n")
 		appExists, err := flycd.AppExists(appName)

@@ -40,17 +40,6 @@ func NewWorkDir(path string) WorkDir {
 	}
 }
 
-func CwDir() (WorkDir, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return WorkDir{}, fmt.Errorf("error getting current working directory: %w", err)
-	}
-	return WorkDir{
-		Root: cwd,
-		Cwd:  cwd,
-	}, nil
-}
-
 func (t *WorkDir) RunCommand(command string, args ...string) (string, error) {
 	return util_cmd.Run(t.Cwd, command, args...)
 }
