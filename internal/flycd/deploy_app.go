@@ -14,16 +14,16 @@ func deployApp(path string) error {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
-	tempDir, err := util_work_dir.NewTempDir()
+	cfg, err := readAppConfig(path)
+	if err != nil {
+		return err
+	}
+
+	tempDir, err := util_work_dir.NewTempDir(cfg.App)
 	if err != nil {
 		return fmt.Errorf("error creating temp dir: %w", err)
 	}
 	defer tempDir.RemoveAll()
-
-	cfg, err := readAppConfig(path, err)
-	if err != nil {
-		return err
-	}
 
 	cfgVersion, err := cfgDir.RunCommand("git", "rev-parse", "HEAD")
 	if err != nil {
@@ -138,7 +138,7 @@ func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) err
 	return err
 }
 
-func readAppConfig(path string, err error) (AppConfig, error) {
+func readAppConfig(path string) (AppConfig, error) {
 	var cfg AppConfig
 
 	appYaml, err := os.ReadFile(path + "/app.yaml")

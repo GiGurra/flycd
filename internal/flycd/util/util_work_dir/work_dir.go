@@ -18,8 +18,12 @@ func (t *WorkDir) RemoveAll() {
 	}
 }
 
-func NewTempDir() (WorkDir, error) {
-	tempDir, err := os.MkdirTemp("", "flycd")
+func NewTempDir(name string) (WorkDir, error) {
+	pattern := "flycd"
+	if name != "" {
+		pattern = name
+	}
+	tempDir, err := os.MkdirTemp("", pattern)
 	if err != nil {
 		return WorkDir{}, fmt.Errorf("error creating temp tempDir: %w", err)
 	}
