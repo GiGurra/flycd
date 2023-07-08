@@ -11,7 +11,7 @@ type WorkDir struct {
 	Cwd  string
 }
 
-func (t *WorkDir) Remove() {
+func (t *WorkDir) RemoveAll() {
 	err := os.RemoveAll(t.Root)
 	if err != nil {
 		fmt.Printf("error removing dir %s: %s", t.Root, err)

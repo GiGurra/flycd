@@ -18,7 +18,7 @@ func deployApp(path string) error {
 	if err != nil {
 		return fmt.Errorf("error creating temp dir: %w", err)
 	}
-	defer tempDir.Remove()
+	defer tempDir.RemoveAll()
 
 	cfg, err := readAppConfig(path, err)
 	if err != nil {
