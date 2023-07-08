@@ -55,6 +55,9 @@ FlyCD is built on the principle of bootstrapping itself.
 * It can currently install itself into an existing fly.io environment (although it doesn't do anything yet once
   installed :D)
 
+**I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
+Consider it proof of concept, and nothing more. I have spent about 1 day on it so far.
+
 ## Current issues
 
 * Lots of implementation is still missing!
@@ -146,10 +149,10 @@ services:
       soft_limit: 200
       hard_limit: 250
     ports:
-      - handlers: ["http"]
+      - handlers: [ "http" ]
         port: 80
         force_https: true
-      - handlers: ["tls", "http"]
+      - handlers: [ "tls", "http" ]
         port: 443
 
 # Modify to your needs. By default, we will create a new fly.io
@@ -166,6 +169,6 @@ launch_params:
 # Modify to your needs. By default, we will deploy the fly.io
 # app without any user interaction/confirmation.
 # For the most simple apps, you probably don't need to modify these at all
-deploy_params: []
+deploy_params: [ ]
 
 ```
