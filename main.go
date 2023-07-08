@@ -71,6 +71,10 @@ var monitorCmd = &cobra.Command{
 
 		fmt.Printf("Monitoring: %s\n", path)
 
+		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
+		// TODO: Start listening to webhooks
+		// TODO: Run specific app's deploy code when webhook is received
+
 		fmt.Printf("Not implemented yet, sorry :(\n")
 		os.Exit(1)
 	},
