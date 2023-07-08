@@ -29,7 +29,7 @@ func deployApp(path string) error {
 	}
 
 	switch cfg.Source.Type {
-	case "git":
+	case SourceTypeGit:
 		_, err = tempDir.RunCommand("git", "clone", cfg.Source.Repo, "repo")
 		if err != nil {
 			return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
@@ -40,7 +40,7 @@ func deployApp(path string) error {
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
-	case "local":
+	case SourceTypeLocal:
 		// Copy the local folder to the temp tempDir
 		sourcePath := "."
 		if cfg.Source.Path != "" {
@@ -62,7 +62,7 @@ func deployApp(path string) error {
 
 	version = strings.TrimSpace(version)
 	cfg.Env["FLYCD_APP_VERSION"] = version
-	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = cfg.Source.Type
+	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
 	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
 	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
 	cfg.Env["FLYCD_APP_SOURCE_REF"] = cfg.Source.Ref

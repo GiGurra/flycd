@@ -36,25 +36,33 @@ func (a *AppConfig) Validate() error {
 }
 
 type Source struct {
-	Repo string `yaml:"repo"`
-	Path string `yaml:"path"`
-	Ref  string `yaml:"ref"`
-	Type string `yaml:"type"`
+	Repo string     `yaml:"repo"`
+	Path string     `yaml:"path"`
+	Ref  string     `yaml:"ref"`
+	Type SourceType `yaml:"type"`
 }
+
+type SourceType string
+
+const (
+	SourceTypeGit    SourceType = "git"
+	SourceTypeLocal  SourceType = "local"
+	SourceTypeDocker SourceType = "docker"
+)
 
 func (s *Source) Validate() error {
 
 	switch s.Type {
-	case "git":
+	case SourceTypeGit:
 		if s.Repo == "" {
 			return fmt.Errorf("repo is required")
 		}
-	case "local":
+	case SourceTypeLocal:
 	default:
 		return fmt.Errorf("invalid source type: %s", s.Type)
 	}
 
-	if s.Type == "git" && s.Ref == "" {
+	if s.Type == SourceTypeGit && s.Ref == "" {
 		return fmt.Errorf("ref is required for git source type")
 	}
 
