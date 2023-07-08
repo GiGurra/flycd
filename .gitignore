@@ -8,6 +8,8 @@
 # Dependency directories
 vendor/
 
+id_rsa
+id_dsa
 
 /flycd
 
