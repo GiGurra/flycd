@@ -66,6 +66,8 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
 * SUPER HACKY code right now, just a 1 day hack so far with most work delegated to shell commands instead of proper go
   libraries :D
     * Lots of refactoring needed!
+* This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
+  discussion thread over at fly.io community forums.
 
 ## Current incomplete TODO list
 
