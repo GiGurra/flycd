@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"os/exec"
 )
 
 const Version = "v0.0.5"
@@ -41,6 +42,16 @@ var rootCmd = &cobra.Command{
 
 func main() {
 	fmt.Printf("Starting FlyCD %s...\n", Version)
+
+	// Check that required applications are installed
+	requiredApps := []string{"flyctl", "git", "yj"}
+	for _, app := range requiredApps {
+		_, err := exec.LookPath(app)
+		if err != nil {
+			fmt.Printf("Error: required app '%s' not found in PATH\n", app)
+			os.Exit(1)
+		}
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
