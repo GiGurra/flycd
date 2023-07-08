@@ -29,7 +29,7 @@ fi
 
 # Parse the tag from main.go
 # shellcheck disable=SC2002
-TAG=$(cat main.go | grep -oP '(?<=Version = ").*(?=")')
+TAG=$(cat main.go | grep 'Version = ' | cut -d '"' -f 2)
 
 # Check that the tag follows semver
 if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
