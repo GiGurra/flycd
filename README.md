@@ -50,8 +50,8 @@ FlyCD is built on the principle of bootstrapping itself.
 * It can operate as a manual Git-Ops CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
     * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
     * the target organisation to deploy to
-    * figures out if a deploy is actually warranted, by comparing git hash of cfg repo and app repo with hashes saved to
-      fly.io env for the app (using app env vars for this)
+    * figures out if a deploy is actually warranted, by comparing sha1sum of app.yaml + git hash of app repo with
+    * hashes saved to fly.io env for the app (using app env vars for this)
 * It can deploy many apps at the same time. Simply point it to a directory structure/hierarchy containing multiple
   app.yaml files, and flycd will traverse the structure recursively, clone each app's source repo and deploy each app
 * It can currently install itself into an existing fly.io environment (although it doesn't do anything yet once
