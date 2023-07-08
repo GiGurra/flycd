@@ -68,3 +68,4 @@ FlyCD is built on the principle of bootstrapping itself.
 * Volumes & mounts
 * Secrets
 * Machine types, ram & cpu modifications
+* fly.io native postgres, redis, etc...
