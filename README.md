@@ -103,3 +103,10 @@ Note: Not yet implemented
 ```
 flycd install tempflycd personal arn
 ```
+
+```
+fly apps list
+
+NAME            OWNER           STATUS          PLATFORM        LATEST DEPLOY        
+tempflycd       personal        deployed        machines        30m3s ago  
+```
