@@ -117,8 +117,8 @@ tempflycd       personal        deployed        machines        30m3s ago
 projects/
 └── example-project1
     ├── local_app
-    │   ├── Dockerfile
-    │   └── app.yaml
+    │   ├── Dockerfile
+    │   └── app.yaml
     └── x_git_app
         └── app.yaml
 ```
