@@ -14,7 +14,7 @@ type WorkDir struct {
 func (t *WorkDir) Remove() {
 	err := os.RemoveAll(t.Root)
 	if err != nil {
-		fmt.Printf("error removing temp dir %s: %s", t.Root, err)
+		fmt.Printf("error removing dir %s: %s", t.Root, err)
 	}
 }
 
