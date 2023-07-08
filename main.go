@@ -76,25 +76,52 @@ var monitorCmd = &cobra.Command{
 	},
 }
 
-func OrgSlugArg() cobra.PositionalArgs {
-	return func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			return fmt.Errorf("accepts %d arg(s) = fly.io org slug, received %d. Use 'flyctl orgs list' to find yours", 1, len(args))
-		}
-		return nil
-	}
-}
-
 var installCmd = &cobra.Command{
-	Use:   "install <fly.io org slug>",
+	Use:   "install <flycd app name> <fly.io org slug> <fly.io region>",
 	Short: "Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos",
-	Args:  OrgSlugArg(),
+	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Printf("Installing flycd to your fly.io account. Checking what orgs you have access to...\n")
-		orgSlug := args[0]
+		appName := args[0]
 
-		fmt.Printf("Step 1 is to create an organisation token with which flycd can access your fly.io account\n")
+		orgSlug := args[1]
+
+		region := args[2]
+
+		fmt.Printf("Installing flycd with app name '%s' to org '%s'\n", orgSlug)
+
+		fmt.Printf("Check if flycd app already exists\n")
+		appExists, err := flycd.AppExists(appName)
+		if err != nil {
+			fmt.Printf("Error checking if app exists: %v\n", err)
+			os.Exit(1)
+		}
+
+		if appExists {
+			fmt.Printf("App '%s' already exists, skipping creation. Use flycd upgrade instead\n", appName)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
+		err = flycd.DeployAppFromConfig(flycd.AppConfig{
+			App:           appName,
+			Org:           orgSlug,
+			PrimaryRegion: region,
+			Source: flycd.Source{
+				Type:             flycd.SourceTypeInlineDockerFile,
+				InlineDockerFile: "FROM nginx:latest",
+			},
+			LaunchParams: flycd.NewDefaultLaunchParams(appName, orgSlug),
+			Services: []flycd.Service{
+				flycd.NewDefaultServiceConfig(),
+			},
+		}, false)
+		if err != nil {
+			fmt.Printf("Error creating dummy app: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("App name successfully reserved... creating access token for org '%s'\n", orgSlug)
 		token, err := flyctl.CreateOrgToken(orgSlug)
 		if err != nil {
 			fmt.Printf("Error creating org token: %v\n", err)

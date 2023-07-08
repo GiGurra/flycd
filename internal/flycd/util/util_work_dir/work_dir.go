@@ -18,12 +18,12 @@ func (t *WorkDir) RemoveAll() {
 	}
 }
 
-func NewTempDir(name string) (WorkDir, error) {
+func NewTempDir(name string, root string) (WorkDir, error) {
 	pattern := "flycd"
 	if name != "" {
 		pattern = name
 	}
-	tempDir, err := os.MkdirTemp("", pattern)
+	tempDir, err := os.MkdirTemp(root, pattern)
 	if err != nil {
 		return WorkDir{}, fmt.Errorf("error creating temp tempDir: %w", err)
 	}
@@ -53,6 +53,10 @@ func CwDir() (WorkDir, error) {
 
 func (t *WorkDir) RunCommand(command string, args ...string) (string, error) {
 	return util_cmd.Run(t.Cwd, command, args...)
+}
+
+func (t *WorkDir) RunCommandStreamedPassthrough(command string, args ...string) error {
+	return util_cmd.RunStreamedPassThrough(t.Cwd, command, args...)
 }
 
 func (t *WorkDir) ReadFile(name string) (string, error) {

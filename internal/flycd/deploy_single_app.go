@@ -1,7 +1,6 @@
 package flycd
 
 import (
-	"encoding/json"
 	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
 	"github.com/google/uuid"
@@ -10,7 +9,28 @@ import (
 	"strings"
 )
 
-func deployApp(path string, force bool) error {
+func DeployAppFromConfig(cfg AppConfig, force bool) error {
+
+	cfgDir, err := util_work_dir.NewTempDir(cfg.App, ".")
+	if err != nil {
+		return fmt.Errorf("error creating temp dir: %w", err)
+	}
+	defer cfgDir.RemoveAll()
+
+	yamlBytes, err := yaml.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("error marshalling app config: %w", err)
+	}
+
+	err = cfgDir.WriteFile("app.yaml", string(yamlBytes))
+	if err != nil {
+		return fmt.Errorf("error writing app.yaml: %w", err)
+	}
+
+	return DeploySingleAppFromFolder(cfgDir.Root, force)
+}
+
+func DeploySingleAppFromFolder(path string, force bool) error {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
@@ -19,7 +39,7 @@ func deployApp(path string, force bool) error {
 		return err
 	}
 
-	tempDir, err := util_work_dir.NewTempDir(cfg.App)
+	tempDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
 		return fmt.Errorf("error creating temp dir: %w", err)
 	}
@@ -63,6 +83,18 @@ func deployApp(path string, force bool) error {
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
+	case SourceTypeInlineDockerFile:
+		// Copy the local folder to the temp tempDir
+		err := tempDir.WriteFile("Dockerfile", cfg.Source.InlineDockerFile)
+		if err != nil {
+			return fmt.Errorf("error writing Dockerfile: %w", err)
+		}
+
+		appVersion, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		if err != nil {
+			return fmt.Errorf("error getting git commit hash: %w", err)
+		}
+
 	default:
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
@@ -90,36 +122,27 @@ func deployApp(path string, force bool) error {
 	}
 
 	// Now run flyctl and check if the app exists
-	_, err = tempDir.RunCommand("flyctl", "status")
+	appExists, err := AppExists(cfg.App)
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "could not find app") {
-			println("App not found, creating it")
-			err = deployNewApp(tempDir, cfg.LaunchParams)
-		} else {
-			err = fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
-		}
-	} else {
-		println("App found, updating it")
+		return fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
+	}
 
-		// Compare the current deployed appVersion with the new appVersion
-		jsonConf, err := tempDir.RunCommand("flyctl", "config", "show")
+	if appExists {
+		deployedCfg, err := GetDeployedAppConfig(cfg.App)
 		if err != nil {
-			return fmt.Errorf("error running flyctl config show in folder %s: %w", path, err)
-		}
-
-		var deployedCfg AppConfig
-		err = json.Unmarshal([]byte(jsonConf), &deployedCfg)
-		if err != nil {
-			return fmt.Errorf("error unmarshalling flyctl config show in folder %s: %w", path, err)
+			return fmt.Errorf("error getting deployed app config: %w", err)
 		}
 
 		if force ||
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appVersion ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgVersion {
-			err = deployExistingApp(tempDir, cfg.DeployParams)
+			return deployExistingApp(tempDir, cfg.DeployParams)
 		} else {
 			println("App is already up to date, skipping deploy")
 		}
+	} else {
+		println("App not found, creating it")
+		return deployNewApp(tempDir, cfg.LaunchParams)
 	}
 
 	fmt.Printf("not implemented")
@@ -130,7 +153,7 @@ func deployApp(path string, force bool) error {
 
 func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {
 	allParams := append([]string{"launch"}, launchParams...)
-	_, err := tempDir.RunCommand("flyctl", allParams...)
+	err := tempDir.RunCommandStreamedPassthrough("flyctl", allParams...)
 	return err
 }
 

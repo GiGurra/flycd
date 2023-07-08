@@ -6,12 +6,14 @@ import (
 )
 
 type AppConfig struct {
-	App          string            `yaml:"app"`
-	Source       Source            `yaml:"source"`
-	Services     []Service         `yaml:"services"`
-	LaunchParams []string          `yaml:"launch_params"`
-	DeployParams []string          `yaml:"deploy_params"`
-	Env          map[string]string `yaml:"env"`
+	App           string            `yaml:"app"`
+	Org           string            `yaml:"org"`
+	PrimaryRegion string            `yaml:"primary_region"`
+	Source        Source            `yaml:"source"`
+	Services      []Service         `yaml:"services"`
+	LaunchParams  []string          `yaml:"launch_params"`
+	DeployParams  []string          `yaml:"deploy_params"`
+	Env           map[string]string `yaml:"env"`
 }
 
 func (a *AppConfig) Validate() error {
@@ -32,22 +34,79 @@ func (a *AppConfig) Validate() error {
 		return err
 	}
 
+	if len(a.LaunchParams) == 0 {
+		a.LaunchParams = NewDefaultLaunchParams(a.App, a.Org)
+	}
+
+	if a.Org != "" && a.PrimaryRegion == "" {
+		return fmt.Errorf("primary_region is required when org is specified")
+	}
+
 	return nil
 }
 
+func NewDefaultServiceConfig() Service {
+	return Service{
+		InternalPort:       80,
+		Protocol:           "tcp",
+		ForceHttps:         false,
+		AutoStopMachines:   true,
+		AutoStartMachines:  true,
+		MinMachinesRunning: 1,
+		Concurrency: Concurrency{
+			Type:      "requests",
+			SoftLimit: 1_000_000_000,
+			HardLimit: 1_000_000_000,
+		},
+		Ports: []Port{
+			{
+				Handlers:   []string{"http"},
+				Port:       80,
+				ForceHttps: true,
+			},
+			{
+				Handlers: []string{"tls", "http"},
+				Port:     443,
+			},
+		},
+	}
+}
+
+func NewDefaultLaunchParams(
+	appName string,
+	orgSlug string,
+) []string {
+	args := []string{
+		"--ha=false",
+		"--auto-confirm",
+		"--now",
+		"--copy-config",
+		"--name",
+		appName,
+	}
+
+	if orgSlug != "" {
+		args = append(args, "--org", orgSlug)
+	}
+
+	return args
+}
+
 type Source struct {
-	Repo string     `yaml:"repo"`
-	Path string     `yaml:"path"`
-	Ref  string     `yaml:"ref"`
-	Type SourceType `yaml:"type"`
+	Repo             string     `yaml:"repo"`
+	Path             string     `yaml:"path"`
+	Ref              string     `yaml:"ref"`
+	Type             SourceType `yaml:"type"`
+	InlineDockerFile string     `yaml:"inline"`
 }
 
 type SourceType string
 
 const (
-	SourceTypeGit    SourceType = "git"
-	SourceTypeLocal  SourceType = "local"
-	SourceTypeDocker SourceType = "docker"
+	SourceTypeGit              SourceType = "git"
+	SourceTypeLocal            SourceType = "local"
+	SourceTypeDocker           SourceType = "docker"
+	SourceTypeInlineDockerFile SourceType = "inline-docker-file"
 )
 
 func (s *Source) Validate() error {
@@ -58,6 +117,10 @@ func (s *Source) Validate() error {
 			return fmt.Errorf("repo is required")
 		}
 	case SourceTypeLocal:
+	case SourceTypeInlineDockerFile:
+		if s.InlineDockerFile == "" {
+			return fmt.Errorf("inline docker file is required")
+		}
 	case SourceTypeDocker:
 		return fmt.Errorf("docker source type not implemented")
 	default:
@@ -77,7 +140,7 @@ type Concurrency struct {
 	HardLimit int    `yaml:"hard_limit"`
 }
 
-type Ports struct {
+type Port struct {
 	Handlers   []string `yaml:"handlers"`
 	Port       int      `yaml:"port"`
 	ForceHttps bool     `yaml:"force_https"`
@@ -91,5 +154,5 @@ type Service struct {
 	AutoStartMachines  bool        `yaml:"auto_start_machines"`
 	MinMachinesRunning int         `yaml:"min_machines_running"`
 	Concurrency        Concurrency `yaml:"concurrency"`
-	Ports              []Ports     `yaml:"ports"`
+	Ports              []Port      `yaml:"ports"`
 }
