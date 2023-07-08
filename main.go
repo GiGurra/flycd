@@ -130,6 +130,11 @@ var installCmd = &cobra.Command{
 
 		fmt.Printf("Token created: %s\n", token)
 
+		// TODO: Store access token as secret
+		// TODO: deploy flycd in monitoring mode
+		// TODO: Add ssh keys as secrets so we can pull from other git repos argocd style
+		// TODO: Fix some stuff in monitoring mode :S, like copying ssh keys from secrets, use access token etc
+
 		fmt.Printf("Not implemented yet, sorry :(\n")
 		os.Exit(1)
 	},
