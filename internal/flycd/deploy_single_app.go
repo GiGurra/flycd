@@ -12,7 +12,7 @@ import (
 
 func DeployAppFromConfig(cfg AppConfig, force bool) error {
 
-	cfgDir, err := util_work_dir.NewTempDir(cfg.App, ".")
+	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
 		return fmt.Errorf("error creating deployment temp dir: %w", err)
 	}
