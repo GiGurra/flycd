@@ -170,7 +170,7 @@ var monitorCmd = &cobra.Command{
 
 // Handler
 func processWebhook(c echo.Context) error {
-	// TODO: Do something useful here
+
 	body := c.Request().Body
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
@@ -184,6 +184,7 @@ func processWebhook(c echo.Context) error {
 	}(body)
 
 	fmt.Printf("Received webhook: %s\n", string(bodyBytes))
+	// TODO: Do something useful here
 
 	return c.String(http.StatusOK, "Hello, World!")
 }
