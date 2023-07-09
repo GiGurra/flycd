@@ -134,7 +134,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			return fmt.Errorf("error writing Dockerfile: %w", err)
 		}
 
-		appHash, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD")).Run()
+		appHash, err = tempDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd)).Run()
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
