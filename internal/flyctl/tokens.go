@@ -54,10 +54,6 @@ type StoreSecretCmd struct {
 
 func StoreSecret(cmd StoreSecretCmd) error {
 
-	// Initialize a shell command for creating an org token with flyctl
-	// This operation is interactive, so we need to forward stdin, stdout, and stderr
-	// so the user can interact with flyctl
-
 	args := []string{
 		"secrets",
 		"set",
