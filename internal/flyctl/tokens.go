@@ -65,7 +65,7 @@ func StoreSecret(cmd StoreSecretCmd) error {
 	args := []string{
 		"secrets",
 		"set",
-		fmt.Sprintf(`"%s"="%s"`, cmd.SecretName, cmd.SecretValue),
+		fmt.Sprintf(`%s="%s"`, cmd.SecretName, cmd.SecretValue),
 	}
 
 	if cmd.AppName != "" {
