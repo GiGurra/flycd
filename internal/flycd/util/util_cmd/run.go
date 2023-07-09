@@ -139,6 +139,8 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 
 	for i := 0; i <= c.TimeoutRetries; i++ {
 
+		ctx := ctx // needed so we don't cancel the parent context
+
 		err := func() error {
 			if c.Timeout > 0 {
 				var cancel context.CancelFunc
