@@ -2,6 +2,7 @@
 ############################
 ## Basic configuration
 app: &app example-project1-git-app-foobar12341
+org: &org personal
 
 # Point to a repo. You are expected to mount the necessary ssh keys to the container
 source:
@@ -18,7 +19,7 @@ source:
 env:
   ENV: "development"
 
-primary_region: "ams" # default region for tests
+primary_region: &primary_region "ams" # default region for tests
 services:
   - internal_port: 80
     protocol: "tcp"
@@ -47,6 +48,10 @@ launch_params:
   - "--copy-config"
   - "--name"
   - *app
+  - "--region"
+  - *primary_region
+  - "--org"
+  - *org
 
 # Modify to your needs. By default, we will deploy the fly.io
 # app without any user interaction/confirmation.

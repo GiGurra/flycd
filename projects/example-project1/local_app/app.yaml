@@ -1,6 +1,7 @@
 ############################
 ## Basic configuration
 app: &app example-project1-local-app-foobar12341
+org: &org personal
 
 # Point where the code is.
 source:
@@ -12,7 +13,7 @@ source:
 env:
   ENV: "development"
 
-primary_region: "ams" # default region for tests
+primary_region: &primary_region "ams" # default region for tests
 services:
   - internal_port: 80
     protocol: "tcp"
@@ -41,6 +42,10 @@ launch_params:
   - "--copy-config"
   - "--name"
   - *app
+  - "--region"
+  - *primary_region
+  - "--org"
+  - *org
 
 # Modify to your needs. By default, we will deploy the fly.io
 # app without any user interaction/confirmation.
