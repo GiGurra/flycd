@@ -1,5 +1,6 @@
 package util_cmd
 
+import "C"
 import (
 	"context"
 	"fmt"
@@ -9,16 +10,18 @@ import (
 )
 
 type Command struct {
-	Cwd  string
-	App  string
-	Args []string
-	Ctx  context.Context
+	Cwd     string
+	App     string
+	Args    []string
+	Ctx     context.Context
+	Logging bool
 }
 
 func NewCommand(appAndArgs ...string) Command {
 
 	result := Command{
 		Cwd: ".",
+		Ctx: context.Background(),
 	}
 
 	if len(appAndArgs) > 0 {
@@ -51,33 +54,36 @@ func (c Command) WithApp(app string, args ...string) Command {
 	return c
 }
 
+func (c Command) WithLogging(args ...bool) Command {
+	if len(args) > 0 {
+		c.Logging = args[0]
+	} else {
+		c.Logging = true
+	}
+	return c
+}
+
 func (c Command) WithContext(ctx context.Context) Command {
 	c.Ctx = ctx
 	return c
 }
 
+func (c Command) logBeforeRun() {
+	if c.Logging {
+		if c.App == "sh" && len(c.Args) > 0 && c.Args[0] == "-c" {
+			fmt.Printf("%s$ %s\n", c.Cwd, strings.Join(c.Args[1:], " "))
+		} else {
+			fmt.Printf("%s$ %s %s\n", c.Cwd, c.App, strings.Join(c.Args, " "))
+		}
+	}
+}
+
 func (c Command) Run() (string, error) {
-	return run(c.Ctx, c.Cwd, c.App, c.Args...)
-}
 
-func (c Command) RunStreamedPassThrough() error {
-	return runStreamedPassThrough(c.Ctx, c.Cwd, c.App, c.Args...)
-}
+	c.logBeforeRun()
 
-func run(ctx context.Context, cwd string, command string, args ...string) (string, error) {
-
-	if command == "sh" && len(args) > 0 && args[0] == "-c" {
-		fmt.Printf("%s$ %s\n", cwd, strings.Join(args[1:], " "))
-	} else {
-		fmt.Printf("%s$ %s %s\n", cwd, command, strings.Join(args, " "))
-	}
-
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	cmd := exec.CommandContext(ctx, command, args...)
-	cmd.Dir = cwd
+	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
+	cmd.Dir = c.Cwd
 	out, err := cmd.Output()
 	if err != nil {
 
@@ -85,26 +91,18 @@ func run(ctx context.Context, cwd string, command string, args ...string) (strin
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			stdErr = string(exitErr.Stderr)
 		}
-		return string(out), fmt.Errorf("error running util_cmd %s \n %s: %w", command, stdErr, err)
+		return string(out), fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, stdErr, err)
 	}
 
 	return string(out), nil
 }
 
-func runStreamedPassThrough(ctx context.Context, cwd string, command string, args ...string) error {
+func (c Command) RunStreamedPassThrough() error {
 
-	if command == "sh" && len(args) > 0 && args[0] == "-c" {
-		fmt.Printf("%s$ %s\n", cwd, strings.Join(args[1:], " "))
-	} else {
-		fmt.Printf("%s$ %s %s\n", cwd, command, strings.Join(args, " "))
-	}
+	c.logBeforeRun()
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	cmd := exec.CommandContext(ctx, command, args...)
-	cmd.Dir = cwd
+	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
+	cmd.Dir = c.Cwd
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -117,7 +115,7 @@ func runStreamedPassThrough(ctx context.Context, cwd string, command string, arg
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			stdErr = string(exitErr.Stderr)
 		}
-		return fmt.Errorf("error running util_cmd %s \n %s: %w", command, stdErr, err)
+		return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, stdErr, err)
 	}
 
 	return nil
