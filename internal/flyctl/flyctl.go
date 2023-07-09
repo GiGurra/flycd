@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 func CreateOrgToken(orgSlug string) (string, error) {
@@ -71,7 +72,11 @@ func StoreSecret(cmd StoreSecretCmd) error {
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	err := util_cmd.NewCommandA("flyctl", args...).WithLogging().RunStreamedPassThrough()
+	err := util_cmd.
+		NewCommandA("flyctl", args...).
+		WithTimeout(10 * time.Second).
+		WithTimeoutRetries(10).
+		RunStreamedPassThrough()
 	if err != nil {
 		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
 	}
