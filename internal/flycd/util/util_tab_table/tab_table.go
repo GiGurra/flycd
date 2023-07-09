@@ -14,6 +14,8 @@ type TabTable struct {
 
 func ParseTable(table string) (TabTable, error) {
 
+	// NOTE: This does not support 'holes' within the table :S
+
 	// Sanitize input into non-empty lines
 	lines := strings.Split(strings.TrimSpace(table), "\n")
 	lines = lo.Map(lines, func(item string, _ int) string {
