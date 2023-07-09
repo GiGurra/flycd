@@ -1,6 +1,5 @@
 package util_cmd
 
-import "C"
 import (
 	"context"
 	"fmt"
