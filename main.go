@@ -227,7 +227,7 @@ var uninstallCmd = &cobra.Command{
 			path = args[0]
 		}
 
-		fmt.Printf("Monitoring: %s\n", path)
+		fmt.Printf("Uninstalling flycd \n")
 
 		fmt.Printf("Not implemented yet, sorry :(\n")
 		os.Exit(1)
