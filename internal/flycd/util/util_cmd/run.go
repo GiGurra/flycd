@@ -56,14 +56,14 @@ func (c Command) WithContext(ctx context.Context) Command {
 }
 
 func (c Command) Run() (string, error) {
-	return Run(c.Ctx, c.Cwd, c.App, c.Args...)
+	return run(c.Ctx, c.Cwd, c.App, c.Args...)
 }
 
 func (c Command) RunStreamedPassThrough() error {
-	return RunStreamedPassThrough(c.Ctx, c.Cwd, c.App, c.Args...)
+	return runStreamedPassThrough(c.Ctx, c.Cwd, c.App, c.Args...)
 }
 
-func Run(ctx context.Context, cwd string, command string, args ...string) (string, error) {
+func run(ctx context.Context, cwd string, command string, args ...string) (string, error) {
 
 	if command == "sh" && len(args) > 0 && args[0] == "-c" {
 		fmt.Printf("%s$ %s\n", cwd, strings.Join(args[1:], " "))
@@ -90,7 +90,7 @@ func Run(ctx context.Context, cwd string, command string, args ...string) (strin
 	return string(out), nil
 }
 
-func RunStreamedPassThrough(ctx context.Context, cwd string, command string, args ...string) error {
+func runStreamedPassThrough(ctx context.Context, cwd string, command string, args ...string) error {
 
 	if command == "sh" && len(args) > 0 && args[0] == "-c" {
 		fmt.Printf("%s$ %s\n", cwd, strings.Join(args[1:], " "))
