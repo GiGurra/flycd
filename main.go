@@ -8,9 +8,13 @@ import (
 	"flycd/internal/flyctl"
 	"flycd/internal/globals"
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
+	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const Version = "v0.0.9"
@@ -117,14 +121,53 @@ var monitorCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
-		// TODO: Start listening to webhooks
-		// TODO: Run specific app's deploy code when webhook is received
+		// Echo instance
+		e := echo.New()
 
-		fmt.Printf("Not implemented yet, sorry :(\n")
-		os.Exit(1)
+		// Middleware
+		e.Use(middleware.Logger())
+		e.Use(middleware.Recover())
+
+		whPath, err := cmd.Flags().GetString("webhook-path")
+		if err != nil {
+			fmt.Printf("Error getting webhook-path flag: %v\n", err)
+			os.Exit(1)
+		}
+		if whPath == "" {
+			whPath = "/webhook"
+		}
+		if !strings.HasPrefix(whPath, "/") {
+			whPath = "/" + whPath
+		}
+
+		whPort, err := cmd.Flags().GetInt("webhook-port")
+		if err != nil {
+			fmt.Printf("Error getting webhook-port flag: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Listening on webhook path: %s\n", whPath)
+		fmt.Printf("Listening on webhook port: %d\n", whPort)
+
+		// Routes
+		e.POST(whPath, processWebhook)
+
+		// Start server
+		e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", whPort)))
+
+		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
+		// TODO: Run specific app's deploy code when webhook is received
 	},
 }
+
+// Handler
+func processWebhook(c echo.Context) error {
+	// TODO: Do something useful here
+	return c.String(http.StatusOK, "Hello, World!")
+}
+
+var _ any = monitorCmd.Flags().StringP("webhook-path", "w", "", "Webhook path")
+var _ any = monitorCmd.Flags().IntP("webhook-port", "p", 80, "Webhook port")
 
 var installCmd = &cobra.Command{
 	Use:   "install <flycd app name> <fly.io org slug> <fly.io region>",
