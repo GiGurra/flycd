@@ -81,7 +81,7 @@ var monitorCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// For now, store the access token in a global. This is super ugly :S. but... it's what we got right now :S
+		// For now, store the access token in a global. This is ugly :S. but... it's what we got right now :S
 		globals.SetAccessToken(accessToken)
 
 		// ensure we have a token loaded for the org we are monitoring
