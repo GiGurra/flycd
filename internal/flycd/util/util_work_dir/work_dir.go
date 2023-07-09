@@ -11,7 +11,7 @@ type WorkDir struct {
 	Cwd  string
 }
 
-func (t *WorkDir) RemoveAll() {
+func (t WorkDir) RemoveAll() {
 	err := os.RemoveAll(t.Root)
 	if err != nil {
 		fmt.Printf("error removing dir %s: %s", t.Root, err)
@@ -40,11 +40,11 @@ func NewWorkDir(path string) WorkDir {
 	}
 }
 
-func (t *WorkDir) NewCommand(command string, args ...string) util_cmd.Command {
+func (t WorkDir) NewCommand(command string, args ...string) util_cmd.Command {
 	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd)
 }
 
-func (t *WorkDir) ReadFile(name string) (string, error) {
+func (t WorkDir) ReadFile(name string) (string, error) {
 	data, err := os.ReadFile(t.Cwd + "/" + name)
 	if err != nil {
 		return "", fmt.Errorf("error reading file %s: %w", name, err)
@@ -52,6 +52,6 @@ func (t *WorkDir) ReadFile(name string) (string, error) {
 	return string(data), nil
 }
 
-func (t *WorkDir) WriteFile(name string, contents string) error {
+func (t WorkDir) WriteFile(name string, contents string) error {
 	return os.WriteFile(t.Cwd+"/"+name, []byte(contents), 0644)
 }
