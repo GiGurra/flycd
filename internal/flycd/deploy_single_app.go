@@ -228,7 +228,7 @@ func createNewApp(tempDir util_work_dir.WorkDir, launchParams []string, twoStep 
 
 func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) error {
 	allParams := append([]string{"deploy"}, deployParams...)
-	allParams = append(allParams, "--remote-only")
+	allParams = append(allParams, "--remote-only", "--detach")
 	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
 	return err
 }
