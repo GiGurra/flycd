@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -170,6 +171,20 @@ var monitorCmd = &cobra.Command{
 // Handler
 func processWebhook(c echo.Context) error {
 	// TODO: Do something useful here
+	body := c.Request().Body
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		return c.String(http.StatusUnsupportedMediaType, "Error reading request body")
+	}
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			fmt.Printf("Error closing request body: %v\n", err)
+		}
+	}(body)
+
+	fmt.Printf("Received webhook: %s\n", string(bodyBytes))
+
 	return c.String(http.StatusOK, "Hello, World!")
 }
 
