@@ -16,8 +16,9 @@ type Command struct {
 	Args        []string
 	AccessToken string
 	// You can have either a custom context or a timeout, not both
-	Ctx     context.Context
-	Timeout time.Duration
+	Ctx            context.Context
+	Timeout        time.Duration
+	TimeoutRetries int
 	// debug functionality
 	Logging bool
 }
@@ -68,6 +69,11 @@ func (c Command) WithApp(app string, args ...string) Command {
 	return c
 }
 
+func (c Command) WithTimeoutRetries(n int) Command {
+	c.TimeoutRetries = n
+	return c
+}
+
 func (c Command) WithLogging(args ...bool) Command {
 	if len(args) > 0 {
 		c.Logging = args[0]
@@ -99,35 +105,36 @@ func (c Command) logBeforeRun() {
 
 func (c Command) Run() (string, error) {
 
-	c.logBeforeRun()
+	var stdout = ""
 
-	if c.Timeout > 0 {
-		var cancel context.CancelFunc
-		c.Ctx, cancel = context.WithTimeout(c.Ctx, c.Timeout)
-		defer cancel()
-	}
+	err := c.doRun(func(cmd *exec.Cmd) error {
 
-	if c.AccessToken != "" && (c.App == "flyctl" || c.App == "fly") {
-		c.Args = append(c.Args, "--access-token", c.AccessToken)
-	}
-
-	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
-	cmd.Dir = c.Cwd
-	out, err := cmd.Output()
-	if err != nil {
-
-		stdErr := ""
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			stdErr = string(exitErr.Stderr)
+		stdoutBytes, innerErr := cmd.Output()
+		if innerErr != nil {
+			return innerErr
 		}
-		return string(out), fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, stdErr, err)
-	}
 
-	return string(out), nil
+		stdout = string(stdoutBytes)
+		return innerErr
+	})
+
+	return stdout, err
 }
 
 func (c Command) RunStreamedPassThrough() error {
 
+	return c.doRun(func(cmd *exec.Cmd) error {
+
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+
+		return cmd.Run()
+	})
+}
+
+func (c Command) doRun(processor func(cmd *exec.Cmd) error) error {
+
 	c.logBeforeRun()
 
 	if c.Timeout > 0 {
@@ -143,11 +150,7 @@ func (c Command) RunStreamedPassThrough() error {
 	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
 	cmd.Dir = c.Cwd
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	err := cmd.Run()
+	err := processor(cmd)
 	if err != nil {
 
 		stdErr := ""
