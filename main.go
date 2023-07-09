@@ -2,6 +2,8 @@ package main
 
 import (
 	"flycd/internal/flycd"
+	"flycd/internal/flycd/util/util_cmd"
+	"flycd/internal/flycd/util/util_tab_table"
 	"flycd/internal/flyctl"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -70,6 +72,27 @@ var monitorCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Monitoring: %s\n", path)
+
+		// Get access token from env var
+		accessToken := os.Getenv("FLY_ACCESS_TOKEN")
+		if accessToken == "" {
+			fmt.Printf("FLY_ACCESS_TOKEN env var not set. Please set it to a valid fly.io access token\n")
+			os.Exit(1)
+		}
+
+		// ensure we have a token loaded for the org we are monitoring
+		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list", "--access-token", accessToken).Run()
+		if err != nil {
+			fmt.Printf("Error getting apps list. Do you have a token loaded?: %v\n", err)
+			os.Exit(1)
+		}
+
+		appsTable, err := util_tab_table.ParseTable(appsTableString)
+		if err != nil {
+			fmt.Printf("Error parsing apps list: %v\n", err)
+			os.Exit(1)
+		}
+		println(appsTable.RowMaps)
 
 		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
 		// TODO: Start listening to webhooks
