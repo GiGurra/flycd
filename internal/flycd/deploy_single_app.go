@@ -46,7 +46,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	}
 	defer tempDir.RemoveAll()
 
-	cfgHash, err := cfgDir.RunCommand("sha1sum", "app.yaml")
+	cfgHash, err := cfgDir.NewCommand("sha1sum", "app.yaml").Run()
 	if err != nil {
 		return fmt.Errorf("error getting git commit hash of cfg dir: %w", err)
 	}
@@ -65,48 +65,48 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		if cfg.Source.Ref.Commit != "" {
 			// Shallow clone of specific commit
 			// https://stackoverflow.com/questions/31278902/how-to-shallow-clone-a-specific-commit-with-depth-1
-			err = tempDir.RunCommandStreamedPassthrough("git", "init")
+			err = tempDir.NewCommand("git", "init").RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error initializing git repo: %w", err)
 			}
 
-			err = tempDir.RunCommandStreamedPassthrough("git", "remote", "add", "origin", cfg.Source.Repo)
+			err = tempDir.NewCommand("git", "remote", "add", "origin", cfg.Source.Repo).RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error adding git remote: %w", err)
 			}
 
-			err = tempDir.RunCommandStreamedPassthrough("git", "fetch", "--depth", "1", "origin", cfg.Source.Ref.Commit)
+			err = tempDir.NewCommand("git", "fetch", "--depth", "1", "origin", cfg.Source.Ref.Commit).RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error fetching git commit: %w", err)
 			}
 
-			err = tempDir.RunCommandStreamedPassthrough("git", "checkout", "FETCH_HEAD")
+			err = tempDir.NewCommand("git", "checkout", "FETCH_HEAD").RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error checking out git commit: %w", err)
 			}
 
 		} else if cfg.Source.Ref.Tag != "" {
-			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Tag)
+			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Tag).RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
 			tempDir.Cwd = tempDir.Cwd + "/repo"
 
 		} else if cfg.Source.Ref.Branch != "" {
-			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch)
+			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch).RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
 			tempDir.Cwd = tempDir.Cwd + "/repo"
 		} else {
-			err = tempDir.RunCommandStreamedPassthrough("git", "clone", cfg.Source.Repo, "repo", "--depth", "1")
+			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1").RunStreamedPassThrough()
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
 			tempDir.Cwd = tempDir.Cwd + "/repo"
 		}
 
-		appHash, err = tempDir.RunCommand("git", "rev-parse", "HEAD")
+		appHash, err = tempDir.NewCommand("git", "rev-parse", "HEAD").Run()
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -117,13 +117,13 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			sourcePath = cfg.Source.Path
 		}
 
-		appHash, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", sourcePath))
+		appHash, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", sourcePath)).Run()
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
 		appHash = strings.TrimSpace(appHash)
 
-		_, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd))
+		_, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd)).Run()
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
@@ -134,7 +134,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			return fmt.Errorf("error writing Dockerfile: %w", err)
 		}
 
-		appHash, err = cfgDir.RunCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD"))
+		appHash, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("git rev-parse HEAD")).Run()
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -162,14 +162,14 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	err = tempDir.WriteFile("app.yaml", string(cfgBytes))
 
 	// execute 'cat app.yaml | yj -yt > fly.toml' on the util_cmd line
-	_, err = tempDir.RunCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml")
+	_, err = tempDir.NewCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml").Run()
 	if err != nil {
 		return fmt.Errorf("error producing fly.toml from app.yaml in folder %s: %w", path, err)
 	}
 
 	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
 	if _, err := os.Stat(filepath.Join(tempDir.Cwd, ".dockerignore")); os.IsNotExist(err) {
-		_, err = tempDir.RunCommand("sh", "-c", "git ls-files -i --exclude-from=.gitignore | xargs -0 -I {} echo {} >> .dockerignore")
+		_, err = tempDir.NewCommand("sh", "-c", "git ls-files -i --exclude-from=.gitignore | xargs -0 -I {} echo {} >> .dockerignore").Run()
 		if err != nil {
 			return fmt.Errorf("error producing .dockerignore from .gitignore in folder %s: %w", path, err)
 		}
@@ -204,13 +204,13 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 
 func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {
 	allParams := append([]string{"launch"}, launchParams...)
-	err := tempDir.RunCommandStreamedPassthrough("flyctl", allParams...)
+	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
 	return err
 }
 
 func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) error {
 	allParams := append([]string{"deploy"}, deployParams...)
-	err := tempDir.RunCommandStreamedPassthrough("flyctl", allParams...)
+	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
 	return err
 }
 

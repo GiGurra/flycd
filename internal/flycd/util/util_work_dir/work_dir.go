@@ -40,12 +40,8 @@ func NewWorkDir(path string) WorkDir {
 	}
 }
 
-func (t *WorkDir) RunCommand(command string, args ...string) (string, error) {
-	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd).Run()
-}
-
-func (t *WorkDir) RunCommandStreamedPassthrough(command string, args ...string) error {
-	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd).RunStreamedPassThrough()
+func (t *WorkDir) NewCommand(command string, args ...string) util_cmd.Command {
+	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd)
 }
 
 func (t *WorkDir) ReadFile(name string) (string, error) {
