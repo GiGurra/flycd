@@ -38,6 +38,7 @@ func NewCommandA(app string, args ...string) Command {
 		Cwd:  ".",
 		App:  app,
 		Args: args,
+		Ctx:  context.Background(),
 	}
 	return result
 }
