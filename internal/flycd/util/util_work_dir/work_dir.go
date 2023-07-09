@@ -41,11 +41,11 @@ func NewWorkDir(path string) WorkDir {
 }
 
 func (t *WorkDir) RunCommand(command string, args ...string) (string, error) {
-	return util_cmd.Run(t.Cwd, command, args...)
+	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd).Run()
 }
 
 func (t *WorkDir) RunCommandStreamedPassthrough(command string, args ...string) error {
-	return util_cmd.RunStreamedPassThrough(t.Cwd, command, args...)
+	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd).RunStreamedPassThrough()
 }
 
 func (t *WorkDir) ReadFile(name string) (string, error) {

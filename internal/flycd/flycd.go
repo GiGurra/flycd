@@ -41,7 +41,7 @@ func Deploy(path string, force bool) error {
 }
 
 func AppExists(name string) (bool, error) {
-	_, err := util_cmd.Run(".", "flyctl", "status", "-a", name)
+	_, err := util_cmd.NewCommand("flyctl", "status", "-a", name).Run()
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "could not find app") {
 			return false, nil
@@ -54,7 +54,7 @@ func AppExists(name string) (bool, error) {
 func GetDeployedAppConfig(name string) (AppConfig, error) {
 
 	// Compare the current deployed appVersion with the new appVersion
-	jsonConf, err := util_cmd.RunLocal("flyctl", "config", "show", "-a", name)
+	jsonConf, err := util_cmd.NewCommand("flyctl", "config", "show", "-a", name).Run()
 	if err != nil {
 		return AppConfig{}, fmt.Errorf("error running flyctl config show for app %s: %w", name, err)
 	}

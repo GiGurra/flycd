@@ -167,7 +167,7 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		return fmt.Errorf("error producing fly.toml from app.yaml in folder %s: %w", path, err)
 	}
 
-	// Create docker ignore file matching git ignore, if it docker ignore file doesn't exists
+	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
 	if _, err := os.Stat(filepath.Join(tempDir.Cwd, ".dockerignore")); os.IsNotExist(err) {
 		_, err = tempDir.RunCommand("sh", "-c", "git ls-files -i --exclude-from=.gitignore | xargs -0 -I {} echo {} >> .dockerignore")
 		if err != nil {

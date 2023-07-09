@@ -1,3 +1,4 @@
+#file: noinspection SpellCheckingInspection
 ############################
 ## Basic configuration
 app: &app example-project1-git-app-foobar12341
@@ -24,7 +25,7 @@ services:
     force_https: true
     auto_stop_machines: true
     auto_start_machines: true
-    min_machines_running: 1
+    min_machines_running: 0
     concurrency:
       type: "requests"
       soft_limit: 200
