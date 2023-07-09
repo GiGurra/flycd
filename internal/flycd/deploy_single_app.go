@@ -14,7 +14,7 @@ func DeployAppFromConfig(cfg AppConfig, force bool) error {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, ".")
 	if err != nil {
-		return fmt.Errorf("error creating temp dir: %w", err)
+		return fmt.Errorf("error creating deployment temp dir: %w", err)
 	}
 	defer cfgDir.RemoveAll()
 
