@@ -92,6 +92,14 @@ func NewDefaultLaunchParams(
 	return args
 }
 
+func NewDefaultDeployParams() []string {
+	args := []string{
+		"--ha=false",
+	}
+
+	return args
+}
+
 type GitRef struct {
 	Branch string `yaml:"branch"`
 	Tag    string `yaml:"tag"`

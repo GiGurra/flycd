@@ -157,6 +157,7 @@ var monitorCmd = &cobra.Command{
 		fmt.Printf("Listening on webhook port: %d\n", whPort)
 
 		// Routes
+		e.GET("/", processHealth)
 		e.POST(whPath, processWebhook)
 
 		// Start server
@@ -183,6 +184,12 @@ func processWebhook(c echo.Context) error {
 
 	fmt.Printf("Received webhook: %s\n", string(bodyBytes))
 	// TODO: Do something useful here
+
+	return c.String(http.StatusOK, "Hello, World!")
+}
+
+// Handler
+func processHealth(c echo.Context) error {
 
 	return c.String(http.StatusOK, "Hello, World!")
 }
@@ -277,6 +284,7 @@ var installCmd = &cobra.Command{
 			PrimaryRegion: region,
 			Source:        flycd.NewLocalFolderSource(wdir),
 			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
+			DeployParams:  flycd.NewDefaultDeployParams(),
 			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
 		})
 		if err != nil {
@@ -284,27 +292,6 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		// TODO: Add ssh keys as secrets so we can pull from other git repos argocd style
-	},
-}
-
-var upgradeCmd = &cobra.Command{
-	Use:   "upgrade",
-	Short: "Upgrade your flycd installation in your fly.io account to the latest version",
-	Run: func(cmd *cobra.Command, args []string) {
-		path, err := os.Getwd()
-		if err != nil {
-			fmt.Printf("Error getting current working directory: %v\n", err)
-			os.Exit(1)
-		}
-
-		if len(args) > 0 {
-			path = args[0]
-		}
-
-		fmt.Printf("Monitoring: %s\n", path)
-
-		fmt.Printf("Not implemented yet, sorry :(\n")
-		os.Exit(1)
 	},
 }
 
@@ -322,7 +309,7 @@ func main() {
 	}
 
 	// prepare cli
-	rootCmd.AddCommand(deployCmd, monitorCmd, installCmd, upgradeCmd)
+	rootCmd.AddCommand(deployCmd, monitorCmd, installCmd)
 
 	// run cli
 	if err := rootCmd.Execute(); err != nil {
