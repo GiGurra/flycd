@@ -176,7 +176,7 @@ func processWebhook(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusUnsupportedMediaType, "Error reading request body")
 	}
-	defer func(body io.ReadCloser) {
+	defer func(body io.Closer) {
 		err := body.Close()
 		if err != nil {
 			fmt.Printf("Error closing request body: %v\n", err)
