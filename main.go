@@ -264,12 +264,18 @@ var installCmd = &cobra.Command{
 
 		}
 
+		wdir, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("Error getting current working directory: %v\n", err)
+			os.Exit(1)
+		}
+
 		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
 		err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,
-			Source:        flycd.NewLocalFolderSource("."),
+			Source:        flycd.NewLocalFolderSource(wdir),
 			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
 			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
 		})
