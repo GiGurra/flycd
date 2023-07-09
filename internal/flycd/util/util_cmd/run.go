@@ -108,12 +108,7 @@ func (c Command) Run() (string, error) {
 	var stdout = ""
 
 	err := c.doRun(func(cmd *exec.Cmd) error {
-
 		stdoutBytes, innerErr := cmd.Output()
-		if innerErr != nil {
-			return innerErr
-		}
-
 		stdout = string(stdoutBytes)
 		return innerErr
 	})
