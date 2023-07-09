@@ -156,7 +156,6 @@ var monitorCmd = &cobra.Command{
 		e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", whPort)))
 
 		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
-		// TODO: Run specific app's deploy code when webhook is received
 	},
 }
 
