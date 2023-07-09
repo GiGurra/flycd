@@ -76,7 +76,7 @@ func StoreSecret(cmd StoreSecretCmd) error {
 		args = append(args, "-t", cmd.AccessToken)
 	}
 
-	err := util_cmd.NewCommandA("flyctl", args...).RunStreamedPassThrough()
+	err := util_cmd.NewCommandA("flyctl", args...).WithLogging().RunStreamedPassThrough()
 	if err != nil {
 		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
 	}
