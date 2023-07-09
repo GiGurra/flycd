@@ -213,27 +213,6 @@ var upgradeCmd = &cobra.Command{
 	},
 }
 
-var uninstallCmd = &cobra.Command{
-	Use:   "uninstall",
-	Short: "Uninstall flycd from your fly.io account",
-	Run: func(cmd *cobra.Command, args []string) {
-		path, err := os.Getwd()
-		if err != nil {
-			fmt.Printf("Error getting current working directory: %v\n", err)
-			os.Exit(1)
-		}
-
-		if len(args) > 0 {
-			path = args[0]
-		}
-
-		fmt.Printf("Uninstalling flycd \n")
-
-		fmt.Printf("Not implemented yet, sorry :(\n")
-		os.Exit(1)
-	},
-}
-
 func main() {
 	fmt.Printf("Starting FlyCD %s...\n", Version)
 
@@ -248,7 +227,7 @@ func main() {
 	}
 
 	// prepare cli
-	rootCmd.AddCommand(deployCmd, monitorCmd, installCmd, upgradeCmd, uninstallCmd)
+	rootCmd.AddCommand(deployCmd, monitorCmd, installCmd, upgradeCmd)
 
 	// run cli
 	if err := rootCmd.Execute(); err != nil {
