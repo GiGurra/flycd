@@ -56,6 +56,11 @@ func GetDeployedAppConfig(name string) (AppConfig, error) {
 	// Compare the current deployed appVersion with the new appVersion
 	jsonConf, err := util_cmd.NewCommand("flyctl", "config", "show", "-a", name).Run()
 	if err != nil {
+
+		if strings.Contains(strings.ToLower(err.Error()), "no machines configured for this app") {
+			return AppConfig{Env: map[string]string{}}, nil
+		}
+
 		return AppConfig{}, fmt.Errorf("error running flyctl config show for app %s: %w", name, err)
 	}
 

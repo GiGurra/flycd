@@ -56,6 +56,7 @@ launch_params:
 # Modify to your needs. By default, we will deploy the fly.io
 # app without any user interaction/confirmation.
 # For the most simple apps, you probably don't need to modify these at all
-deploy_params: []
+deploy_params:
+  - "--ha=false"
 
 

@@ -205,15 +205,23 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		}
 	} else {
 		println("App not found, creating it")
-		return deployNewApp(tempDir, cfg.LaunchParams)
+		err = createNewApp(tempDir, cfg.LaunchParams, true)
+		if err != nil {
+			return fmt.Errorf("error creating new app: %w", err)
+		}
+		println("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation")
+		return deployExistingApp(tempDir, cfg.DeployParams)
 	}
 
 	return nil
 }
 
-func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {
+func createNewApp(tempDir util_work_dir.WorkDir, launchParams []string, twoStep bool) error {
 	allParams := append([]string{"launch"}, launchParams...)
 	allParams = append(allParams, "--remote-only")
+	if twoStep {
+		allParams = append(allParams, "--build-only")
+	}
 	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
 	return err
 }
