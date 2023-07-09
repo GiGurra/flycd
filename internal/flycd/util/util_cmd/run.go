@@ -2,6 +2,7 @@ package util_cmd
 
 import (
 	"context"
+	"errors"
 	"flycd/internal/globals"
 	"fmt"
 	"os"
@@ -142,18 +143,28 @@ func (c Command) doRun(processor func(cmd *exec.Cmd) error) error {
 		c.Args = append(c.Args, "--access-token", c.AccessToken)
 	}
 
-	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
-	cmd.Dir = c.Cwd
+	for i := 0; i <= c.TimeoutRetries; i++ {
 
-	err := processor(cmd)
-	if err != nil {
+		cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
+		cmd.Dir = c.Cwd
 
-		stdErr := ""
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			stdErr = string(exitErr.Stderr)
+		err := processor(cmd)
+		if err != nil {
+
+			if errors.Is(err, context.DeadlineExceeded) {
+				fmt.Printf("timeout running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
+				continue
+			}
+
+			stdErr := ""
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				stdErr = string(exitErr.Stderr)
+			}
+			return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, stdErr, err)
 		}
-		return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, stdErr, err)
-	}
 
-	return nil
+		return nil
+
+	}
+	return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, "timeout", context.DeadlineExceeded)
 }

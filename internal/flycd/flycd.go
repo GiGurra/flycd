@@ -5,6 +5,7 @@ import (
 	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func Deploy(path string, force bool) error {
@@ -41,7 +42,11 @@ func Deploy(path string, force bool) error {
 }
 
 func AppExists(name string) (bool, error) {
-	_, err := util_cmd.NewCommand("flyctl", "status", "-a", name).Run()
+	_, err := util_cmd.
+		NewCommand("flyctl", "status", "-a", name).
+		WithTimeout(10 * time.Second).
+		WithTimeoutRetries(10).
+		Run()
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "could not find app") {
 			return false, nil
@@ -54,7 +59,11 @@ func AppExists(name string) (bool, error) {
 func GetDeployedAppConfig(name string) (AppConfig, error) {
 
 	// Compare the current deployed appVersion with the new appVersion
-	jsonConf, err := util_cmd.NewCommand("flyctl", "config", "show", "-a", name).Run()
+	jsonConf, err := util_cmd.
+		NewCommand("flyctl", "config", "show", "-a", name).
+		WithTimeout(20 * time.Second).
+		WithTimeoutRetries(10).
+		Run()
 	if err != nil {
 
 		if strings.Contains(strings.ToLower(err.Error()), "no machines configured for this app") {

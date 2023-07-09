@@ -1,8 +1,6 @@
 package flycd
 
 import (
-	"context"
-	"errors"
 	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
 	"github.com/google/uuid"
@@ -225,40 +223,30 @@ func createNewApp(cfg AppConfig, tempDir util_work_dir.WorkDir, twoStep bool) er
 	if twoStep {
 		allParams = append(allParams, "--build-only")
 	}
-	// try 10 times
-	for i := 0; i < 10; i++ {
-		err := tempDir.NewCommand("flyctl", allParams...).WithTimeout(20 * time.Second).RunStreamedPassThrough()
-		if err == nil {
-			return nil
-		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Printf("Creating app %s timed out, retrying %d/10\n", cfg.App, i+1)
-			continue
-		} else {
-			return err
-		}
+	err := tempDir.
+		NewCommand("flyctl", allParams...).
+		WithTimeout(20 * time.Second).
+		WithTimeoutRetries(10).
+		RunStreamedPassThrough()
+	if err == nil {
+		return fmt.Errorf("error creating app %s: %w", cfg.App, err)
 	}
-	return fmt.Errorf("error creating app %s: %w, after trying 10 times", cfg.App, context.DeadlineExceeded)
+	return nil
 }
 
 func deployExistingApp(cfg AppConfig, tempDir util_work_dir.WorkDir) error {
 	allParams := append([]string{"deploy"}, cfg.DeployParams...)
 	allParams = append(allParams, "--remote-only", "--detach")
 
-	nAttempts := 5
-	for i := 0; i < nAttempts; i++ {
-		err := tempDir.NewCommand("flyctl", allParams...).WithTimeout(180 * time.Second).RunStreamedPassThrough()
-		if err == nil {
-			return nil
-		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Printf("Deploying app %s timed out, retrying %d/%d\n", cfg.App, i+1, nAttempts)
-			continue
-		} else {
-			return err
-		}
+	err := tempDir.
+		NewCommand("flyctl", allParams...).
+		WithTimeout(120 * time.Second).
+		WithTimeoutRetries(5).
+		RunStreamedPassThrough()
+	if err == nil {
+		return fmt.Errorf("error deploying app %s: %w", cfg.App, err)
 	}
-	return fmt.Errorf("error deploying app %s: %w, after trying 10 times", cfg.App, context.DeadlineExceeded)
+	return nil
 }
 
 func readAppConfig(path string) (AppConfig, error) {
