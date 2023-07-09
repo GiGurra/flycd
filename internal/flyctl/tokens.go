@@ -54,6 +54,14 @@ type StoreSecretCmd struct {
 
 func StoreSecret(cmd StoreSecretCmd) error {
 
+	if cmd.secretName == "" {
+		return fmt.Errorf("secret name cannot be empty")
+	}
+
+	if cmd.secretValue == "" {
+		return fmt.Errorf("secret value cannot be empty")
+	}
+
 	args := []string{
 		"secrets",
 		"set",
