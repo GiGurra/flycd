@@ -133,6 +133,10 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 		if err != nil {
 			return fmt.Errorf("error writing Dockerfile: %w", err)
 		}
+		err = tempDir.WriteFile(".dockerignore", "")
+		if err != nil {
+			return fmt.Errorf("error writing .dockerignore: %w", err)
+		}
 
 		appHash, err = tempDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd)).Run()
 		if err != nil {
@@ -177,20 +181,24 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 	}
 
 	// Now run flyctl and check if the app exists
+	fmt.Printf("Checking if the app %s exists\n", cfg.App)
 	appExists, err := AppExists(cfg.App)
 	if err != nil {
 		return fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
 	}
 
 	if appExists {
+		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfg.App)
 		deployedCfg, err := GetDeployedAppConfig(cfg.App)
 		if err != nil {
 			return fmt.Errorf("error getting deployed app config: %w", err)
 		}
 
+		fmt.Printf("Comparing deployed config with current config\n")
 		if force ||
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
+			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
 			return deployExistingApp(tempDir, cfg.DeployParams)
 		} else {
 			println("App is already up to date, skipping deploy")
