@@ -2,6 +2,7 @@ package util_cmd
 
 import (
 	"context"
+	"flycd/internal/globals"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,9 +11,10 @@ import (
 )
 
 type Command struct {
-	Cwd  string
-	App  string
-	Args []string
+	Cwd         string
+	App         string
+	Args        []string
+	AccessToken string
 	// You can have either a custom context or a timeout, not both
 	Ctx     context.Context
 	Timeout time.Duration
@@ -27,9 +29,10 @@ func defaultTimeout() time.Duration {
 func NewCommand(appAndArgs ...string) Command {
 
 	result := Command{
-		Cwd:     ".",
-		Ctx:     context.Background(),
-		Timeout: defaultTimeout(),
+		Cwd:         ".",
+		Ctx:         context.Background(),
+		Timeout:     defaultTimeout(),
+		AccessToken: globals.GetAccessToken(),
 	}
 
 	if len(appAndArgs) > 0 {
@@ -44,11 +47,12 @@ func NewCommand(appAndArgs ...string) Command {
 }
 func NewCommandA(app string, args ...string) Command {
 	result := Command{
-		Cwd:     ".",
-		App:     app,
-		Args:    args,
-		Ctx:     context.Background(),
-		Timeout: defaultTimeout(),
+		Cwd:         ".",
+		App:         app,
+		Args:        args,
+		Ctx:         context.Background(),
+		Timeout:     defaultTimeout(),
+		AccessToken: globals.GetAccessToken(),
 	}
 	return result
 }
@@ -103,6 +107,10 @@ func (c Command) Run() (string, error) {
 		defer cancel()
 	}
 
+	if c.AccessToken != "" && (c.App == "flyctl" || c.App == "fly") {
+		c.Args = append(c.Args, "--access-token", c.AccessToken)
+	}
+
 	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
 	cmd.Dir = c.Cwd
 	out, err := cmd.Output()
@@ -126,6 +134,10 @@ func (c Command) RunStreamedPassThrough() error {
 		var cancel context.CancelFunc
 		c.Ctx, cancel = context.WithTimeout(c.Ctx, c.Timeout)
 		defer cancel()
+	}
+
+	if c.AccessToken != "" && (c.App == "flyctl" || c.App == "fly") {
+		c.Args = append(c.Args, "--access-token", c.AccessToken)
 	}
 
 	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)

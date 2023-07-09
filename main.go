@@ -5,6 +5,7 @@ import (
 	"flycd/internal/flycd/util/util_cmd"
 	"flycd/internal/flycd/util/util_tab_table"
 	"flycd/internal/flyctl"
+	"flycd/internal/globals"
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
@@ -79,6 +80,9 @@ var monitorCmd = &cobra.Command{
 			fmt.Printf("FLY_ACCESS_TOKEN env var not set. Please set it to a valid fly.io access token\n")
 			os.Exit(1)
 		}
+
+		// For now, store the access token in a global. This is super ugly :S. but... it's what we got right now :S
+		globals.SetAccessToken(accessToken)
 
 		// ensure we have a token loaded for the org we are monitoring
 		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list", "--access-token", accessToken).Run()
