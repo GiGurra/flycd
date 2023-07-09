@@ -6,7 +6,6 @@ import (
 	"flycd/internal/flycd/util/util_cmd"
 	"flycd/internal/flycd/util/util_tab_table"
 	"flycd/internal/flyctl"
-	"flycd/internal/globals"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -89,7 +88,6 @@ var monitorCmd = &cobra.Command{
 		}
 
 		// For now, store the access token in a global. This is ugly :S. but... it's what we got right now :S
-		globals.SetAccessToken(accessToken)
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 
@@ -216,43 +214,54 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if appExists {
-			fmt.Printf("App '%s' already exists, skipping creation. Use flycd upgrade instead\n", appName)
-			os.Exit(1)
+		if !appExists {
+
+			fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
+			err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
+				App:           appName,
+				Org:           orgSlug,
+				PrimaryRegion: region,
+				Source:        flycd.NewInlineDockerFileSource("FROM nginx:latest"),
+				LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
+				Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
+			})
+			if err != nil {
+				fmt.Printf("Error creating dummy app: %v\n", err)
+				os.Exit(1)
+			}
 		}
 
-		fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-		err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
-			App:           appName,
-			Org:           orgSlug,
-			PrimaryRegion: region,
-			Source:        flycd.NewInlineDockerFileSource("FROM nginx:latest"),
-			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
-			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
+		existsAccessTokenSecret, err := flyctl.ExistsSecret(ctx, flyctl.ExistsSecretCmd{
+			AppName:    appName,
+			SecretName: "FLY_ACCESS_TOKEN",
 		})
 		if err != nil {
-			fmt.Printf("Error creating dummy app: %v\n", err)
+			fmt.Printf("Error checking if access token secret exists: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("App name successfully reserved... creating access token for org '%s'\n", orgSlug)
-		token, err := flyctl.CreateOrgToken(orgSlug)
-		if err != nil {
-			fmt.Printf("Error creating org token: %v\n", err)
-			os.Exit(1)
-		}
+		if !existsAccessTokenSecret {
 
-		fmt.Printf("Token created.. storing it...\n")
+			fmt.Printf("App name successfully reserved... creating access token for org '%s'\n", orgSlug)
+			token, err := flyctl.CreateOrgToken(orgSlug)
+			if err != nil {
+				fmt.Printf("Error creating org token: %v\n", err)
+				os.Exit(1)
+			}
 
-		err = flyctl.StoreSecret(ctx, flyctl.StoreSecretCmd{
-			AppName:     appName,
-			SecretName:  "FLY_ACCESS_TOKEN",
-			SecretValue: token,
-		})
+			fmt.Printf("Token created.. storing it...\n")
 
-		if err != nil {
-			fmt.Printf("Error storing token: %v\n", err)
-			os.Exit(1)
+			err = flyctl.StoreSecret(ctx, flyctl.StoreSecretCmd{
+				AppName:     appName,
+				SecretName:  "FLY_ACCESS_TOKEN",
+				SecretValue: token,
+			})
+
+			if err != nil {
+				fmt.Printf("Error storing token: %v\n", err)
+				os.Exit(1)
+			}
+
 		}
 
 		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")

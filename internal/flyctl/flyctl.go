@@ -2,8 +2,10 @@ package flyctl
 
 import (
 	"context"
+	"encoding/json"
 	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
+	"github.com/samber/lo"
 	"os"
 	"os/exec"
 	"strings"
@@ -53,6 +55,54 @@ type StoreSecretCmd struct {
 	SecretValue string
 }
 
+type ExistsSecretCmd struct {
+	AppName    string
+	SecretName string
+}
+
+type flySecretListItem struct {
+	Name      string    `json:"Name"`
+	Digest    string    `json:"Digest"`
+	CreatedAt time.Time `json:"CreatedAt"`
+}
+
+func ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
+
+	if cmd.SecretName == "" {
+		return false, fmt.Errorf("secret name cannot be empty")
+	}
+
+	args := []string{
+		"secrets",
+		"list",
+		"--json",
+	}
+
+	if cmd.AppName != "" {
+		args = append(args, "-a", cmd.AppName)
+	}
+
+	strResp, err := util_cmd.
+		NewCommandA("flyctl", args...).
+		WithTimeout(10 * time.Second).
+		WithTimeoutRetries(10).
+		Run(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error running flyctl secrets list for '%s': %w", cmd.AppName, err)
+	}
+
+	// Parse strResp as json array of flySecretListItem
+	var secrets []flySecretListItem
+	err = json.Unmarshal([]byte(strResp), &secrets)
+	if err != nil {
+		return false, fmt.Errorf("error parsing flyctl secrets list for '%s': %w", cmd.AppName, err)
+	}
+
+	return lo.ContainsBy(secrets, func(item flySecretListItem) bool {
+		return item.Name == cmd.SecretName
+	}), nil
+}
+
 func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 
 	if cmd.SecretName == "" {
@@ -75,8 +125,8 @@ func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 
 	err := util_cmd.
 		NewCommandA("flyctl", args...).
-		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(10).
+		WithTimeout(120 * time.Second).
+		WithTimeoutRetries(5).
 		RunStreamedPassThrough(ctx)
 	if err != nil {
 		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
