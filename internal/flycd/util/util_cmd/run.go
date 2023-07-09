@@ -10,19 +10,26 @@ import (
 )
 
 type Command struct {
-	Cwd     string
-	App     string
-	Args    []string
+	Cwd  string
+	App  string
+	Args []string
+	// You can have either a custom context or a timeout, not both
 	Ctx     context.Context
-	Logging bool
 	Timeout time.Duration
+	// debug functionality
+	Logging bool
+}
+
+func defaultTimeout() time.Duration {
+	return 5 * time.Minute
 }
 
 func NewCommand(appAndArgs ...string) Command {
 
 	result := Command{
-		Cwd: ".",
-		Ctx: context.Background(),
+		Cwd:     ".",
+		Ctx:     context.Background(),
+		Timeout: defaultTimeout(),
 	}
 
 	if len(appAndArgs) > 0 {
@@ -37,10 +44,11 @@ func NewCommand(appAndArgs ...string) Command {
 }
 func NewCommandA(app string, args ...string) Command {
 	result := Command{
-		Cwd:  ".",
-		App:  app,
-		Args: args,
-		Ctx:  context.Background(),
+		Cwd:     ".",
+		App:     app,
+		Args:    args,
+		Ctx:     context.Background(),
+		Timeout: defaultTimeout(),
 	}
 	return result
 }
