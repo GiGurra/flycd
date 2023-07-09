@@ -182,7 +182,6 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// TODO: Store access token as secret
 		// TODO: deploy flycd in monitoring mode
 		// TODO: Add ssh keys as secrets so we can pull from other git repos argocd style
 		// TODO: Fix some stuff in monitoring mode :S, like copying ssh keys from secrets, use access token etc
