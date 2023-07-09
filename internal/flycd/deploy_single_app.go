@@ -1,6 +1,8 @@
 package flycd
 
 import (
+	"context"
+	"errors"
 	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
 	"github.com/google/uuid"
@@ -8,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func DeployAppFromConfig(cfg AppConfig, force bool) error {
@@ -199,38 +202,63 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
-			return deployExistingApp(tempDir, cfg.DeployParams)
+			return deployExistingApp(cfg, tempDir)
 		} else {
 			println("App is already up to date, skipping deploy")
 		}
 	} else {
 		println("App not found, creating it")
-		err = createNewApp(tempDir, cfg.LaunchParams, true)
+		err = createNewApp(cfg, tempDir, true)
 		if err != nil {
 			return fmt.Errorf("error creating new app: %w", err)
 		}
 		println("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation")
-		return deployExistingApp(tempDir, cfg.DeployParams)
+		return deployExistingApp(cfg, tempDir)
 	}
 
 	return nil
 }
 
-func createNewApp(tempDir util_work_dir.WorkDir, launchParams []string, twoStep bool) error {
-	allParams := append([]string{"launch"}, launchParams...)
+func createNewApp(cfg AppConfig, tempDir util_work_dir.WorkDir, twoStep bool) error {
+	allParams := append([]string{"launch"}, cfg.LaunchParams...)
 	allParams = append(allParams, "--remote-only")
 	if twoStep {
 		allParams = append(allParams, "--build-only")
 	}
-	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
-	return err
+	// try 10 times
+	for i := 0; i < 10; i++ {
+		err := tempDir.NewCommand("flyctl", allParams...).WithTimeout(20 * time.Second).RunStreamedPassThrough()
+		if err == nil {
+			return nil
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Printf("Creating app %s timed out, retrying %d/10\n", cfg.App, i+1)
+			continue
+		} else {
+			return err
+		}
+	}
+	return fmt.Errorf("error creating app %s: %w, after trying 10 times", cfg.App, context.DeadlineExceeded)
 }
 
-func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) error {
-	allParams := append([]string{"deploy"}, deployParams...)
+func deployExistingApp(cfg AppConfig, tempDir util_work_dir.WorkDir) error {
+	allParams := append([]string{"deploy"}, cfg.DeployParams...)
 	allParams = append(allParams, "--remote-only", "--detach")
-	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
-	return err
+
+	nAttempts := 5
+	for i := 0; i < nAttempts; i++ {
+		err := tempDir.NewCommand("flyctl", allParams...).WithTimeout(180 * time.Second).RunStreamedPassThrough()
+		if err == nil {
+			return nil
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Printf("Deploying app %s timed out, retrying %d/%d\n", cfg.App, i+1, nAttempts)
+			continue
+		} else {
+			return err
+		}
+	}
+	return fmt.Errorf("error deploying app %s: %w, after trying 10 times", cfg.App, context.DeadlineExceeded)
 }
 
 func readAppConfig(path string) (AppConfig, error) {
