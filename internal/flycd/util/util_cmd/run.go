@@ -3,7 +3,6 @@ package util_cmd
 import (
 	"context"
 	"errors"
-	"flycd/internal/globals"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,10 +11,9 @@ import (
 )
 
 type Command struct {
-	Cwd         string
-	App         string
-	Args        []string
-	AccessToken string
+	Cwd  string
+	App  string
+	Args []string
 	// You can have either a custom context or a timeout, not both
 	Timeout        time.Duration
 	TimeoutRetries int
@@ -27,12 +25,22 @@ func defaultTimeout() time.Duration {
 	return 5 * time.Minute
 }
 
+func getAccessToken(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	token, ok := ctx.Value("FLY_ACCESS_TOKEN").(string)
+	if !ok {
+		return ""
+	}
+	return token
+}
+
 func NewCommand(appAndArgs ...string) Command {
 
 	result := Command{
-		Cwd:         ".",
-		Timeout:     defaultTimeout(),
-		AccessToken: globals.GetAccessToken(),
+		Cwd:     ".",
+		Timeout: defaultTimeout(),
 	}
 
 	if len(appAndArgs) > 0 {
@@ -47,11 +55,10 @@ func NewCommand(appAndArgs ...string) Command {
 }
 func NewCommandA(app string, args ...string) Command {
 	result := Command{
-		Cwd:         ".",
-		App:         app,
-		Args:        args,
-		Timeout:     defaultTimeout(),
-		AccessToken: globals.GetAccessToken(),
+		Cwd:     ".",
+		App:     app,
+		Args:    args,
+		Timeout: defaultTimeout(),
 	}
 	return result
 }
@@ -125,22 +132,25 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 
 	c.logBeforeRun()
 
-	if c.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, c.Timeout)
-		defer cancel()
-	}
-
-	if c.AccessToken != "" && (c.App == "flyctl" || c.App == "fly") {
-		c.Args = append(c.Args, "--access-token", c.AccessToken)
+	accessToken := getAccessToken(ctx)
+	if accessToken != "" && (c.App == "flyctl" || c.App == "fly") {
+		c.Args = append(c.Args, "--access-token", accessToken)
 	}
 
 	for i := 0; i <= c.TimeoutRetries; i++ {
 
-		cmd := exec.CommandContext(ctx, c.App, c.Args...)
-		cmd.Dir = c.Cwd
+		err := func() error {
+			if c.Timeout > 0 {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, c.Timeout)
+				defer cancel()
+			}
 
-		err := processor(cmd)
+			cmd := exec.CommandContext(ctx, c.App, c.Args...)
+			cmd.Dir = c.Cwd
+
+			return processor(cmd)
+		}()
 		if err != nil {
 
 			if errors.Is(err, context.DeadlineExceeded) {
