@@ -49,7 +49,6 @@ type StoreSecretCmd struct {
 	AppName     string
 	SecretName  string
 	SecretValue string
-	AccessToken string
 }
 
 func StoreSecret(cmd StoreSecretCmd) error {
@@ -70,10 +69,6 @@ func StoreSecret(cmd StoreSecretCmd) error {
 
 	if cmd.AppName != "" {
 		args = append(args, "-a", cmd.AppName)
-	}
-
-	if cmd.AccessToken != "" {
-		args = append(args, "-t", cmd.AccessToken)
 	}
 
 	err := util_cmd.NewCommandA("flyctl", args...).WithLogging().RunStreamedPassThrough()

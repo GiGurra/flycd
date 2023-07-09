@@ -85,7 +85,7 @@ var monitorCmd = &cobra.Command{
 		globals.SetAccessToken(accessToken)
 
 		// ensure we have a token loaded for the org we are monitoring
-		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list", "--access-token", accessToken).Run()
+		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list").Run()
 		if err != nil {
 			fmt.Printf("Error getting apps list. Do you have a token loaded?: %v\n", err)
 			os.Exit(1)
