@@ -7,6 +7,7 @@ RUN apt install build-essential -y
 RUN apt install wget -y
 RUN apt install git -y
 RUN apt install jq -y
+RUN apt install curl -y
 
 # Install Go
 RUN wget https://go.dev/dl/go1.20.5.linux-amd64.tar.gz
@@ -24,6 +25,12 @@ ENV PATH="/flycd:${PATH}"
 
 # Build the app
 RUN go build -o flycd
+
+# We actually always want to do this last, so we always get a new version of flyctl
+RUN curl -L https://fly.io/install.sh | sh
+
+ENV FLYCTL_INSTALL="/root/.fly"
+ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 
 # Run the app
 ENTRYPOINT ["flycd"]

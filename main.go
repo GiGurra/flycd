@@ -92,7 +92,22 @@ var monitorCmd = &cobra.Command{
 			fmt.Printf("Error parsing apps list: %v\n", err)
 			os.Exit(1)
 		}
-		println(appsTable.RowMaps)
+
+		fmt.Printf("Currently deployed apps: \n")
+		for _, appRow := range appsTable.RowMaps {
+			name := appRow["NAME"]
+			org := appRow["OWNER"]
+
+			fmt.Printf(" - name=%s, org=%s\n", name, org)
+		}
+
+		fmt.Printf("Syncing/Deploying all apps in %s\n", path)
+
+		err = flycd.Deploy(path, false)
+		if err != nil {
+			fmt.Printf("Error deploying from %s: %v\n:", path, err)
+			os.Exit(1)
+		}
 
 		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
 		// TODO: Start listening to webhooks
