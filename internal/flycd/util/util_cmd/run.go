@@ -16,6 +16,7 @@ type Command struct {
 }
 
 func NewCommand(appAndArgs ...string) Command {
+
 	result := Command{
 		Cwd: ".",
 	}
