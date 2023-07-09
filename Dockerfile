@@ -34,5 +34,5 @@ ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 
 # Run the app
 ENTRYPOINT ["flycd"]
-#CMD ["flycd"]
+CMD ["monitor"]
 
