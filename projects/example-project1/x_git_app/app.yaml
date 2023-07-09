@@ -19,7 +19,7 @@ source:
 env:
   ENV: "development"
 
-primary_region: &primary_region "ams" # default region for tests
+primary_region: &primary_region "arn" # default region for tests
 services:
   - internal_port: 80
     protocol: "tcp"

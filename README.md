@@ -144,7 +144,7 @@ source:
 env:
   ENV: "development"
 
-primary_region: "ams" # default region for tests is Amsterdam
+primary_region: "arn" # default region for tests
 services:
   - internal_port: 80
     protocol: "tcp"
