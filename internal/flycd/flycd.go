@@ -1,6 +1,7 @@
 package flycd
 
 import (
+	"context"
 	"encoding/json"
 	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 	"time"
 )
 
-func Deploy(path string, force bool) error {
+func Deploy(ctx context.Context, path string, force bool) error {
 
 	println("Traversing:", path)
 
@@ -20,18 +21,18 @@ func Deploy(path string, force bool) error {
 	if hasAppYaml {
 
 		fmt.Printf("Found app.yaml in %s, deploying app\n", path)
-		err2 := DeploySingleAppFromFolder(path, force)
+		err2 := DeploySingleAppFromFolder(ctx, path, force)
 		if err2 != nil {
 			return fmt.Errorf("error deploying app: %w", err2)
 		}
 
 	} else if hasProjectsDir {
 		println("Found projects dir, traversing only projects")
-		return Deploy(path+"/projects", force)
+		return Deploy(ctx, path+"/projects", force)
 	} else {
 		println("Found neither app.yaml nor projects dir, traversing all dirs")
 		for _, entry := range traversableCandidates {
-			err := Deploy(path+"/"+entry.Name(), force)
+			err := Deploy(ctx, path+"/"+entry.Name(), force)
 			if err != nil {
 				return err
 			}
@@ -41,12 +42,12 @@ func Deploy(path string, force bool) error {
 	return nil
 }
 
-func AppExists(name string) (bool, error) {
+func AppExists(ctx context.Context, name string) (bool, error) {
 	_, err := util_cmd.
 		NewCommand("flyctl", "status", "-a", name).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(10).
-		Run()
+		Run(ctx)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "could not find app") {
 			return false, nil
@@ -56,14 +57,14 @@ func AppExists(name string) (bool, error) {
 	return true, nil
 }
 
-func GetDeployedAppConfig(name string) (AppConfig, error) {
+func GetDeployedAppConfig(ctx context.Context, name string) (AppConfig, error) {
 
 	// Compare the current deployed appVersion with the new appVersion
 	jsonConf, err := util_cmd.
 		NewCommand("flyctl", "config", "show", "-a", name).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(10).
-		Run()
+		Run(ctx)
 	if err != nil {
 
 		if strings.Contains(strings.ToLower(err.Error()), "no machines configured for this app") {

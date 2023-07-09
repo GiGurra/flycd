@@ -17,7 +17,6 @@ type Command struct {
 	Args        []string
 	AccessToken string
 	// You can have either a custom context or a timeout, not both
-	Ctx            context.Context
 	Timeout        time.Duration
 	TimeoutRetries int
 	// debug functionality
@@ -32,7 +31,6 @@ func NewCommand(appAndArgs ...string) Command {
 
 	result := Command{
 		Cwd:         ".",
-		Ctx:         context.Background(),
 		Timeout:     defaultTimeout(),
 		AccessToken: globals.GetAccessToken(),
 	}
@@ -52,7 +50,6 @@ func NewCommandA(app string, args ...string) Command {
 		Cwd:         ".",
 		App:         app,
 		Args:        args,
-		Ctx:         context.Background(),
 		Timeout:     defaultTimeout(),
 		AccessToken: globals.GetAccessToken(),
 	}
@@ -84,11 +81,6 @@ func (c Command) WithLogging(args ...bool) Command {
 	return c
 }
 
-func (c Command) WithContext(ctx context.Context) Command {
-	c.Ctx = ctx
-	return c
-}
-
 func (c Command) WithTimeout(timeout time.Duration) Command {
 	c.Timeout = timeout
 	return c
@@ -104,11 +96,11 @@ func (c Command) logBeforeRun() {
 	}
 }
 
-func (c Command) Run() (string, error) {
+func (c Command) Run(ctx context.Context) (string, error) {
 
 	var stdout = ""
 
-	err := c.doRun(func(cmd *exec.Cmd) error {
+	err := c.doRun(ctx, func(cmd *exec.Cmd) error {
 		stdoutBytes, innerErr := cmd.Output()
 		stdout = string(stdoutBytes)
 		return innerErr
@@ -117,9 +109,9 @@ func (c Command) Run() (string, error) {
 	return stdout, err
 }
 
-func (c Command) RunStreamedPassThrough() error {
+func (c Command) RunStreamedPassThrough(ctx context.Context) error {
 
-	return c.doRun(func(cmd *exec.Cmd) error {
+	return c.doRun(ctx, func(cmd *exec.Cmd) error {
 
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -129,13 +121,13 @@ func (c Command) RunStreamedPassThrough() error {
 	})
 }
 
-func (c Command) doRun(processor func(cmd *exec.Cmd) error) error {
+func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error) error {
 
 	c.logBeforeRun()
 
 	if c.Timeout > 0 {
 		var cancel context.CancelFunc
-		c.Ctx, cancel = context.WithTimeout(c.Ctx, c.Timeout)
+		ctx, cancel = context.WithTimeout(ctx, c.Timeout)
 		defer cancel()
 	}
 
@@ -145,13 +137,18 @@ func (c Command) doRun(processor func(cmd *exec.Cmd) error) error {
 
 	for i := 0; i <= c.TimeoutRetries; i++ {
 
-		cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
+		cmd := exec.CommandContext(ctx, c.App, c.Args...)
 		cmd.Dir = c.Cwd
 
 		err := processor(cmd)
 		if err != nil {
 
 			if errors.Is(err, context.DeadlineExceeded) {
+				fmt.Printf("timeout running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
+				continue
+			}
+
+			if strings.Contains(err.Error(), "signal: killed") {
 				fmt.Printf("timeout running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
 				continue
 			}

@@ -1,6 +1,7 @@
 package flyctl
 
 import (
+	"context"
 	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
 	"os"
@@ -52,7 +53,7 @@ type StoreSecretCmd struct {
 	SecretValue string
 }
 
-func StoreSecret(cmd StoreSecretCmd) error {
+func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 
 	if cmd.SecretName == "" {
 		return fmt.Errorf("secret name cannot be empty")
@@ -76,7 +77,7 @@ func StoreSecret(cmd StoreSecretCmd) error {
 		NewCommandA("flyctl", args...).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(10).
-		RunStreamedPassThrough()
+		RunStreamedPassThrough(ctx)
 	if err != nil {
 		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
 	}

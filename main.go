@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flycd/internal/flycd"
 	"flycd/internal/flycd/util/util_cmd"
 	"flycd/internal/flycd/util/util_tab_table"
@@ -47,7 +48,8 @@ var deployCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		err = flycd.Deploy(path, force)
+		ctx := context.Background()
+		err = flycd.Deploy(ctx, path, force)
 		if err != nil {
 			fmt.Printf("Error deploying from %s: %v\n:", path, err)
 			os.Exit(1)
@@ -83,9 +85,11 @@ var monitorCmd = &cobra.Command{
 
 		// For now, store the access token in a global. This is ugly :S. but... it's what we got right now :S
 		globals.SetAccessToken(accessToken)
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 
 		// ensure we have a token loaded for the org we are monitoring
-		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list").Run()
+		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list").Run(ctx)
 		if err != nil {
 			fmt.Printf("Error getting apps list. Do you have a token loaded?: %v\n", err)
 			os.Exit(1)
@@ -107,7 +111,7 @@ var monitorCmd = &cobra.Command{
 
 		fmt.Printf("Syncing/Deploying all apps in %s\n", path)
 
-		err = flycd.Deploy(path, false)
+		err = flycd.Deploy(ctx, path, false)
 		if err != nil {
 			fmt.Printf("Error deploying from %s: %v\n:", path, err)
 			os.Exit(1)
@@ -136,8 +140,10 @@ var installCmd = &cobra.Command{
 
 		fmt.Printf("Installing flycd with app name '%s' to org '%s'\n", appName, orgSlug)
 
+		ctx := context.Background()
+
 		fmt.Printf("Check if flycd app already exists\n")
-		appExists, err := flycd.AppExists(appName)
+		appExists, err := flycd.AppExists(ctx, appName)
 		if err != nil {
 			fmt.Printf("Error checking if app exists: %v\n", err)
 			os.Exit(1)
@@ -149,14 +155,14 @@ var installCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-		err = flycd.DeployAppFromConfig(flycd.AppConfig{
+		err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,
 			Source:        flycd.NewInlineDockerFileSource("FROM nginx:latest"),
 			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
 			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
-		}, false)
+		})
 		if err != nil {
 			fmt.Printf("Error creating dummy app: %v\n", err)
 			os.Exit(1)
@@ -171,7 +177,7 @@ var installCmd = &cobra.Command{
 
 		fmt.Printf("Token created.. storing it...\n")
 
-		err = flyctl.StoreSecret(flyctl.StoreSecretCmd{
+		err = flyctl.StoreSecret(ctx, flyctl.StoreSecretCmd{
 			AppName:     appName,
 			SecretName:  "FLY_ACCESS_TOKEN",
 			SecretValue: token,
