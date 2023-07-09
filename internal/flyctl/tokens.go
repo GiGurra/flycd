@@ -46,39 +46,39 @@ func CreateOrgToken(orgSlug string) (string, error) {
 }
 
 type StoreSecretCmd struct {
-	appName     string
-	secretName  string
-	secretValue string
-	accessToken string
+	AppName     string
+	SecretName  string
+	SecretValue string
+	AccessToken string
 }
 
 func StoreSecret(cmd StoreSecretCmd) error {
 
-	if cmd.secretName == "" {
+	if cmd.SecretName == "" {
 		return fmt.Errorf("secret name cannot be empty")
 	}
 
-	if cmd.secretValue == "" {
+	if cmd.SecretValue == "" {
 		return fmt.Errorf("secret value cannot be empty")
 	}
 
 	args := []string{
 		"secrets",
 		"set",
-		fmt.Sprintf(`"%s"="%s"`, cmd.secretName, cmd.secretValue),
+		fmt.Sprintf(`"%s"="%s"`, cmd.SecretName, cmd.SecretValue),
 	}
 
-	if cmd.appName != "" {
-		args = append(args, "-a", cmd.appName)
+	if cmd.AppName != "" {
+		args = append(args, "-a", cmd.AppName)
 	}
 
-	if cmd.accessToken != "" {
-		args = append(args, "-t", cmd.accessToken)
+	if cmd.AccessToken != "" {
+		args = append(args, "-t", cmd.AccessToken)
 	}
 
 	err := util_cmd.NewCommandA("flyctl", args...).RunStreamedPassThrough()
 	if err != nil {
-		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.secretName, err)
+		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
 	}
 
 	return nil

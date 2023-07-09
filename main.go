@@ -150,7 +150,18 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("Token created: %s\n", token)
+		fmt.Printf("Token created.. storing it...\n")
+
+		err = flyctl.StoreSecret(flyctl.StoreSecretCmd{
+			AppName:     appName,
+			SecretName:  "FLY_ACCESS_TOKEN",
+			SecretValue: token,
+		})
+
+		if err != nil {
+			fmt.Printf("Error storing token: %v\n", err)
+			os.Exit(1)
+		}
 
 		// TODO: Store access token as secret
 		// TODO: deploy flycd in monitoring mode
