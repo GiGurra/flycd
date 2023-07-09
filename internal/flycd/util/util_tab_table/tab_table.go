@@ -9,6 +9,7 @@ import (
 type TabTable struct {
 	Headers []string
 	Rows    [][]string
+	RowMaps []map[string]string
 }
 
 func ParseTable(table string) (TabTable, error) {
@@ -43,8 +44,15 @@ func ParseTable(table string) (TabTable, error) {
 
 	lines = lines[1:]
 	result.Rows = make([][]string, len(lines))
+	result.RowMaps = make([]map[string]string, len(lines))
 	for i, line := range lines {
 		result.Rows[i] = parseColumns(line)
+		result.RowMaps[i] = make(map[string]string)
+		for j, header := range result.Headers {
+			if len(result.Rows[i]) > j {
+				result.RowMaps[i][header] = result.Rows[i][j]
+			}
+		}
 	}
 
 	return result, nil

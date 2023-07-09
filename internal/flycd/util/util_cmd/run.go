@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 type Command struct {
@@ -14,6 +15,7 @@ type Command struct {
 	Args    []string
 	Ctx     context.Context
 	Logging bool
+	Timeout time.Duration
 }
 
 func NewCommand(appAndArgs ...string) Command {
@@ -68,6 +70,11 @@ func (c Command) WithContext(ctx context.Context) Command {
 	return c
 }
 
+func (c Command) WithTimeout(timeout time.Duration) Command {
+	c.Timeout = timeout
+	return c
+}
+
 func (c Command) logBeforeRun() {
 	if c.Logging {
 		if c.App == "sh" && len(c.Args) > 0 && c.Args[0] == "-c" {
@@ -81,6 +88,12 @@ func (c Command) logBeforeRun() {
 func (c Command) Run() (string, error) {
 
 	c.logBeforeRun()
+
+	if c.Timeout > 0 {
+		var cancel context.CancelFunc
+		c.Ctx, cancel = context.WithTimeout(c.Ctx, c.Timeout)
+		defer cancel()
+	}
 
 	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
 	cmd.Dir = c.Cwd
@@ -100,6 +113,12 @@ func (c Command) Run() (string, error) {
 func (c Command) RunStreamedPassThrough() error {
 
 	c.logBeforeRun()
+
+	if c.Timeout > 0 {
+		var cancel context.CancelFunc
+		c.Ctx, cancel = context.WithTimeout(c.Ctx, c.Timeout)
+		defer cancel()
+	}
 
 	cmd := exec.CommandContext(c.Ctx, c.App, c.Args...)
 	cmd.Dir = c.Cwd

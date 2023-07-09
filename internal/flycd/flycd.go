@@ -3,8 +3,9 @@ package flycd
 import (
 	"encoding/json"
 	"flycd/internal/flycd/util/util_cmd"
+	"flycd/internal/flycd/util/util_tab_table"
 	"fmt"
-	"strings"
+	"github.com/samber/lo"
 )
 
 func Deploy(path string, force bool) error {
@@ -41,14 +42,24 @@ func Deploy(path string, force bool) error {
 }
 
 func AppExists(name string) (bool, error) {
-	_, err := util_cmd.NewCommand("flyctl", "status", "-a", name).Run()
+
+	// While we could do flyctl apps list --json and parse that,
+	// This json is huge and slow to fetch. flyctl doesn't seem to offer a
+	// simple way to handle this, so I just dump it in table form here instead
+
+	tableStr, err := util_cmd.NewCommand("flyctl", "apps", "list").Run()
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "could not find app") {
-			return false, nil
-		}
 		return false, err
 	}
-	return true, nil
+
+	parsedTable, err := util_tab_table.ParseTable(tableStr)
+	if err != nil {
+		return false, fmt.Errorf("error parsing table: %w. tableStr: \n%s", err, tableStr)
+	}
+
+	return lo.ContainsBy(parsedTable.RowMaps, func(item map[string]string) bool {
+		return item["NAME"] == name
+	}), nil
 }
 
 func GetDeployedAppConfig(name string) (AppConfig, error) {
