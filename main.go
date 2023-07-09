@@ -255,12 +255,20 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// TODO: deploy flycd in monitoring mode
+		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
+		err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
+			App:           appName,
+			Org:           orgSlug,
+			PrimaryRegion: region,
+			Source:        flycd.NewLocalFolderSource("."),
+			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
+			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
+		})
+		if err != nil {
+			fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
+			os.Exit(1)
+		}
 		// TODO: Add ssh keys as secrets so we can pull from other git repos argocd style
-		// TODO: Fix some stuff in monitoring mode :S, like copying ssh keys from secrets, use access token etc
-
-		fmt.Printf("Not implemented yet, sorry :(\n")
-		os.Exit(1)
 	},
 }
 

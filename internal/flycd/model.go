@@ -117,6 +117,13 @@ func NewInlineDockerFileSource(inline string) Source {
 	}
 }
 
+func NewLocalFolderSource(path string) Source {
+	return Source{
+		Type: SourceTypeLocal,
+		Path: path,
+	}
+}
+
 type SourceType string
 
 const (
