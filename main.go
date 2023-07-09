@@ -113,12 +113,20 @@ var monitorCmd = &cobra.Command{
 			fmt.Printf(" - name=%s, org=%s\n", name, org)
 		}
 
-		fmt.Printf("Syncing/Deploying all apps in %s\n", path)
-
-		err = flycd.Deploy(ctx, path, false)
+		syncAllAppsOnStartup, err := cmd.Flags().GetBool("sync-on-startup")
 		if err != nil {
-			fmt.Printf("Error deploying from %s: %v\n:", path, err)
+			fmt.Printf("Error getting sync-on-startup flag: %v\n", err)
 			os.Exit(1)
+		}
+
+		if syncAllAppsOnStartup {
+			fmt.Printf("Syncing/Deploying all apps in %s\n", path)
+
+			err = flycd.Deploy(ctx, path, false)
+			if err != nil {
+				fmt.Printf("Error deploying from %s: %v\n:", path, err)
+				os.Exit(1)
+			}
 		}
 
 		// Echo instance
@@ -165,8 +173,9 @@ func processWebhook(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
 }
 
-var _ any = monitorCmd.Flags().StringP("webhook-path", "w", "", "Webhook path")
+var _ any = monitorCmd.Flags().StringP("webhook-path", "w", os.Getenv("WEBHOOK_PATH"), "Webhook path")
 var _ any = monitorCmd.Flags().IntP("webhook-port", "p", 80, "Webhook port")
+var _ any = monitorCmd.Flags().BoolP("sync-on-startup", "s", false, "Sync all apps on startup")
 
 var installCmd = &cobra.Command{
 	Use:   "install <flycd app name> <fly.io org slug> <fly.io region>",
