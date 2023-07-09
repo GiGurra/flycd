@@ -101,7 +101,7 @@ Not yet implemented.
 The following just installs a blank nginx server and creates an org token (prints it to your terminal).
 
 ```
-flycd install tempflycd personal arn
+flycd install tempflycd personal ams
 ```
 
 ```
@@ -144,7 +144,7 @@ source:
 env:
   ENV: "development"
 
-primary_region: "arn" # default region for tests is Stockholm/Sweden
+primary_region: "ams" # default region for tests is Amsterdam
 services:
   - internal_port: 80
     protocol: "tcp"
