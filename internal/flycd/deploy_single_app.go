@@ -213,12 +213,14 @@ func DeploySingleAppFromFolder(path string, force bool) error {
 
 func deployNewApp(tempDir util_work_dir.WorkDir, launchParams []string) error {
 	allParams := append([]string{"launch"}, launchParams...)
+	allParams = append(allParams, "--remote-only")
 	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
 	return err
 }
 
 func deployExistingApp(tempDir util_work_dir.WorkDir, deployParams []string) error {
 	allParams := append([]string{"deploy"}, deployParams...)
+	allParams = append(allParams, "--remote-only")
 	err := tempDir.NewCommand("flyctl", allParams...).RunStreamedPassThrough()
 	return err
 }
