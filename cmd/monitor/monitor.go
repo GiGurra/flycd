@@ -183,7 +183,7 @@ func processWebhook(c echo.Context, path string) error {
 
 	fmt.Printf("Received webhook: %s\n", string(bodyBytes))
 
-	// Try deserialize as github webhook payload
+	// Try to deserialize as GitHub webhook payload
 	var githubWebhookPayload github.PushWebhookPayload
 	err = json.Unmarshal(bodyBytes, &githubWebhookPayload)
 	if err != nil {
