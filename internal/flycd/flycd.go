@@ -108,7 +108,7 @@ func Deploy(ctx context.Context, path string, deployCfg DeployConfig) error {
 	return nil
 }
 
-func AppExists(ctx context.Context, name string) (bool, error) {
+func AppIsDeployed(ctx context.Context, name string) (bool, error) {
 	res, err := util_cmd.
 		NewCommand("flyctl", "status", "-a", name).
 		WithTimeout(10 * time.Second).

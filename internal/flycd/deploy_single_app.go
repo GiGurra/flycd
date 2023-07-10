@@ -263,7 +263,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 
 	// Now run flyctl and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
-	appExists, err := AppExists(ctx, cfg.App)
+	appExists, err := AppIsDeployed(ctx, cfg.App)
 	if err != nil {
 		return fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
 	}
