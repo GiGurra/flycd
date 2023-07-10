@@ -3,6 +3,7 @@ package flycd
 import (
 	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 )
@@ -14,10 +15,37 @@ type TraversalStepAnalysis struct {
 }
 
 type SpecNode struct {
-	Path      string
-	AppYaml   string
-	AppConfig AppConfig
-	Children  []SpecNode
+	Path               string
+	AppYaml            string
+	AppConfig          AppConfig
+	AppConfigSyntaxErr error
+	Children           []SpecNode
+}
+
+func (s SpecNode) Traverse(t func(node SpecNode) error) error {
+	err := t(s)
+	if err != nil {
+		return fmt.Errorf("error traversing node '%s': %w", s.Path, err)
+	}
+	for _, child := range s.Children {
+		err := child.Traverse(t)
+		if err != nil {
+			return fmt.Errorf("error traversing child node '%s': %w", child.Path, err)
+		}
+	}
+	return nil
+}
+
+func (s SpecNode) Flatten() ([]SpecNode, error) {
+	var result []SpecNode
+	err := s.Traverse(func(node SpecNode) error {
+		result = append(result, node)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error flattening node '%s': %w", s.Path, err)
+	}
+	return result, nil
 }
 
 func (s SpecNode) IsAppNode() bool {
@@ -28,11 +56,11 @@ func (s SpecNode) IsAppSyntaxValid() bool {
 	return s.AppConfig.App != "" // it has been parsed
 }
 
-func (s SpecNode) IsAppValid() bool {
+func (s SpecNode) IsValidApp() bool {
 	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfig.Validate() == nil
 }
 
-func AnalyseSpec(path string) (SpecNode, error) {
+func Analyse(path string) (SpecNode, error) {
 
 	// convert path to absolut path
 	path, err := filepath.Abs(path)
@@ -51,14 +79,27 @@ func AnalyseSpec(path string) (SpecNode, error) {
 		if err != nil {
 			return SpecNode{}, fmt.Errorf("error reading app.yaml: %w", err)
 		}
+
+		var appConfig AppConfig
+		err = yaml.Unmarshal([]byte(appYaml), &appConfig)
+		if err != nil {
+			return SpecNode{
+				Path:               path,
+				AppYaml:            appYaml,
+				AppConfigSyntaxErr: err,
+				Children:           []SpecNode{},
+			}, nil
+		}
+
 		return SpecNode{
-			Path:     path,
-			AppYaml:  appYaml,
-			Children: []SpecNode{},
+			Path:      path,
+			AppYaml:   appYaml,
+			AppConfig: appConfig,
+			Children:  []SpecNode{},
 		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
-		child, err := AnalyseSpec(filepath.Join(path, "projects"))
+		child, err := Analyse(filepath.Join(path, "projects"))
 		if err != nil {
 			return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -71,7 +112,7 @@ func AnalyseSpec(path string) (SpecNode, error) {
 
 		children := make([]SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := AnalyseSpec(filepath.Join(path, entry.Name()))
+			child, err := Analyse(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
