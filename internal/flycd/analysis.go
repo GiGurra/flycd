@@ -13,59 +13,72 @@ type TraversalStepAnalysis struct {
 	TraversableCandidates []os.DirEntry
 }
 
-type SpecSnapshot struct {
-	Path     string
-	AppYaml  string
-	Children []SpecSnapshot
+type SpecNode struct {
+	Path      string
+	AppYaml   string
+	AppConfig AppConfig
+	Children  []SpecNode
 }
 
-func AnalyseSpec(path string) (SpecSnapshot, error) {
+func (s SpecNode) IsAppNode() bool {
+	return s.AppYaml != ""
+}
+
+func (s SpecNode) IsAppSyntaxValid() bool {
+	return s.AppConfig.App != "" // it has been parsed
+}
+
+func (s SpecNode) IsAppValid() bool {
+	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfig.Validate() == nil
+}
+
+func AnalyseSpec(path string) (SpecNode, error) {
 
 	// convert path to absolut path
 	path, err := filepath.Abs(path)
 	if err != nil {
-		return SpecSnapshot{}, fmt.Errorf("error converting path to absolute path: %w", err)
+		return SpecNode{}, fmt.Errorf("error converting path to absolute path: %w", err)
 	}
 
 	nodeInfo, err := analyseTraversalCandidate(path)
 	if err != nil {
-		return SpecSnapshot{}, fmt.Errorf("error analysing node '%s': %w", path, err)
+		return SpecNode{}, fmt.Errorf("error analysing node '%s': %w", path, err)
 	}
 
 	if nodeInfo.HasAppYaml {
 		workDir := util_work_dir.NewWorkDir(path)
 		appYaml, err := workDir.ReadFile("app.yaml")
 		if err != nil {
-			return SpecSnapshot{}, fmt.Errorf("error reading app.yaml: %w", err)
+			return SpecNode{}, fmt.Errorf("error reading app.yaml: %w", err)
 		}
-		return SpecSnapshot{
+		return SpecNode{
 			Path:     path,
 			AppYaml:  appYaml,
-			Children: []SpecSnapshot{},
+			Children: []SpecNode{},
 		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
 		child, err := AnalyseSpec(filepath.Join(path, "projects"))
 		if err != nil {
-			return SpecSnapshot{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
+			return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
-		return SpecSnapshot{
+		return SpecNode{
 			Path:     path,
 			AppYaml:  "",
-			Children: []SpecSnapshot{child},
+			Children: []SpecNode{child},
 		}, nil
 	} else {
 
-		children := make([]SpecSnapshot, len(nodeInfo.TraversableCandidates))
+		children := make([]SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
 			child, err := AnalyseSpec(filepath.Join(path, entry.Name()))
 			if err != nil {
-				return SpecSnapshot{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
+				return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
 			children[i] = child
 		}
 
-		return SpecSnapshot{
+		return SpecNode{
 			Path:     path,
 			AppYaml:  "",
 			Children: children,
