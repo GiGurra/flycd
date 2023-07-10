@@ -5,11 +5,17 @@ import (
 	"os"
 )
 
-func analyseCfgFolder(path string) ([]os.DirEntry, bool, bool, error) {
+type SingleFolderAnalysisResult struct {
+	HasAppYaml            bool
+	HasProjectsDir        bool
+	TraversableCandidates []os.DirEntry
+}
+
+func analyseSingleFolder(path string) (SingleFolderAnalysisResult, error) {
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return nil, false, false, fmt.Errorf("error reading directory: %w", err)
+		return SingleFolderAnalysisResult{}, fmt.Errorf("error reading directory: %w", err)
 	}
 
 	// Collect potentially traversable dirs
@@ -21,7 +27,7 @@ func analyseCfgFolder(path string) ([]os.DirEntry, bool, bool, error) {
 		if entry.IsDir() {
 			shouldTraverse, err := canTraverseDir(entry)
 			if err != nil {
-				return nil, false, false, fmt.Errorf("error checking for symlink: %w", err)
+				return SingleFolderAnalysisResult{}, fmt.Errorf("error checking for symlink: %w", err)
 			}
 			if !shouldTraverse {
 				continue
@@ -39,7 +45,11 @@ func analyseCfgFolder(path string) ([]os.DirEntry, bool, bool, error) {
 
 		}
 	}
-	return traversableCandidates, hasAppYaml, hasProjectsDir, nil
+	return SingleFolderAnalysisResult{
+		HasAppYaml:            hasAppYaml,
+		HasProjectsDir:        hasProjectsDir,
+		TraversableCandidates: traversableCandidates,
+	}, nil
 }
 
 func isSymLink(dir os.DirEntry) (bool, error) {

@@ -13,12 +13,12 @@ func Deploy(ctx context.Context, path string, deployCfg DeployConfig) error {
 
 	println("Traversing:", path)
 
-	traversableCandidates, hasAppYaml, hasProjectsDir, err := analyseCfgFolder(path)
+	analysis, err := analyseSingleFolder(path)
 	if err != nil {
 		return fmt.Errorf("error analysing folder: %w", err)
 	}
 
-	if hasAppYaml {
+	if analysis.HasAppYaml {
 
 		fmt.Printf("Found app.yaml in %s, deploying app\n", path)
 		err2 := DeploySingleAppFromFolder(ctx, path, deployCfg)
@@ -26,12 +26,12 @@ func Deploy(ctx context.Context, path string, deployCfg DeployConfig) error {
 			return fmt.Errorf("error deploying app: %w", err2)
 		}
 
-	} else if hasProjectsDir {
+	} else if analysis.HasProjectsDir {
 		println("Found projects dir, traversing only projects")
 		return Deploy(ctx, path+"/projects", deployCfg)
 	} else {
 		println("Found neither app.yaml nor projects dir, traversing all dirs")
-		for _, entry := range traversableCandidates {
+		for _, entry := range analysis.TraversableCandidates {
 			err := Deploy(ctx, path+"/"+entry.Name(), deployCfg)
 			if err != nil {
 				return err
