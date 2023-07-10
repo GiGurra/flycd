@@ -59,6 +59,7 @@ var Cmd = &cobra.Command{
 			fmt.Printf("FLY_SSH_PRIVATE_KEY env var is set, so we probably want o do something... \n")
 
 			if sshKeyName == "" {
+				fmt.Printf("FLY_SSH_PRIVATE_KEY_NAME env var not set, so just guessing we want 'id_rsa'\n")
 				sshKeyName = "id_rsa"
 			}
 
