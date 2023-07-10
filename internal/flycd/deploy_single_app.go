@@ -13,14 +13,16 @@ import (
 )
 
 type DeployConfig struct {
-	Force   bool
-	Retries int
+	Force          bool
+	Retries        int
+	AttemptTimeout time.Duration
 }
 
 func NewDeployConfig() DeployConfig {
 	return DeployConfig{
-		Force:   false,
-		Retries: 5,
+		Force:          false,
+		Retries:        2,
+		AttemptTimeout: 5 * time.Minute,
 	}
 }
 
@@ -38,6 +40,15 @@ func (c DeployConfig) WithRetries(retries ...int) DeployConfig {
 		c.Retries = retries[0]
 	} else {
 		c.Retries = 5
+	}
+	return c
+}
+
+func (c DeployConfig) WithAttemptTimeout(timeout ...time.Duration) DeployConfig {
+	if len(timeout) > 0 {
+		c.AttemptTimeout = timeout[0]
+	} else {
+		c.AttemptTimeout = 5 * time.Minute
 	}
 	return c
 }
