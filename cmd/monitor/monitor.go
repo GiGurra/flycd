@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -187,6 +188,21 @@ func processHealth(c echo.Context) error {
 func init() {
 	flags.whIfc = Cmd.Flags().StringP("webhook-interface", "i", os.Getenv("WEBHOOK_INTERFACE"), "Webhook interface")
 	flags.whPath = Cmd.Flags().StringP("webhook-path", "w", os.Getenv("WEBHOOK_PATH"), "Webhook path")
-	flags.whPort = Cmd.Flags().IntP("webhook-port", "p", 80, "Webhook port")
+	flags.whPort = Cmd.Flags().IntP("webhook-port", "p", defaultWhPort(), "Webhook port")
 	flags.startupSync = Cmd.Flags().BoolP("sync-on-startup", "s", false, "Sync all apps on startup")
+}
+
+func defaultWhPort() int {
+
+	portStr := os.Getenv("WEBHOOK_PORT")
+	if portStr == "" {
+		return 80
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		panic(fmt.Errorf("invalid webhook port (not a valid integer): '%s', %w", portStr, err))
+	}
+
+	return port
 }
