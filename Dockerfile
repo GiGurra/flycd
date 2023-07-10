@@ -29,7 +29,10 @@ RUN curl -L https://fly.io/install.sh | sh
 ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 
-# Build the app
+# Download the dependencies. Done in a separate step so we can cache it.
+RUN go mod download
+
+# Build the latest version of the app
 RUN go build -o flycd
 
 # grab the latest version of flyctl
