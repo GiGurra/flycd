@@ -2,8 +2,8 @@ package flycd
 
 import (
 	"context"
-	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/google/uuid"
 	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"

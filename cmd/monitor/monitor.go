@@ -2,10 +2,10 @@ package monitor
 
 import (
 	"context"
-	"flycd/internal/flycd"
-	"flycd/internal/flycd/util/util_cmd"
-	"flycd/internal/flycd/util/util_tab_table"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
+	"github.com/gigurra/flycd/internal/flycd/util/util_tab_table"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"

@@ -3,8 +3,8 @@ package flyctl
 import (
 	"context"
 	"encoding/json"
-	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"github.com/samber/lo"
 	"os"
 	"os/exec"

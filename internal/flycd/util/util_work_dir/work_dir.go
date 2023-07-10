@@ -1,8 +1,8 @@
 package util_work_dir
 
 import (
-	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"os"
 )
 

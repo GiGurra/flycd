@@ -2,8 +2,8 @@ package deploy
 
 import (
 	"context"
-	"flycd/internal/flycd"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/spf13/cobra"
 	"os"
 )

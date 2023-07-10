@@ -3,8 +3,8 @@ package flycd
 import (
 	"context"
 	"encoding/json"
-	"flycd/internal/flycd/util/util_cmd"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"strings"
 	"time"
 )

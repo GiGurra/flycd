@@ -1,10 +1,10 @@
 package main
 
 import (
-	"flycd/cmd/deploy"
-	"flycd/cmd/install"
-	"flycd/cmd/monitor"
 	"fmt"
+	"github.com/gigurra/flycd/cmd/deploy"
+	"github.com/gigurra/flycd/cmd/install"
+	"github.com/gigurra/flycd/cmd/monitor"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"

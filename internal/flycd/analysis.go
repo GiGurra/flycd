@@ -1,8 +1,8 @@
 package flycd
 
 import (
-	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
 	"os"

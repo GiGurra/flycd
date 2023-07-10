@@ -2,9 +2,9 @@ package install
 
 import (
 	"context"
-	"flycd/internal/flycd"
-	"flycd/internal/flyctl"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd"
+	"github.com/gigurra/flycd/internal/flyctl"
 	"github.com/spf13/cobra"
 	"os"
 	"strings"
