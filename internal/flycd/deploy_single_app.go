@@ -30,7 +30,7 @@ func DeployAppFromConfig(ctx context.Context, force bool, cfg AppConfig) error {
 		return fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return DeploySingleAppFromFolder(ctx, cfgDir.Root, force)
+	return DeploySingleAppFromFolder(ctx, cfgDir.Root(), force)
 }
 
 func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) error {
@@ -92,20 +92,20 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
-			tempDir.Cwd = tempDir.Cwd + "/repo"
+			tempDir.SetCwd(tempDir.Cwd() + "/repo")
 
 		} else if cfg.Source.Ref.Branch != "" {
 			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch).RunStreamedPassThrough(ctx)
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
-			tempDir.Cwd = tempDir.Cwd + "/repo"
+			tempDir.SetCwd(tempDir.Cwd() + "/repo")
 		} else {
 			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1").RunStreamedPassThrough(ctx)
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
-			tempDir.Cwd = tempDir.Cwd + "/repo"
+			tempDir.SetCwd(tempDir.Cwd() + "/repo")
 		}
 
 		appHash, err = tempDir.NewCommand("git", "rev-parse", "HEAD").Run(ctx)
@@ -125,7 +125,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 		}
 		appHash = strings.TrimSpace(appHash)
 
-		_, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd)).Run(ctx)
+		_, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd())).Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
@@ -140,7 +140,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 			return fmt.Errorf("error writing .dockerignore: %w", err)
 		}
 
-		appHash, err = tempDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd)).Run(ctx)
+		appHash, err = tempDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd())).Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
@@ -175,7 +175,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 	}
 
 	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
-	if _, err := os.Stat(filepath.Join(tempDir.Cwd, ".dockerignore")); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(tempDir.Cwd(), ".dockerignore")); os.IsNotExist(err) {
 		_, err = tempDir.NewCommand("sh", "-c", "git ls-files -i --exclude-from=.gitignore | xargs -0 -I {} echo {} >> .dockerignore").Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error producing .dockerignore from .gitignore in folder %s: %w", path, err)
