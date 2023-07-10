@@ -48,6 +48,54 @@ var Cmd = &cobra.Command{
 			ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 		}
 
+		// Get flycd ssh key from env var
+		fmt.Printf("Checking if to store ssh... \n")
+		sshKey := os.Getenv("FLY_SSH_PRIVATE_KEY")
+		sshKeyName := os.Getenv("FLY_SSH_PRIVATE_KEY_NAME")
+		if sshKey == "" {
+			fmt.Printf("WARNING: FLY_SSH_PRIVATE_KEY env var not set. Proceeding and assuming you only want to access public repos...\n")
+		} else {
+
+			fmt.Printf("FLY_SSH_PRIVATE_KEY env var is set, so we probably want o do something... \n")
+
+			if sshKeyName == "" {
+				sshKeyName = "id_rsa"
+			}
+
+			fmt.Printf("Checking if to store ssh key: %s\n", sshKeyName)
+
+			// Check that we
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Printf("Error getting user home directory: %v\n", err)
+				os.Exit(1)
+			}
+
+			sshDir := homeDir + "/.ssh"
+			sshKeyPath := sshDir + "/" + sshKeyName
+
+			// Ensure ssh dir exists
+			if _, err := os.Stat(sshDir); os.IsNotExist(err) {
+				fmt.Printf("ssh dir does not exist: %s\n", sshDir)
+				os.Exit(1)
+			}
+
+			// Don't overwrite existing key
+			if _, err := os.Stat(sshKeyPath); !os.IsNotExist(err) {
+				fmt.Printf("ssh key already exists. Skipping copy from env var -> %s\n", sshKeyPath)
+			} else {
+
+				// Write key to file
+				err = os.WriteFile(sshKeyPath, []byte(sshKey), 0600)
+				if err != nil {
+					fmt.Printf("Error writing ssh key to file: %v\n", err)
+					os.Exit(1)
+				}
+
+				fmt.Printf("Stored ssh key: %s\n", sshKeyPath)
+			}
+		}
+
 		// ensure we have a token loaded for the org we are monitoring
 		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list").Run(ctx)
 		if err != nil {
@@ -103,8 +151,6 @@ var Cmd = &cobra.Command{
 
 		// Start server
 		e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", *flags.whPort)))
-
-		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
 	},
 }
 
