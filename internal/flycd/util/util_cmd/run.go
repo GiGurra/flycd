@@ -220,6 +220,11 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 				continue
 			}
 
+			if strings.Contains(err.Error(), "context deadline exceeded") {
+				fmt.Printf("timeout (context deadline exceeded) running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
+				continue
+			}
+
 			return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, err.Error(), err)
 		}
 
