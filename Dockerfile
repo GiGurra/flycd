@@ -24,8 +24,14 @@ RUN curl -L https://fly.io/install.sh | sh
 ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 
-# Copy over the app
-COPY . /flycd
+# Copy over the app, excl the projects folder
+RUN mkdir -p /flycd
+COPY ./cmd /flycd/cmd
+COPY ./internal /flycd/internal
+COPY ./main.go /flycd/main.go
+COPY ./go.mod /flycd/go.mod
+COPY ./go.sum /flycd/go.sum
+COPY ./LICENSE /flycd/LICENSE
 WORKDIR /flycd
 ENV PATH="/flycd:${PATH}"
 
@@ -42,6 +48,9 @@ RUN flyctl version upgrade
 RUN mkdir -p /root/.ssh
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+
+# Lastly, copy the latest version of the projects folder
+COPY ./cmd /flycd/cmd
 
 # Run the app
 ENTRYPOINT ["flycd"]
