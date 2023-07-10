@@ -32,7 +32,7 @@ Example of what it could look like (doesn't have to include multiple envs, or an
 ```
 $flycd --help
 
-Starting FlyCD latest...
+Starting FlyCD v0.0.9...
 Complete documentation is available at https://github.com/gigurra/flycd
 
 Usage:
@@ -45,14 +45,12 @@ Available Commands:
   help        Help about any command
   install     Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos
   monitor     (Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc
-  uninstall   Uninstall flycd from your fly.io account
-  upgrade     Upgrade your flycd installation in your fly.io account to the latest version
 
 Flags:
   -h, --help   help for flycd
 
 Use "flycd [command] --help" for more information about a command.
-FlyCD latest exiting normally, bye!
+FlyCD v0.0.9 exiting normally, bye!
 ```
 
 ## Current state
