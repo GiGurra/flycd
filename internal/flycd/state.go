@@ -32,6 +32,9 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 		}
 		if lo.Contains(remoteKeys, localKey) {
 			fmt.Printf("Found app %s matching webhook url %s. Scheduling deploy...\n", app.AppConfig.App, payload.Repository.Url)
+
+			// TODO: Implement some kind of persistence here...
+
 			go func() {
 				ctx := context.Background()
 				deployCfg := NewDeployConfig().
