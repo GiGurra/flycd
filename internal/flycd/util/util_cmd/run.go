@@ -1,9 +1,11 @@
 package util_cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -17,8 +19,17 @@ type Command struct {
 	// You can have either a custom context or a timeout, not both
 	Timeout        time.Duration
 	TimeoutRetries int
+	LogStdOut      bool
+	LogStdErr      bool
 	// debug functionality
-	Logging bool
+	LogInput bool
+}
+
+type CommandResult struct {
+	StdOut   string
+	StdErr   string
+	err      error
+	Attempts int
 }
 
 func defaultTimeout() time.Duration {
@@ -81,9 +92,9 @@ func (c Command) WithTimeoutRetries(n int) Command {
 
 func (c Command) WithLogging(args ...bool) Command {
 	if len(args) > 0 {
-		c.Logging = args[0]
+		c.LogInput = args[0]
 	} else {
-		c.Logging = true
+		c.LogInput = true
 	}
 	return c
 }
@@ -94,7 +105,7 @@ func (c Command) WithTimeout(timeout time.Duration) Command {
 }
 
 func (c Command) logBeforeRun() {
-	if c.Logging {
+	if c.LogInput {
 		if c.App == "sh" && len(c.Args) > 0 && c.Args[0] == "-c" {
 			fmt.Printf("%s$ %s\n", c.Cwd, strings.Join(c.Args[1:], " "))
 		} else {
@@ -103,29 +114,60 @@ func (c Command) logBeforeRun() {
 	}
 }
 
-func (c Command) Run(ctx context.Context) (string, error) {
+func (c Command) RunStreamAndCapture(ctx context.Context) CommandResult {
 
-	var stdout = ""
+	stdoutBuffer := &bytes.Buffer{}
+	stderrBuffer := &bytes.Buffer{}
+	attempts := 0
 
 	err := c.doRun(ctx, func(cmd *exec.Cmd) error {
-		stdoutBytes, innerErr := cmd.Output()
-		stdout = string(stdoutBytes)
-		return innerErr
+
+		// Reset these each time, because they could internally
+		attempts++
+		stdoutBuffer = &bytes.Buffer{}
+		stderrBuffer = &bytes.Buffer{}
+
+		cmd.Stdin = os.Stdin
+		if c.LogStdOut {
+			cmd.Stdout = io.MultiWriter(os.Stdout, stdoutBuffer)
+		} else {
+			cmd.Stdout = stdoutBuffer
+		}
+		if c.LogStdErr {
+			cmd.Stderr = io.MultiWriter(os.Stderr, stderrBuffer)
+		} else {
+			cmd.Stderr = stderrBuffer
+		}
+
+		return cmd.Run()
 	})
 
-	return stdout, err
+	stdout := stdoutBuffer.String()
+	stderr := stderrBuffer.String()
+
+	return CommandResult{
+		StdOut:   stdout,
+		StdErr:   stderr,
+		err:      err,
+		Attempts: attempts,
+	}
+}
+
+func (c Command) Run(ctx context.Context) (string, error) {
+
+	res := c.RunStreamAndCapture(ctx)
+
+	return res.StdOut, res.err
 }
 
 func (c Command) RunStreamedPassThrough(ctx context.Context) error {
 
-	return c.doRun(ctx, func(cmd *exec.Cmd) error {
+	c.LogStdOut = true
+	c.LogStdErr = true
 
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
+	res := c.RunStreamAndCapture(ctx)
 
-		return cmd.Run()
-	})
+	return res.err
 }
 
 func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error) error {
