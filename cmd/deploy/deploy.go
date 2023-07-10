@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+var flags struct {
+	force *bool
+}
+
 var Cmd = &cobra.Command{
 	Use:   "deploy <path>",
 	Short: "Manually deploy a single flycd app, or all flycd apps inside a folder",
@@ -17,7 +21,7 @@ var Cmd = &cobra.Command{
 		fmt.Printf("Deploying from: %s\n", path)
 
 		ctx := context.Background()
-		err := flycd.Deploy(ctx, path, *forceFlag)
+		err := flycd.Deploy(ctx, path, *flags.force)
 		if err != nil {
 			fmt.Printf("Error deploying from %s: %v\n:", path, err)
 			os.Exit(1)
@@ -25,8 +29,6 @@ var Cmd = &cobra.Command{
 	},
 }
 
-var forceFlag *bool
-
 func init() {
-	forceFlag = Cmd.Flags().BoolP("force", "f", false, "Force re-deploy even if there are no changes")
+	flags.force = Cmd.Flags().BoolP("force", "f", false, "Force deploy even if no changes detected")
 }

@@ -15,6 +15,12 @@ import (
 	"strings"
 )
 
+var flags struct {
+	whPath      *string
+	whPort      *int
+	startupSync *bool
+}
+
 var Cmd = &cobra.Command{
 	Use:   "monitor",
 	Short: "(Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc",
@@ -32,16 +38,15 @@ var Cmd = &cobra.Command{
 
 		fmt.Printf("Monitoring: %s\n", path)
 
+		ctx := context.Background()
+
 		// Get access token from env var
 		accessToken := os.Getenv("FLY_ACCESS_TOKEN")
 		if accessToken == "" {
-			fmt.Printf("FLY_ACCESS_TOKEN env var not set. Please set it to a valid fly.io access token\n")
-			os.Exit(1)
+			fmt.Printf("WARNING: FLY_ACCESS_TOKEN env var not set. Proceeding and assuming you are running locally logged in...\n")
+		} else {
+			ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 		}
-
-		// For now, store the access token in a global. This is ugly :S. but... it's what we got right now :S
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 
 		// ensure we have a token loaded for the org we are monitoring
 		appsTableString, err := util_cmd.NewCommand("flyctl", "apps", "list").Run(ctx)
@@ -64,13 +69,7 @@ var Cmd = &cobra.Command{
 			fmt.Printf(" - name=%s, org=%s\n", name, org)
 		}
 
-		syncAllAppsOnStartup, err := cmd.Flags().GetBool("sync-on-startup")
-		if err != nil {
-			fmt.Printf("Error getting sync-on-startup flag: %v\n", err)
-			os.Exit(1)
-		}
-
-		if syncAllAppsOnStartup {
+		if *flags.startupSync {
 			fmt.Printf("Syncing/Deploying all apps in %s\n", path)
 
 			err = flycd.Deploy(ctx, path, false)
@@ -87,11 +86,7 @@ var Cmd = &cobra.Command{
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
 
-		whPath, err := cmd.Flags().GetString("webhook-path")
-		if err != nil {
-			fmt.Printf("Error getting webhook-path flag: %v\n", err)
-			os.Exit(1)
-		}
+		whPath := *flags.whPath
 		if whPath == "" {
 			whPath = "/webhook"
 		}
@@ -99,21 +94,15 @@ var Cmd = &cobra.Command{
 			whPath = "/" + whPath
 		}
 
-		whPort, err := cmd.Flags().GetInt("webhook-port")
-		if err != nil {
-			fmt.Printf("Error getting webhook-port flag: %v\n", err)
-			os.Exit(1)
-		}
-
 		fmt.Printf("Listening on webhook path: %s\n", whPath)
-		fmt.Printf("Listening on webhook port: %d\n", whPort)
+		fmt.Printf("Listening on webhook port: %d\n", *flags.whPort)
 
 		// Routes
 		e.GET("/", processHealth)
 		e.POST(whPath, processWebhook)
 
 		// Start server
-		e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", whPort)))
+		e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", *flags.whPort)))
 
 		// TODO: Ensure we have ssh keys loaded for cloning git repos. If running on fly.io, we need to copy them from /mnt/somewhere -> ~/.ssh
 	},
@@ -146,6 +135,8 @@ func processHealth(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
 }
 
-var _ any = Cmd.Flags().StringP("webhook-path", "w", os.Getenv("WEBHOOK_PATH"), "Webhook path")
-var _ any = Cmd.Flags().IntP("webhook-port", "p", 80, "Webhook port")
-var _ any = Cmd.Flags().BoolP("sync-on-startup", "s", false, "Sync all apps on startup")
+func init() {
+	flags.whPath = Cmd.Flags().StringP("webhook-path", "w", os.Getenv("WEBHOOK_PATH"), "Webhook path")
+	flags.whPort = Cmd.Flags().IntP("webhook-port", "p", 80, "Webhook port")
+	flags.startupSync = Cmd.Flags().BoolP("sync-on-startup", "s", false, "Sync all apps on startup")
+}
