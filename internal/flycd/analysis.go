@@ -3,6 +3,7 @@ package flycd
 import (
 	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
+	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -59,6 +60,25 @@ func (s SpecNode) IsAppSyntaxValid() bool {
 
 func (s SpecNode) IsValidApp() bool {
 	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigSemErr == nil
+}
+
+func ScanForApps(path string) ([]SpecNode, error) {
+
+	analysis, err := AnalyseSpec(path)
+	if err != nil {
+		return nil, fmt.Errorf("error analysing %s: %w", path, err)
+	}
+
+	nodeList, err := analysis.Flatten()
+	if err != nil {
+		return nil, fmt.Errorf("error flattening analysis of %s: %w", path, err)
+	}
+
+	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
+		return node.IsAppNode()
+	})
+
+	return apps, nil
 }
 
 func AnalyseSpec(path string) (SpecNode, error) {

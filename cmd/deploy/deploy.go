@@ -4,7 +4,6 @@ import (
 	"context"
 	"flycd/internal/flycd"
 	"fmt"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -28,21 +27,11 @@ var Cmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		analysis, err := flycd.AnalyseSpec(path)
+		apps, err := flycd.ScanForApps(path)
 		if err != nil {
-			fmt.Printf("Error analysing %s: %v\n:", path, err)
+			fmt.Printf("Error finding apps: %v\n", err)
 			os.Exit(1)
 		}
-
-		nodeList, err := analysis.Flatten()
-		if err != nil {
-			fmt.Printf("Error flattening analysis of %s: %v\n:", path, err)
-			os.Exit(1)
-		}
-
-		apps := lo.Filter(nodeList, func(node flycd.SpecNode, _ int) bool {
-			return node.IsAppNode()
-		})
 
 		for _, app := range apps {
 			fmt.Printf("Considering app %s @ %s\n", app.AppConfig.App, app.Path)
