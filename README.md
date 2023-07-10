@@ -56,6 +56,8 @@ FlyCD is built on the principle of bootstrapping itself.
   app.yaml files, and flycd will traverse the structure recursively, clone each app's source repo and deploy each app
 * It can currently install itself into an existing fly.io environment (although it doesn't do anything yet once
   installed :D)
+* Needs some persistence and queueing of incoming webhook commands to no run into data races, or lose data if flycd
+  crashes or is re-deployed :S. Currently, it just spins up a go-routine for running the new deployment.
 
 **I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
 Consider it proof of concept, and nothing more.
