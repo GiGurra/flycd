@@ -67,6 +67,9 @@ FlyCD is built on the principle of bootstrapping itself.
 * Needs some persistence and queueing of incoming webhook commands to no run into data races, or lose data if flycd
   crashes or is re-deployed :S. Currently, it just spins up a go-routine for running the new deployment.
 * Needs a better way to scan existing available apps than re-read all of their specs from disk on every webhook event.
+* Need separate config repo(s) and webhooks. Right now flycd when deployed needs locally mounted projects/ folder.
+* Need regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably can't add
+  webhooks.
 
 **I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
 Consider it proof of concept, and nothing more.
