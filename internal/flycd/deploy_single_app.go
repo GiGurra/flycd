@@ -14,17 +14,28 @@ import (
 )
 
 type DeployConfig struct {
-	Force          bool
-	Retries        int
-	AttemptTimeout time.Duration
+	Force             bool
+	Retries           int
+	AttemptTimeout    time.Duration
+	AbortOnFirstError bool
 }
 
 func NewDeployConfig() DeployConfig {
 	return DeployConfig{
-		Force:          false,
-		Retries:        2,
-		AttemptTimeout: 5 * time.Minute,
+		Force:             false,
+		Retries:           2,
+		AttemptTimeout:    5 * time.Minute,
+		AbortOnFirstError: true,
 	}
+}
+
+func (c DeployConfig) WithAbortOnFirstError(state ...bool) DeployConfig {
+	if len(state) > 0 {
+		c.AbortOnFirstError = state[0]
+	} else {
+		c.AbortOnFirstError = true
+	}
+	return c
 }
 
 func (c DeployConfig) WithForce(force ...bool) DeployConfig {

@@ -9,6 +9,72 @@ import (
 	"time"
 )
 
+type DeployFailure struct {
+	Spec  SpecNode
+	Cause error
+}
+
+type DeployResult struct {
+	Succeeded []SpecNode
+	Failed    []DeployFailure
+}
+
+func NewDeployResult() DeployResult {
+	return DeployResult{
+		Succeeded: make([]SpecNode, 0),
+		Failed:    make([]DeployFailure, 0),
+	}
+}
+
+var SkippedNotValid = fmt.Errorf("skipped: not a valid app")
+var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
+
+func DeployAll(
+	ctx context.Context,
+	path string,
+	deployCfg DeployConfig,
+) (DeployResult, error) {
+
+	result := NewDeployResult()
+
+	apps, err := ScanForApps(path)
+	if err != nil {
+		return result, fmt.Errorf("Error finding apps: %w\n", err)
+	}
+
+	aborted := false
+	for _, app := range apps {
+		fmt.Printf("Considering app %s @ %s\n", app.AppConfig.App, app.Path)
+		if aborted {
+			fmt.Printf("Aborted earlier, skipping!\n")
+			result.Failed = append(result.Failed, DeployFailure{
+				Spec:  app,
+				Cause: SkippedAbortedEarlier,
+			})
+			continue
+		}
+		if app.IsValidApp() {
+			err := Deploy(ctx, app.Path, deployCfg)
+			if err != nil {
+				result.Failed = append(result.Failed, DeployFailure{
+					Spec:  app,
+					Cause: err,
+				})
+				aborted = true
+				fmt.Printf("Error deploying %s @ %s: %v\n:", app.AppConfig.App, app.Path, err)
+			}
+		} else {
+			fmt.Printf("App is NOT valid, skipping!\n")
+			result.Failed = append(result.Failed, DeployFailure{
+				Spec:  app,
+				Cause: SkippedNotValid,
+			})
+		}
+	}
+
+	return result, nil
+}
+
 func Deploy(ctx context.Context, path string, deployCfg DeployConfig) error {
 
 	println("Traversing:", path)

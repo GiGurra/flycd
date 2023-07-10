@@ -123,12 +123,16 @@ var Cmd = &cobra.Command{
 		if *flags.startupSync {
 			fmt.Printf("Syncing/Deploying all apps in %s\n", path)
 
-			deployCfg := flycd.NewDeployConfig()
-			err = flycd.Deploy(ctx, path, deployCfg)
+			deployCfg := flycd.
+				NewDeployConfig().
+				WithAbortOnFirstError(false)
+
+			_, err := flycd.DeployAll(ctx, path, deployCfg)
 			if err != nil {
-				fmt.Printf("Error deploying from %s: %v\n:", path, err)
-				os.Exit(1)
+				fmt.Printf("Error deploying: %v\n", err)
+				return
 			}
+
 		}
 
 		// Echo instance
