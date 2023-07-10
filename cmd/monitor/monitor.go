@@ -16,6 +16,7 @@ import (
 )
 
 var flags struct {
+	whIfc       *string
 	whPath      *string
 	whPort      *int
 	startupSync *bool
@@ -152,7 +153,7 @@ var Cmd = &cobra.Command{
 		e.POST(whPath, processWebhook)
 
 		// Start server
-		e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", *flags.whPort)))
+		e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", *flags.whIfc, *flags.whPort)))
 	},
 }
 
@@ -184,6 +185,7 @@ func processHealth(c echo.Context) error {
 }
 
 func init() {
+	flags.whIfc = Cmd.Flags().StringP("webhook-interface", "i", os.Getenv("WEBHOOK_INTERFACE"), "Webhook interface")
 	flags.whPath = Cmd.Flags().StringP("webhook-path", "w", os.Getenv("WEBHOOK_PATH"), "Webhook path")
 	flags.whPort = Cmd.Flags().IntP("webhook-port", "p", 80, "Webhook port")
 	flags.startupSync = Cmd.Flags().BoolP("sync-on-startup", "s", false, "Sync all apps on startup")
