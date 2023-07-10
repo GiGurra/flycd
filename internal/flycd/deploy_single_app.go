@@ -5,6 +5,7 @@ import (
 	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
 	"github.com/google/uuid"
+	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -83,17 +84,16 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		return err
 	}
 
+	cfgHash, err := dirhash.HashDir(cfgDir.Cwd(), "", dirhash.DefaultHash)
+	if err != nil {
+		return fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
+	}
+
 	tempDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
 		return fmt.Errorf("error creating temp dir: %w", err)
 	}
 	defer tempDir.RemoveAll()
-
-	cmdRes, err := cfgDir.NewCommand("sha1sum", "app.yaml").Run(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting git commit hash of cfg dir: %w", err)
-	}
-	cfgHash := strings.TrimSpace(cmdRes.StdOut)
 
 	appHash, err := newUUIDString()
 	if err != nil {
@@ -183,17 +183,15 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 			sourcePath = cfg.Source.Path
 		}
 
-		res, err := cfgDir.
-			NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", sourcePath)).
-			Run(ctx)
-		if err != nil {
-			return fmt.Errorf("error getting git commit hash: %w", err)
-		}
-		appHash = strings.TrimSpace(res.StdOut)
-
 		_, err = cfgDir.
 			NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd())).
 			Run(ctx)
+
+		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
+		if err != nil {
+			return fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
+		}
+
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
@@ -208,13 +206,13 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 			return fmt.Errorf("error writing .dockerignore: %w", err)
 		}
 
-		res, err := tempDir.
-			NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd())).
-			Run(ctx)
+		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
 		if err != nil {
-			return fmt.Errorf("error getting git commit hash: %w", err)
+			return fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
 		}
-		appHash = strings.TrimSpace(res.StdOut)
+		if err != nil {
+			return fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
+		}
 
 	default:
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
