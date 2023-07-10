@@ -20,8 +20,13 @@ var Cmd = &cobra.Command{
 		path := args[0]
 		fmt.Printf("Deploying from: %s\n", path)
 
+		deployCfg := flycd.
+			NewDeployConfig().
+			WithRetries(0).
+			WithForce(*flags.force)
+
 		ctx := context.Background()
-		err := flycd.Deploy(ctx, path, *flags.force)
+		err := flycd.Deploy(ctx, path, deployCfg)
 		if err != nil {
 			fmt.Printf("Error deploying from %s: %v\n:", path, err)
 			os.Exit(1)

@@ -26,7 +26,7 @@ var Cmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		fmt.Printf("Check if flycd app already exists\n")
+		fmt.Printf("Check if app named '%s' already exists\n", appName)
 		appExists, err := flycd.AppExists(ctx, appName)
 		if err != nil {
 			fmt.Printf("Error checking if app exists: %v\n", err)
@@ -35,8 +35,10 @@ var Cmd = &cobra.Command{
 
 		if !appExists {
 
+			deployCfg := flycd.NewDeployConfig().WithRetries(0)
+
 			fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-			err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
+			err = flycd.DeployAppFromConfig(ctx, deployCfg, flycd.AppConfig{
 				App:           appName,
 				Org:           orgSlug,
 				PrimaryRegion: region,
@@ -92,7 +94,8 @@ var Cmd = &cobra.Command{
 		}
 
 		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
-		err = flycd.DeployAppFromConfig(ctx, true, flycd.AppConfig{
+		deployCfg := flycd.NewDeployConfig().WithForce(true).WithRetries(0)
+		err = flycd.DeployAppFromConfig(ctx, deployCfg, flycd.AppConfig{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,

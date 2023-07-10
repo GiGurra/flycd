@@ -12,7 +12,37 @@ import (
 	"time"
 )
 
-func DeployAppFromConfig(ctx context.Context, force bool, cfg AppConfig) error {
+type DeployConfig struct {
+	Force   bool
+	Retries int
+}
+
+func NewDeployConfig() DeployConfig {
+	return DeployConfig{
+		Force:   false,
+		Retries: 5,
+	}
+}
+
+func (c DeployConfig) WithForce(force ...bool) DeployConfig {
+	if len(force) > 0 {
+		c.Force = force[0]
+	} else {
+		c.Force = true
+	}
+	return c
+}
+
+func (c DeployConfig) WithRetries(retries ...int) DeployConfig {
+	if len(retries) > 0 {
+		c.Retries = retries[0]
+	} else {
+		c.Retries = 5
+	}
+	return c
+}
+
+func DeployAppFromConfig(ctx context.Context, deployCfg DeployConfig, cfg AppConfig) error {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
@@ -30,10 +60,10 @@ func DeployAppFromConfig(ctx context.Context, force bool, cfg AppConfig) error {
 		return fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return DeploySingleAppFromFolder(ctx, cfgDir.Root(), force)
+	return DeploySingleAppFromFolder(ctx, cfgDir.Root(), deployCfg)
 }
 
-func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) error {
+func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg DeployConfig) error {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
@@ -226,11 +256,11 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 		}
 
 		fmt.Printf("Comparing deployed config with current config\n")
-		if force ||
+		if deployCfg.Force ||
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
-			return deployExistingApp(ctx, cfg, tempDir)
+			return deployExistingApp(ctx, cfg, tempDir, deployCfg)
 		} else {
 			println("App is already up to date, skipping deploy")
 		}
@@ -241,7 +271,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 			return fmt.Errorf("error creating new app: %w", err)
 		}
 		println("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation")
-		return deployExistingApp(ctx, cfg, tempDir)
+		return deployExistingApp(ctx, cfg, tempDir, deployCfg)
 	}
 
 	return nil
@@ -265,14 +295,19 @@ func createNewApp(ctx context.Context, cfg AppConfig, tempDir util_work_dir.Work
 	return nil
 }
 
-func deployExistingApp(ctx context.Context, cfg AppConfig, tempDir util_work_dir.WorkDir) error {
+func deployExistingApp(
+	ctx context.Context,
+	cfg AppConfig,
+	tempDir util_work_dir.WorkDir,
+	deployCfg DeployConfig,
+) error {
 	allParams := append([]string{"deploy"}, cfg.DeployParams...)
 	allParams = append(allParams, "--remote-only", "--detach")
 
 	_, err := tempDir.
 		NewCommand("flyctl", allParams...).
 		WithTimeout(240 * time.Second).
-		WithTimeoutRetries(5).
+		WithTimeoutRetries(deployCfg.Retries).
 		WithStdLogging().
 		Run(ctx)
 	if err != nil {
