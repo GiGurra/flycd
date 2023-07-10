@@ -1,6 +1,9 @@
 # FlyCD
 
-## Goals
+## Concept
+
+![alt text](https://raw.githubusercontent.com/GiGurra/flycd/master/concept.svg)
+
 
 FlyCD is a tool designed to add ArgoCD/Flux style git-ops support for Fly.io. Although its fully automated git-ops
 functionality is still to be implemented, the following are the features it aims to provide:
