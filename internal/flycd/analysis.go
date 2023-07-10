@@ -1,14 +1,76 @@
 package flycd
 
 import (
+	"flycd/internal/flycd/util/util_work_dir"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 type TraversalStepAnalysis struct {
 	HasAppYaml            bool
 	HasProjectsDir        bool
 	TraversableCandidates []os.DirEntry
+}
+
+type SpecSnapshot struct {
+	Path     string
+	AppYaml  string
+	Children []SpecSnapshot
+}
+
+func AnalyseSpec(path string) (SpecSnapshot, error) {
+
+	// convert path to absolut path
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return SpecSnapshot{}, fmt.Errorf("error converting path to absolute path: %w", err)
+	}
+
+	nodeInfo, err := analyseTraversalCandidate(path)
+	if err != nil {
+		return SpecSnapshot{}, fmt.Errorf("error analysing node '%s': %w", path, err)
+	}
+
+	if nodeInfo.HasAppYaml {
+		workDir := util_work_dir.NewWorkDir(path)
+		appYaml, err := workDir.ReadFile("app.yaml")
+		if err != nil {
+			return SpecSnapshot{}, fmt.Errorf("error reading app.yaml: %w", err)
+		}
+		return SpecSnapshot{
+			Path:     path,
+			AppYaml:  appYaml,
+			Children: []SpecSnapshot{},
+		}, nil
+	} else if nodeInfo.HasProjectsDir {
+
+		child, err := AnalyseSpec(filepath.Join(path, "projects"))
+		if err != nil {
+			return SpecSnapshot{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
+		}
+		return SpecSnapshot{
+			Path:     path,
+			AppYaml:  "",
+			Children: []SpecSnapshot{child},
+		}, nil
+	} else {
+
+		children := make([]SpecSnapshot, len(nodeInfo.TraversableCandidates))
+		for i, entry := range nodeInfo.TraversableCandidates {
+			child, err := AnalyseSpec(filepath.Join(path, entry.Name()))
+			if err != nil {
+				return SpecSnapshot{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
+			}
+			children[i] = child
+		}
+
+		return SpecSnapshot{
+			Path:     path,
+			AppYaml:  "",
+			Children: children,
+		}, nil
+	}
 }
 
 func analyseTraversalCandidate(path string) (TraversalStepAnalysis, error) {
