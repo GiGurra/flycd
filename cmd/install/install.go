@@ -87,19 +87,13 @@ var Cmd = &cobra.Command{
 
 		}
 
-		wd, err := os.Getwd()
-		if err != nil {
-			fmt.Printf("Error getting current working directory: %v\n", err)
-			os.Exit(1)
-		}
-
 		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
 		deployCfg := flycd.NewDeployConfig().WithForce(true).WithRetries(0)
 		err = flycd.DeployAppFromConfig(ctx, deployCfg, flycd.AppConfig{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,
-			Source:        flycd.NewLocalFolderSource(wd),
+			Source:        flycd.NewGitSource("https://github.com/gigurra/flycd"),
 			LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
 			DeployParams:  flycd.NewDefaultDeployParams(),
 			Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
