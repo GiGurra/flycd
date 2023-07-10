@@ -99,7 +99,7 @@ Consider it proof of concept, and nothing more.
    flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
    verify that it works.
 5. Add a webhook to your git repo, pointing to your flycd app's url,
-   e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports github push
+   e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports GitHub push
    webhooks.
 6. Watch the magic happen!
 
