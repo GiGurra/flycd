@@ -156,12 +156,17 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 		if err != nil {
 
 			if errors.Is(err, context.DeadlineExceeded) {
-				fmt.Printf("timeout running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
+				fmt.Printf("timeout (go context.DeadlineExceeded) running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
 				continue
 			}
 
 			if strings.Contains(err.Error(), "signal: killed") {
-				fmt.Printf("timeout running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
+				fmt.Printf("timeout (signal: killed) running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
+				continue
+			}
+
+			if strings.Contains(err.Error(), "request returned non-2xx status, 504") {
+				fmt.Printf("timeout (http 504 from fly.io) running util_cmd for %s, attempt %d/%d \n", c.App, i+1, c.TimeoutRetries+1)
 				continue
 			}
 
