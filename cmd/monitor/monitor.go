@@ -53,7 +53,7 @@ var Cmd = &cobra.Command{
 		sshKey := os.Getenv("FLY_SSH_PRIVATE_KEY")
 		sshKeyName := os.Getenv("FLY_SSH_PRIVATE_KEY_NAME")
 		if sshKey == "" {
-			fmt.Printf("WARNING: FLY_SSH_PRIVATE_KEY env var not set. Proceeding and assuming you only want to access public repos...\n")
+			fmt.Printf("WARNING: FLY_SSH_PRIVATE_KEY env var not set. Proceeding and assuming you only want to access public repos, or you have magically solved git auth in some other way...\n")
 		} else {
 
 			fmt.Printf("FLY_SSH_PRIVATE_KEY env var is set, so we probably want o do something... \n")
