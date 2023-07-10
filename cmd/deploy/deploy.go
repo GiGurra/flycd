@@ -28,7 +28,7 @@ var Cmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		analysis, err := flycd.Analyse(path)
+		analysis, err := flycd.AnalyseSpec(path)
 		if err != nil {
 			fmt.Printf("Error analysing %s: %v\n:", path, err)
 			os.Exit(1)

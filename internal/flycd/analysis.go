@@ -19,6 +19,7 @@ type SpecNode struct {
 	AppYaml            string
 	AppConfig          AppConfig
 	AppConfigSyntaxErr error
+	AppConfigSemErr    error
 	Children           []SpecNode
 }
 
@@ -53,14 +54,14 @@ func (s SpecNode) IsAppNode() bool {
 }
 
 func (s SpecNode) IsAppSyntaxValid() bool {
-	return s.AppConfig.App != "" // it has been parsed
+	return s.AppConfig.App != "" && s.AppConfigSyntaxErr == nil
 }
 
 func (s SpecNode) IsValidApp() bool {
-	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfig.Validate() == nil
+	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigSemErr == nil
 }
 
-func Analyse(path string) (SpecNode, error) {
+func AnalyseSpec(path string) (SpecNode, error) {
 
 	// convert path to absolut path
 	path, err := filepath.Abs(path)
@@ -91,6 +92,16 @@ func Analyse(path string) (SpecNode, error) {
 			}, nil
 		}
 
+		err = appConfig.Validate()
+		if err != nil {
+			return SpecNode{
+				Path:            path,
+				AppYaml:         appYaml,
+				AppConfigSemErr: err,
+				Children:        []SpecNode{},
+			}, nil
+		}
+
 		return SpecNode{
 			Path:      path,
 			AppYaml:   appYaml,
@@ -99,7 +110,7 @@ func Analyse(path string) (SpecNode, error) {
 		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
-		child, err := Analyse(filepath.Join(path, "projects"))
+		child, err := AnalyseSpec(filepath.Join(path, "projects"))
 		if err != nil {
 			return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -112,7 +123,7 @@ func Analyse(path string) (SpecNode, error) {
 
 		children := make([]SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := Analyse(filepath.Join(path, entry.Name()))
+			child, err := AnalyseSpec(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
