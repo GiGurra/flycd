@@ -90,7 +90,7 @@ var Cmd = &cobra.Command{
 		}
 
 		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
-		err = flycd.DeployAppFromConfig(ctx, false, flycd.AppConfig{
+		err = flycd.DeployAppFromConfig(ctx, true, flycd.AppConfig{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,
