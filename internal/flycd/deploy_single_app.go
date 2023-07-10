@@ -288,7 +288,12 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 	return nil
 }
 
-func createNewApp(ctx context.Context, cfg AppConfig, tempDir util_work_dir.WorkDir, twoStep bool) error {
+func createNewApp(
+	ctx context.Context,
+	cfg AppConfig,
+	tempDir util_work_dir.WorkDir,
+	twoStep bool,
+) error {
 	allParams := append([]string{"launch"}, cfg.LaunchParams...)
 	allParams = append(allParams, "--remote-only")
 	if twoStep {
@@ -317,7 +322,7 @@ func deployExistingApp(
 
 	_, err := tempDir.
 		NewCommand("flyctl", allParams...).
-		WithTimeout(240 * time.Second).
+		WithTimeout(deployCfg.AttemptTimeout).
 		WithTimeoutRetries(deployCfg.Retries).
 		WithStdLogging().
 		Run(ctx)
