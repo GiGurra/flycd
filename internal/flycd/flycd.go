@@ -13,7 +13,7 @@ func Deploy(ctx context.Context, path string, deployCfg DeployConfig) error {
 
 	println("Traversing:", path)
 
-	analysis, err := analyseSingleFolder(path)
+	analysis, err := analyseTraversalCandidate(path)
 	if err != nil {
 		return fmt.Errorf("error analysing folder: %w", err)
 	}
