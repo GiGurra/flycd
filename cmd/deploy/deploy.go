@@ -5,6 +5,7 @@ import (
 	"flycd/internal/flycd"
 	"fmt"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var flags struct {
@@ -27,10 +28,18 @@ var Cmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		_, err := flycd.DeployAll(ctx, path, deployCfg)
+		result, err := flycd.DeployAll(ctx, path, deployCfg)
 		if err != nil {
 			fmt.Printf("Error deploying: %v\n", err)
 			return
+		}
+
+		if !result.Success() {
+			fmt.Printf("Failed to deploy %d apps\n", len(result.Failed))
+			for _, failure := range result.Failed {
+				fmt.Printf(" - %s: %v\n", failure.Spec.Path, failure.Cause)
+			}
+			os.Exit(1)
 		}
 	},
 }

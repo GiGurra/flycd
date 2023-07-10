@@ -19,6 +19,10 @@ type DeployResult struct {
 	Failed    []DeployFailure
 }
 
+func (r DeployResult) Success() bool {
+	return len(r.Failed) == 0
+}
+
 func NewDeployResult() DeployResult {
 	return DeployResult{
 		Succeeded: make([]SpecNode, 0),
