@@ -102,6 +102,5 @@ var Cmd = &cobra.Command{
 			fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
 			os.Exit(1)
 		}
-		// TODO: Add ssh keys as secrets so we can pull from other git repos argocd style
 	},
 }
