@@ -72,6 +72,7 @@ FlyCD is built on the principle of bootstrapping itself.
 * Need separate config repo(s) and webhooks. Right now flycd when deployed needs locally mounted projects/ folder.
 * Need regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably can't add
   webhooks.
+* Need some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are trivial to create :S. 
 
 **I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
 Consider it proof of concept, and nothing more.
