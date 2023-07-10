@@ -41,6 +41,7 @@ var Cmd = &cobra.Command{
 				PrimaryRegion: region,
 				Source:        flycd.NewInlineDockerFileSource("FROM nginx:latest"),
 				LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
+				DeployParams:  flycd.NewDefaultDeployParams(),
 				Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
 			})
 			if err != nil {
