@@ -64,7 +64,9 @@ func DeployAll(
 					Spec:  app,
 					Cause: err,
 				})
-				aborted = true
+				if deployCfg.AbortOnFirstError {
+					aborted = true
+				}
 				fmt.Printf("Error deploying %s @ %s: %v\n:", app.AppConfig.App, app.Path, err)
 			}
 		} else {
