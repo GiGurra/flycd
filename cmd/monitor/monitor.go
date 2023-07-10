@@ -181,7 +181,13 @@ func processWebhook(c echo.Context, path string) error {
 		}
 	}(body)
 
-	fmt.Printf("Received webhook: %s\n", string(bodyBytes))
+	truncatedBodyStr := string(bodyBytes)
+	// Truncate to max 512 bytes
+	if len(truncatedBodyStr) > 512 {
+		truncatedBodyStr = truncatedBodyStr[:512] + "..."
+	}
+
+	fmt.Printf("Received webhook: %s\n", truncatedBodyStr)
 
 	// Try to deserialize as GitHub webhook payload
 	var githubWebhookPayload github.PushWebhookPayload
