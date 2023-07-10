@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 var Cmd = &cobra.Command{
@@ -67,6 +68,7 @@ var Cmd = &cobra.Command{
 				fmt.Printf("Error creating org token: %v\n", err)
 				os.Exit(1)
 			}
+			token = strings.TrimSpace(token)
 
 			fmt.Printf("Token created.. storing it...\n")
 

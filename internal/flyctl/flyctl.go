@@ -46,7 +46,7 @@ func CreateOrgToken(orgSlug string) (string, error) {
 		return "", fmt.Errorf("error parsing flyctl tokens create org output")
 	}
 
-	return lines[iLineToken], nil
+	return strings.TrimSpace(lines[iLineToken]), nil
 }
 
 type StoreSecretCmd struct {
@@ -116,7 +116,7 @@ func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 	args := []string{
 		"secrets",
 		"set",
-		fmt.Sprintf(`%s="%s"`, cmd.SecretName, cmd.SecretValue),
+		fmt.Sprintf(`%s=%s`, cmd.SecretName, cmd.SecretValue),
 	}
 
 	if cmd.AppName != "" {
