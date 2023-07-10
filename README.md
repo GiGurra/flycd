@@ -50,30 +50,32 @@ FlyCD is built on the principle of bootstrapping itself.
 * It can operate as a manual Git-Ops CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
     * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
     * the target organisation to deploy to
-    * figures out if a deployment is actually warranted, by comparing `sha1sum` of app.yaml + git hash of app repo with hashes
-      saved to fly.io env for the app (using app env vars for this)
+    * figures out if a deployment is actually warranted, by configuration folder and app folder checksum/app git hash
+      with hashes saved to fly.io env for the app (using app env vars for this)
 * It can deploy many apps at the same time. Simply point it to a directory structure/hierarchy containing multiple
   app.yaml files, and flycd will traverse the structure recursively, clone each app's source repo and deploy each app
 * It can currently install itself into an existing fly.io environment (although it doesn't do anything yet once
   installed :D)
 
 **I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
-Consider it proof of concept, and nothing more. I have spent about 1 day on it so far.
+Consider it proof of concept, and nothing more.
 
 ## Current issues
 
-* Lots of implementation is still missing!
-* SUPER HACKY code right now, just a 2-day hack so far with most work delegated to shell commands instead of proper go
+* SUPER HACKY code right now, just a 3-day hack so far with most work delegated to shell commands instead of proper go
   libraries :D
     * Lots of refactoring needed!
 * This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
-  discussion thread over at fly.io community forums. 
-  * see https://community.fly.io/t/simple-self-contained-argocd-style-git-ops-with-fly-io-what-are-the-options-poc-flycd-app/14032
+  discussion thread over at fly.io community forums.
+    *
+  see https://community.fly.io/t/simple-self-contained-argocd-style-git-ops-with-fly-io-what-are-the-options-poc-flycd-app/14032
+* Only supports GitHub webhooks
+* The current handling of private repos is hacky (currently you have to manually save a fly.io secret with a private key
+  for git over ssh)
 
 ## Current incomplete TODO list
 
-* All of the above ☝️☝️☝️
-* listening to webhooks, and figuring out which app/apps it relates to
+* Fix current issues above ☝️☝️☝️
 * better error handling :S
 * better logging
 * some status views or status APIs maybe
@@ -85,30 +87,25 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
 
 ## Using it
 
-### Setting up your own config repo
+### Getting started
 
-1. Fork this repo and run `go install .`
+1. Fork this repo
 2. Modify the contents of the `project` folder (or create one), and add the app specifications you like
-3. Run `flycd deploy projects`
-
-### Installing flycd git-ops app to your fly.io env (not yet implemented)
-
-Not yet implemented.
-
-The following just installs a blank nginx server and creates an org token (prints it to your terminal).
-
-```
-flycd install <the app name you want for flycd @ fly.io> <your fly.io org, e.g. personal> <your fly.io region>
-```
-
-```
-fly apps list
-
-NAME            OWNER           STATUS          PLATFORM        LATEST DEPLOY        
-tempflycd       personal        deployed        machines        30m3s ago  
-```
+3. Run `go run . deploy projects` to ensure it deploys things the way you expect
+4. Run `go run . install <your-preferred-flycd-app-name> <org> <region>` to install flycd into your fly.io environment.
+   This will create a new fly.io app with <your-preferred-flycd-app-name> running flycd in monitoring mode/webhook
+   listening mode. There are some env vars you can use to modify the webhook path. The `install` command will
+   automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
+   flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
+   verify that it works.
+5. Add a webhook to your git repo, pointing to your flycd app's url,
+   e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports github push
+   webhooks.
+6. Watch the magic happen!
 
 ## Sample project structure
+
+Replace the `projects/` folder in your fork with something more useful.
 
 ```
 projects/
@@ -119,61 +116,5 @@ projects/
     └── x_git_app
         └── app.yaml
 ```
-## Sample flycd app.yaml
 
-```yaml
-############################
-## Basic configuration
-app: &app example-project1-git-app-foobar12341
-
-# Point to a repo. You are expected to mount the necessary ssh keys to the container
-source:
-  repo: "https://github.com/GiGurra/flycd-nginx-test"
-  #path: "path/to/app" # optional
-  ref:
-    branch: "main"
-    #tag: "v1.2.3"
-    #commit: "fae2e1f1f578ddda681f09137dbae831bde84fe7"
-  type: "git"
-
-############################
-## Optional configuration
-env:
-  ENV: "development"
-
-primary_region: "arn" # default region for tests
-services:
-  - internal_port: 80
-    protocol: "tcp"
-    force_https: true
-    auto_stop_machines: true
-    auto_start_machines: true
-    min_machines_running: 1
-    concurrency:
-      type: "requests"
-      soft_limit: 200
-      hard_limit: 250
-    ports:
-      - handlers: [ "http" ]
-        port: 80
-        force_https: true
-      - handlers: [ "tls", "http" ]
-        port: 443
-
-# Modify to your needs. By default, we will create a new fly.io
-# app without any user interaction/confirmation.
-# For the most simple apps, you probably don't need to modify these at all
-launch_params:
-  - "--ha=false"
-  - "--auto-confirm"
-  - "--now"
-  - "--copy-config"
-  - "--name"
-  - *app
-
-# Modify to your needs. By default, we will deploy the fly.io
-# app without any user interaction/confirmation.
-# For the most simple apps, you probably don't need to modify these at all
-deploy_params: [ ]
-
-```
+Check the examples in here to see how to configure your apps, or just check my hacky code :D
