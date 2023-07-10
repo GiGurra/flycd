@@ -32,6 +32,11 @@ RUN curl -L https://fly.io/install.sh | sh
 ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 
+# store known hosts for github.com and bitbucket.org
+RUN mkdir -p /root/.ssh
+RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+
 # Run the app
 ENTRYPOINT ["flycd"]
 CMD ["monitor", "projects"]
