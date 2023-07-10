@@ -2,9 +2,6 @@
 
 ## Concept
 
-![alt text](https://raw.githubusercontent.com/GiGurra/flycd/master/concept.svg)
-
-
 FlyCD is a tool designed to add ArgoCD/Flux style git-ops support for Fly.io. Although its fully automated git-ops
 functionality is still to be implemented, the following are the features it aims to provide:
 
@@ -26,6 +23,11 @@ functionality is still to be implemented, the following are the features it aims
 * FlyCD spec format is a strict superset of regular fly.io toml files. Although fly.io uses toml and flycd uses yaml,
   they are 1:1 convertible between, and who knows, flycd might use toml in the future if flycd author(s) stop hating
   toml :).
+
+Example of what it could look like (doesn't have to include multiple envs, or anything like this):
+
+![alt text](https://raw.githubusercontent.com/GiGurra/flycd/master/concept.svg)
+
 
 ```
 $flycd --help
