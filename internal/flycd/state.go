@@ -20,6 +20,7 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 	}
 
 	// find app that matches
+	fmt.Printf("Scanning %d apps for matching webhook url %s...\n", len(availableApps), payload.Repository.Url)
 	for _, app := range availableApps {
 		localKey := strings.ToLower(app.AppConfig.Source.Repo)
 		remoteKeys := []string{
