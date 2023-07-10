@@ -271,7 +271,7 @@ func deployExistingApp(ctx context.Context, cfg AppConfig, tempDir util_work_dir
 
 	_, err := tempDir.
 		NewCommand("flyctl", allParams...).
-		WithTimeout(120 * time.Second).
+		WithTimeout(240 * time.Second).
 		WithTimeoutRetries(5).
 		WithStdLogging().
 		Run(ctx)

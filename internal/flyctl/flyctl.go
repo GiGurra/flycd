@@ -125,7 +125,7 @@ func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 
 	_, err := util_cmd.
 		NewCommandA("flyctl", args...).
-		WithTimeout(120 * time.Second).
+		WithTimeout(240 * time.Second).
 		WithTimeoutRetries(5).
 		WithStdLogging().
 		Run(ctx)
