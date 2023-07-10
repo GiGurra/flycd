@@ -18,16 +18,16 @@ ENV PATH="/root/go/bin:${PATH}"
 # Install yaml tools
 RUN go install github.com/sclevine/yj/v5@v5.1.0
 
-# Copy over the app
-COPY . /flycd
-WORKDIR /flycd
-ENV PATH="/flycd:${PATH}"
-
 # We actually always want to do this last, so we always get a new version of flyctl
 RUN curl -L https://fly.io/install.sh | sh
 
 ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
+
+# Copy over the app
+COPY . /flycd
+WORKDIR /flycd
+ENV PATH="/flycd:${PATH}"
 
 # Download the dependencies. Done in a separate step so we can cache it.
 RUN go mod download
