@@ -50,7 +50,7 @@ RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 
 # Lastly, copy the latest version of the projects folder
-COPY ./cmd /flycd/cmd
+COPY ./projects /flycd/projects
 
 # Run the app
 ENTRYPOINT ["flycd"]
