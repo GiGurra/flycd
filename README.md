@@ -65,8 +65,7 @@ FlyCD is built on the principle of bootstrapping itself.
       with hashes saved to fly.io env for the app (using app env vars for this)
 * It can deploy many apps at the same time. Simply point it to a directory structure/hierarchy containing multiple
   app.yaml files, and flycd will traverse the structure recursively, clone each app's source repo and deploy each app
-* It can currently install itself into an existing fly.io environment (although it doesn't do anything yet once
-  installed :D)
+* It can currently install itself into an existing fly.io environment
 * Needs some persistence and queueing of incoming webhook commands to no run into data races, or lose data if flycd
   crashes or is re-deployed :S. Currently, it just spins up a go-routine for running the new deployment.
 * Needs a better way to scan existing available apps than re-read all of their specs from disk on every webhook event.
