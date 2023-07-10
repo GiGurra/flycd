@@ -56,12 +56,6 @@ var Cmd = &cobra.Command{
 				fmt.Printf("App is NOT valid, skipping!\n")
 			}
 		}
-		/*
-			err := flycd.Deploy(ctx, path, deployCfg)
-			if err != nil {
-				fmt.Printf("Error deploying from %s: %v\n:", path, err)
-				os.Exit(1)
-			}*/
 	},
 }
 
