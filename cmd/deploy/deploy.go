@@ -9,7 +9,7 @@ import (
 )
 
 var Cmd = &cobra.Command{
-	Use:   "deploy",
+	Use:   "deploy <path>",
 	Short: "Manually deploy a single flycd app, or all flycd apps inside a folder",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
