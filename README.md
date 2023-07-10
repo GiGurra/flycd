@@ -63,7 +63,7 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
 ## Current issues
 
 * Lots of implementation is still missing!
-* SUPER HACKY code right now, just a one-day hack so far with most work delegated to shell commands instead of proper go
+* SUPER HACKY code right now, just a 2-day hack so far with most work delegated to shell commands instead of proper go
   libraries :D
     * Lots of refactoring needed!
 * This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
@@ -73,7 +73,6 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
 ## Current incomplete TODO list
 
 * All of the above ☝️☝️☝️
-* ssh keys/credentials for cloning app repos
 * listening to webhooks, and figuring out which app/apps it relates to
 * better error handling :S
 * better logging
@@ -88,9 +87,7 @@ Consider it proof of concept, and nothing more. I have spent about 1 day on it s
 
 ### Setting up your own config repo
 
-1. The two ways I'd recommend, either:
-    * Fork this repo and run `go install .`
-    * `go install github.com/gigurra/flycd@v0.0.8`
+1. Fork this repo and run `go install .`
 2. Modify the contents of the `project` folder (or create one), and add the app specifications you like
 3. Run `flycd deploy projects`
 
@@ -101,7 +98,7 @@ Not yet implemented.
 The following just installs a blank nginx server and creates an org token (prints it to your terminal).
 
 ```
-flycd install tempflycd personal ams
+flycd install <the app name you want for flycd @ fly.io> <your fly.io org, e.g. personal> <your fly.io region>
 ```
 
 ```
