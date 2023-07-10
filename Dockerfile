@@ -23,14 +23,17 @@ COPY . /flycd
 WORKDIR /flycd
 ENV PATH="/flycd:${PATH}"
 
-# Build the app
-RUN go build -o flycd
-
 # We actually always want to do this last, so we always get a new version of flyctl
 RUN curl -L https://fly.io/install.sh | sh
 
 ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
+
+# Build the app
+RUN go build -o flycd
+
+# grab the latest version of flyctl
+RUN flyctl version upgrade
 
 # store known hosts for github.com and bitbucket.org
 RUN mkdir -p /root/.ssh
