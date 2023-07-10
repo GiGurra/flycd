@@ -2,10 +2,12 @@ package monitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_tab_table"
+	"github.com/gigurra/flycd/internal/github"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -155,7 +157,9 @@ var Cmd = &cobra.Command{
 
 		// Routes
 		e.GET("/", processHealth)
-		e.POST(whPath, processWebhook)
+		e.POST(whPath, func(c echo.Context) error {
+			return processWebhook(c, path)
+		})
 
 		// Start server
 		e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", *flags.whIfc, *flags.whPort)))
@@ -163,7 +167,7 @@ var Cmd = &cobra.Command{
 }
 
 // Handler
-func processWebhook(c echo.Context) error {
+func processWebhook(c echo.Context, path string) error {
 
 	body := c.Request().Body
 	bodyBytes, err := io.ReadAll(body)
@@ -178,9 +182,22 @@ func processWebhook(c echo.Context) error {
 	}(body)
 
 	fmt.Printf("Received webhook: %s\n", string(bodyBytes))
-	// TODO: Do something useful here
 
-	return c.String(http.StatusOK, "Hello, World!")
+	// Try deserialize as github webhook payload
+	var githubWebhookPayload github.PushWebhookPayload
+	err = json.Unmarshal(bodyBytes, &githubWebhookPayload)
+	if err != nil {
+		fmt.Printf("ERROR: deserializing github webhook payload: %v\n", err)
+		return c.String(http.StatusBadRequest, "Error deserializing webhook payload")
+	}
+
+	err = flycd.HandleGithubWebhook(githubWebhookPayload, path)
+	if err != nil {
+		fmt.Printf("ERROR: handling github webhook: %v\n", err)
+		return c.String(http.StatusInternalServerError, "something went wrong - check flycd server logs!")
+	}
+
+	return c.String(http.StatusAccepted, "Accepted!")
 }
 
 // Handler
