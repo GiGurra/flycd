@@ -38,7 +38,7 @@ var Cmd = &cobra.Command{
 			deployCfg := flycd.NewDeployConfig().WithRetries(0)
 
 			fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-			err = flycd.DeployAppFromConfig(ctx, deployCfg, flycd.AppConfig{
+			err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, flycd.AppConfig{
 				App:           appName,
 				Org:           orgSlug,
 				PrimaryRegion: region,
@@ -89,7 +89,7 @@ var Cmd = &cobra.Command{
 
 		fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
 		deployCfg := flycd.NewDeployConfig().WithForce(true).WithRetries(0)
-		err = flycd.DeployAppFromConfig(ctx, deployCfg, flycd.AppConfig{
+		err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, flycd.AppConfig{
 			App:           appName,
 			Org:           orgSlug,
 			PrimaryRegion: region,

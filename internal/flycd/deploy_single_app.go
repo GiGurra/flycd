@@ -65,7 +65,7 @@ func (c DeployConfig) WithAttemptTimeout(timeout ...time.Duration) DeployConfig 
 	return c
 }
 
-func DeployAppFromConfig(ctx context.Context, deployCfg DeployConfig, cfg AppConfig) error {
+func DeployAppFromInlineConfig(ctx context.Context, deployCfg DeployConfig, cfg AppConfig) error {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {

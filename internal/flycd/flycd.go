@@ -54,7 +54,7 @@ func DeployAll(
 			continue
 		}
 		if app.IsValidApp() {
-			err := Deploy(ctx, app.Path, deployCfg)
+			err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
 			if err != nil {
 				result.Failed = append(result.Failed, DeployFailure{
 					Spec:  app,
@@ -73,39 +73,6 @@ func DeployAll(
 	}
 
 	return result, nil
-}
-
-func Deploy(ctx context.Context, path string, deployCfg DeployConfig) error {
-
-	println("Traversing:", path)
-
-	analysis, err := analyseTraversalCandidate(path)
-	if err != nil {
-		return fmt.Errorf("error analysing folder: %w", err)
-	}
-
-	if analysis.HasAppYaml {
-
-		fmt.Printf("Found app.yaml in %s, deploying app\n", path)
-		err2 := DeploySingleAppFromFolder(ctx, path, deployCfg)
-		if err2 != nil {
-			return fmt.Errorf("error deploying app: %w", err2)
-		}
-
-	} else if analysis.HasProjectsDir {
-		println("Found projects dir, traversing only projects")
-		return Deploy(ctx, path+"/projects", deployCfg)
-	} else {
-		println("Found neither app.yaml nor projects dir, traversing all dirs")
-		for _, entry := range analysis.TraversableCandidates {
-			err := Deploy(ctx, path+"/"+entry.Name(), deployCfg)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func AppIsDeployed(ctx context.Context, name string) (bool, error) {
