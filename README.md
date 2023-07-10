@@ -8,6 +8,14 @@ functionality is still to be implemented, the following are the features it aims
 * Extending the regular fly.io fly.toml specifications with additional configuration parameters,
   removing the need for running **_any_** flyctl commands manually.
 
+* FlyCD separates app development from app environment deployment/composition.
+    * You write code in one repo and push updates to your app. Don't include any environment specific configuration in
+      your app repo.
+    * Have arbitrary number of fly.io environments making use of that app, in different
+      versions, configurations etc. No need to embed environment specific configurations into your app.
+    * Reference/deploy any app, from your own repos or repos owned by others, and compose the cloud environment you want
+      separately from app development.
+
 * FlyCD is installed and runs as any other fly.io app inside the fly.io environment you install it in, listening to
   webhooks from git pushes,
   and grabbing the latest versions (or specific versions) of your applications from git, and deploying them to fly.io.
