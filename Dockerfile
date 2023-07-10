@@ -18,7 +18,7 @@ ENV PATH="/root/go/bin:${PATH}"
 # Install yaml tools
 RUN go install github.com/sclevine/yj/v5@v5.1.0
 
-# We actually always want to do this last, so we always get a new version of flyctl
+# Install flyctl/fly.io cli
 RUN curl -L https://fly.io/install.sh | sh
 
 ENV FLYCTL_INSTALL="/root/.fly"
