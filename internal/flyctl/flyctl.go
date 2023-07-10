@@ -82,7 +82,7 @@ func ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	strResp, err := util_cmd.
+	res, err := util_cmd.
 		NewCommandA("flyctl", args...).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(10).
@@ -93,7 +93,7 @@ func ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
 
 	// Parse strResp as json array of flySecretListItem
 	var secrets []flySecretListItem
-	err = json.Unmarshal([]byte(strResp), &secrets)
+	err = json.Unmarshal([]byte(res.StdOut), &secrets)
 	if err != nil {
 		return false, fmt.Errorf("error parsing flyctl secrets list for '%s': %w", cmd.AppName, err)
 	}
@@ -123,11 +123,12 @@ func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	err := util_cmd.
+	_, err := util_cmd.
 		NewCommandA("flyctl", args...).
 		WithTimeout(120 * time.Second).
 		WithTimeoutRetries(5).
-		RunStreamedPassThrough(ctx)
+		WithStdLogging().
+		Run(ctx)
 	if err != nil {
 		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
 	}

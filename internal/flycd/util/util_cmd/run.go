@@ -28,7 +28,8 @@ type Command struct {
 type CommandResult struct {
 	StdOut   string
 	StdErr   string
-	err      error
+	Combined string
+	Err      error
 	Attempts int
 }
 
@@ -114,10 +115,27 @@ func (c Command) logBeforeRun() {
 	}
 }
 
-func (c Command) RunStreamAndCapture(ctx context.Context) CommandResult {
+func (c Command) WithStdLogging() Command {
+	c.LogStdErr = true
+	c.LogStdOut = true
+	return c
+}
+
+func (c Command) WithStdErrLogging() Command {
+	c.LogStdErr = true
+	return c
+}
+
+func (c Command) WithStdOutLogging() Command {
+	c.LogStdOut = true
+	return c
+}
+
+func (c Command) Run(ctx context.Context) (CommandResult, error) {
 
 	stdoutBuffer := &bytes.Buffer{}
 	stderrBuffer := &bytes.Buffer{}
+	combinedBuffer := &bytes.Buffer{}
 	attempts := 0
 
 	err := c.doRun(ctx, func(cmd *exec.Cmd) error {
@@ -126,17 +144,18 @@ func (c Command) RunStreamAndCapture(ctx context.Context) CommandResult {
 		attempts++
 		stdoutBuffer = &bytes.Buffer{}
 		stderrBuffer = &bytes.Buffer{}
+		combinedBuffer = &bytes.Buffer{}
 
 		cmd.Stdin = os.Stdin
 		if c.LogStdOut {
-			cmd.Stdout = io.MultiWriter(os.Stdout, stdoutBuffer)
+			cmd.Stdout = io.MultiWriter(os.Stdout, stdoutBuffer, combinedBuffer)
 		} else {
-			cmd.Stdout = stdoutBuffer
+			cmd.Stdout = io.MultiWriter(stdoutBuffer, combinedBuffer)
 		}
 		if c.LogStdErr {
-			cmd.Stderr = io.MultiWriter(os.Stderr, stderrBuffer)
+			cmd.Stderr = io.MultiWriter(os.Stderr, stderrBuffer, combinedBuffer)
 		} else {
-			cmd.Stderr = stderrBuffer
+			cmd.Stderr = io.MultiWriter(stderrBuffer, combinedBuffer)
 		}
 
 		return cmd.Run()
@@ -144,30 +163,19 @@ func (c Command) RunStreamAndCapture(ctx context.Context) CommandResult {
 
 	stdout := stdoutBuffer.String()
 	stderr := stderrBuffer.String()
+	combined := combinedBuffer.String()
+
+	if err != nil {
+		err = fmt.Errorf("command failed: %w\nstderr:%s", err, stderr)
+	}
 
 	return CommandResult{
 		StdOut:   stdout,
 		StdErr:   stderr,
-		err:      err,
+		Combined: combined,
+		Err:      err,
 		Attempts: attempts,
-	}
-}
-
-func (c Command) Run(ctx context.Context) (string, error) {
-
-	res := c.RunStreamAndCapture(ctx)
-
-	return res.StdOut, res.err
-}
-
-func (c Command) RunStreamedPassThrough(ctx context.Context) error {
-
-	c.LogStdOut = true
-	c.LogStdErr = true
-
-	res := c.RunStreamAndCapture(ctx)
-
-	return res.err
+	}, err
 }
 
 func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error) error {
@@ -212,11 +220,7 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 				continue
 			}
 
-			stdErr := ""
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				stdErr = string(exitErr.Stderr)
-			}
-			return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, stdErr, err)
+			return fmt.Errorf("error running util_cmd %s \n %s: %w", c.App, err.Error(), err)
 		}
 
 		return nil

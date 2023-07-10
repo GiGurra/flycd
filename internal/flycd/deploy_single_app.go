@@ -48,11 +48,11 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 	}
 	defer tempDir.RemoveAll()
 
-	cfgHash, err := cfgDir.NewCommand("sha1sum", "app.yaml").Run(ctx)
+	cmdRes, err := cfgDir.NewCommand("sha1sum", "app.yaml").Run(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting git commit hash of cfg dir: %w", err)
 	}
-	cfgHash = strings.TrimSpace(cfgHash)
+	cfgHash := strings.TrimSpace(cmdRes.StdOut)
 
 	appHash, err := newUUIDString()
 	if err != nil {
@@ -67,51 +67,74 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 		if cfg.Source.Ref.Commit != "" {
 			// Shallow clone of specific commit
 			// https://stackoverflow.com/questions/31278902/how-to-shallow-clone-a-specific-commit-with-depth-1
-			err = tempDir.NewCommand("git", "init").RunStreamedPassThrough(ctx)
+			_, err = tempDir.
+				NewCommand("git", "init").
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error initializing git repo: %w", err)
 			}
 
-			err = tempDir.NewCommand("git", "remote", "add", "origin", cfg.Source.Repo).RunStreamedPassThrough(ctx)
+			_, err = tempDir.
+				NewCommand("git", "remote", "add", "origin", cfg.Source.Repo).
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error adding git remote: %w", err)
 			}
 
-			err = tempDir.NewCommand("git", "fetch", "--depth", "1", "origin", cfg.Source.Ref.Commit).RunStreamedPassThrough(ctx)
+			_, err = tempDir.
+				NewCommand("git", "fetch", "--depth", "1", "origin", cfg.Source.Ref.Commit).
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error fetching git commit: %w", err)
 			}
 
-			err = tempDir.NewCommand("git", "checkout", "FETCH_HEAD").RunStreamedPassThrough(ctx)
+			_, err = tempDir.
+				NewCommand("git", "checkout", "FETCH_HEAD").
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error checking out git commit: %w", err)
 			}
 
 		} else if cfg.Source.Ref.Tag != "" {
-			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Tag).RunStreamedPassThrough(ctx)
+			_, err = tempDir.
+				NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Tag).
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
 			tempDir.SetCwd(tempDir.Cwd() + "/repo")
 
 		} else if cfg.Source.Ref.Branch != "" {
-			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch).RunStreamedPassThrough(ctx)
+			_, err = tempDir.
+				NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch).
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
 			tempDir.SetCwd(tempDir.Cwd() + "/repo")
 		} else {
-			err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1").RunStreamedPassThrough(ctx)
+			_, err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1").
+				WithStdLogging().
+				Run(ctx)
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
 			tempDir.SetCwd(tempDir.Cwd() + "/repo")
 		}
 
-		appHash, err = tempDir.NewCommand("git", "rev-parse", "HEAD").Run(ctx)
+		res, err := tempDir.
+			NewCommand("git", "rev-parse", "HEAD").
+			Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
+		appHash = strings.TrimSpace(res.StdOut)
 	case SourceTypeLocal:
 		// Copy the local folder to the temp tempDir
 		sourcePath := "."
@@ -119,13 +142,17 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 			sourcePath = cfg.Source.Path
 		}
 
-		appHash, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", sourcePath)).Run(ctx)
+		res, err := cfgDir.
+			NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", sourcePath)).
+			Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
-		appHash = strings.TrimSpace(appHash)
+		appHash = strings.TrimSpace(res.StdOut)
 
-		_, err = cfgDir.NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd())).Run(ctx)
+		_, err = cfgDir.
+			NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd())).
+			Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
@@ -140,11 +167,13 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, force bool) err
 			return fmt.Errorf("error writing .dockerignore: %w", err)
 		}
 
-		appHash, err = tempDir.NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd())).Run(ctx)
+		res, err := tempDir.
+			NewCommand("sh", "-c", fmt.Sprintf("find \"%s\" -type f -exec shasum {} \\; | sort | sha1sum | awk '{ print $1 }'", tempDir.Cwd())).
+			Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
-		appHash = strings.TrimSpace(appHash)
+		appHash = strings.TrimSpace(res.StdOut)
 
 	default:
 		return fmt.Errorf("unknown source type %s", cfg.Source.Type)
@@ -224,11 +253,12 @@ func createNewApp(ctx context.Context, cfg AppConfig, tempDir util_work_dir.Work
 	if twoStep {
 		allParams = append(allParams, "--build-only")
 	}
-	err := tempDir.
+	_, err := tempDir.
 		NewCommand("flyctl", allParams...).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(10).
-		RunStreamedPassThrough(ctx)
+		WithStdLogging().
+		Run(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating app %s: %w", cfg.App, err)
 	}
@@ -239,11 +269,12 @@ func deployExistingApp(ctx context.Context, cfg AppConfig, tempDir util_work_dir
 	allParams := append([]string{"deploy"}, cfg.DeployParams...)
 	allParams = append(allParams, "--remote-only", "--detach")
 
-	err := tempDir.
+	_, err := tempDir.
 		NewCommand("flyctl", allParams...).
 		WithTimeout(120 * time.Second).
 		WithTimeoutRetries(5).
-		RunStreamedPassThrough(ctx)
+		WithStdLogging().
+		Run(ctx)
 	if err != nil {
 		return fmt.Errorf("error deploying app %s: %w", cfg.App, err)
 	}
