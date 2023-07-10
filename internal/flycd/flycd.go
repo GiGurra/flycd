@@ -74,8 +74,6 @@ func GetDeployedAppConfig(ctx context.Context, name string) (AppConfig, error) {
 		return AppConfig{}, fmt.Errorf("error running flyctl config show for app %s: %w", name, err)
 	}
 
-	// TODO: If app is stuck in pending state (prev deploy failed or never performed, we need to repair it...Somehow :S)
-
 	var deployedCfg AppConfig
 	err = json.Unmarshal([]byte(jsonConf), &deployedCfg)
 	if err != nil {
