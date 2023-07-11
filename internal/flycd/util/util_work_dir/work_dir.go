@@ -87,3 +87,8 @@ func (t WorkDir) CopyContentsTo(target WorkDir) error {
 	}
 	return nil
 }
+
+func (t WorkDir) Exists() bool {
+	_, err := os.Stat(t.Cwd())
+	return err == nil
+}

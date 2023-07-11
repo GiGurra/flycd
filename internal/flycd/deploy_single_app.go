@@ -190,6 +190,13 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		appHash = strings.TrimSpace(res.StdOut)
 	case SourceTypeLocal:
 		srcDir := cfgDir.WithPushCwd(cfg.Source.Path)
+
+		// check if srcDir exists
+		if !srcDir.Exists() {
+			// Try with it as an absolute path
+			srcDir = util_work_dir.NewWorkDir(cfg.Source.Path)
+		}
+
 		err = srcDir.CopyContentsTo(tempDir)
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", srcDir.Cwd(), err)
