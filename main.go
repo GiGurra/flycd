@@ -11,7 +11,7 @@ import (
 	"os/exec"
 )
 
-const Version = "v0.0.11"
+const Version = "v0.0.12"
 
 var rootCmd = &cobra.Command{
 	Use:   "flycd",
@@ -36,7 +36,7 @@ func main() {
 	fmt.Printf("Starting FlyCD %s...\n", Version)
 
 	// Check that required applications are installed
-	requiredApps := []string{"flyctl", "git", "ssh", "yj", "cat", "cp"}
+	requiredApps := []string{"flyctl", "git", "ssh", "cat", "cp"}
 	for _, app := range requiredApps {
 		_, err := exec.LookPath(app)
 		if err != nil {

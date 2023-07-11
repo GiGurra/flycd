@@ -3,6 +3,7 @@ package flycd
 import (
 	"context"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/google/uuid"
 	"golang.org/x/mod/sumdb/dirhash"
@@ -240,17 +241,24 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
 
 	// Write a new app.yaml file with the appHash
-	cfgBytes, err := yaml.Marshal(cfg)
+	cfgBytesYaml, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("error marshalling app.yaml: %w", err)
 	}
 
-	err = tempDir.WriteFile("app.yaml", string(cfgBytes))
-
-	// execute 'cat app.yaml | yj -yt > fly.toml' on the util_cmd line
-	_, err = tempDir.NewCommand("sh", "-c", "cat app.yaml | yj -yt > fly.toml").Run(ctx)
+	cfgBytesToml, err := util_toml.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("error producing fly.toml from app.yaml in folder %s: %w", path, err)
+		return fmt.Errorf("error marshalling fly.toml: %w", err)
+	}
+
+	err = tempDir.WriteFile("app.yaml", string(cfgBytesYaml))
+	if err != nil {
+		return fmt.Errorf("error writing app.yaml: %w", err)
+	}
+
+	err = tempDir.WriteFile("fly.toml", cfgBytesToml)
+	if err != nil {
+		return fmt.Errorf("error writing fly.toml: %w", err)
 	}
 
 	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist

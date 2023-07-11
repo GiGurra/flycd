@@ -65,7 +65,42 @@ deploy_params:
   - "--ha=false"
 `
 
-func TestConvertYaml2Toml(t *testing.T) {
+var srcToml = `
+app = "example-project1-local-app-foobar12341"
+org = "personal"
+primary_region = "arn"
+launch_params = ["--ha=false", "--auto-confirm", "--now", "--copy-config", "--name", "example-project1-local-app-foobar12341", "--region", "arn", "--org", "personal"]
+deploy_params = ["--ha=false"]
+
+[source]
+type = "local"
+
+[env]
+ENV = "development"
+
+[[services]]
+internal_port = 80
+protocol = "tcp"
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 0
+[services.concurrency]
+type = "requests"
+soft_limit = 200
+hard_limit = 250
+
+[[services.ports]]
+handlers = ["http"]
+port = 80
+force_https = true
+
+[[services.ports]]
+handlers = ["tls", "http"]
+port = 443
+`
+
+func TestConvertYaml2TomlEqualConfigsAsYaml(t *testing.T) {
 
 	// Parse the yaml as a map
 	mapData := make(map[string]any)
@@ -107,5 +142,29 @@ func TestConvertYaml2Toml(t *testing.T) {
 	diff := cmp.Diff(backToYaml1, backToYaml2)
 	if diff != "" {
 		t.Fatalf("Maps are not equal: %v", diff)
+	}
+}
+
+func TestConvertYaml2TomlEqualConfigsAsObjects(t *testing.T) {
+
+	cfgFromYaml := AppConfig{}
+	cfgFromToml := AppConfig{}
+
+	// Parse the yaml as a cfg
+	err := yaml.Unmarshal([]byte(srcYaml), &cfgFromYaml)
+	if err != nil {
+		t.Fatalf("Failed to parse yaml: %v", err)
+	}
+
+	// Parse the toml as a cfg
+	err = util_toml.Unmarshal(srcToml, &cfgFromToml)
+	if err != nil {
+		t.Fatalf("Failed to parse toml: %v", err)
+	}
+
+	// Check that the configs are equal
+	diff := cmp.Diff(cfgFromYaml, cfgFromToml)
+	if diff != "" {
+		t.Fatalf("Configs are not equal: %v", diff)
 	}
 }

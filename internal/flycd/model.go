@@ -6,14 +6,14 @@ import (
 )
 
 type AppConfig struct {
-	App           string            `yaml:"app"`
-	Org           string            `yaml:"org"`
-	PrimaryRegion string            `yaml:"primary_region"`
-	Source        Source            `yaml:"source"`
-	Services      []Service         `yaml:"services"`
-	LaunchParams  []string          `yaml:"launch_params"`
-	DeployParams  []string          `yaml:"deploy_params"`
-	Env           map[string]string `yaml:"env"`
+	App           string            `yaml:"app" toml:"app"`
+	Org           string            `yaml:"org" toml:"org"`
+	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region"`
+	Source        Source            `yaml:"source" toml:"source"`
+	Services      []Service         `yaml:"services" toml:"services"`
+	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params"`
+	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
+	Env           map[string]string `yaml:"env" toml:"env"`
 }
 
 func (a *AppConfig) Validate() error {
@@ -101,9 +101,9 @@ func NewDefaultDeployParams() []string {
 }
 
 type GitRef struct {
-	Branch string `yaml:"branch"`
-	Tag    string `yaml:"tag"`
-	Commit string `yaml:"commit"`
+	Branch string `yaml:"branch" toml:"branch"`
+	Tag    string `yaml:"tag" toml:"tag"`
+	Commit string `yaml:"commit" toml:"commit"`
 }
 
 func (g *GitRef) IsEmpty() bool {
@@ -111,11 +111,11 @@ func (g *GitRef) IsEmpty() bool {
 }
 
 type Source struct {
-	Repo   string     `yaml:"repo"`
-	Path   string     `yaml:"path"`
-	Ref    GitRef     `yaml:"ref"`
-	Type   SourceType `yaml:"type"`
-	Inline string     `yaml:"inline"`
+	Repo   string     `yaml:"repo" toml:"repo"`
+	Path   string     `yaml:"path" toml:"path"`
+	Ref    GitRef     `yaml:"ref" toml:"ref"`
+	Type   SourceType `yaml:"type" toml:"type"`
+	Inline string     `yaml:"inline" toml:"inline"`
 }
 
 func NewInlineDockerFileSource(inline string) Source {
@@ -170,24 +170,24 @@ func (s *Source) Validate() error {
 }
 
 type Concurrency struct {
-	Type      string `yaml:"type"`
-	SoftLimit int    `yaml:"soft_limit"`
-	HardLimit int    `yaml:"hard_limit"`
+	Type      string `yaml:"type" toml:"type"`
+	SoftLimit int    `yaml:"soft_limit" toml:"soft_limit"`
+	HardLimit int    `yaml:"hard_limit" toml:"hard_limit"`
 }
 
 type Port struct {
-	Handlers   []string `yaml:"handlers"`
-	Port       int      `yaml:"port"`
-	ForceHttps bool     `yaml:"force_https"`
+	Handlers   []string `yaml:"handlers" toml:"handlers"`
+	Port       int      `yaml:"port" toml:"port"`
+	ForceHttps bool     `yaml:"force_https" toml:"force_https"`
 }
 
 type Service struct {
-	InternalPort       int         `yaml:"internal_port"`
-	Protocol           string      `yaml:"protocol"`
-	ForceHttps         bool        `yaml:"force_https"`
-	AutoStopMachines   bool        `yaml:"auto_stop_machines"`
-	AutoStartMachines  bool        `yaml:"auto_start_machines"`
-	MinMachinesRunning int         `yaml:"min_machines_running"`
-	Concurrency        Concurrency `yaml:"concurrency"`
-	Ports              []Port      `yaml:"ports"`
+	InternalPort       int         `yaml:"internal_port" toml:"internal_port"`
+	Protocol           string      `yaml:"protocol" toml:"protocol"`
+	ForceHttps         bool        `yaml:"force_https" toml:"force_https"`
+	AutoStopMachines   bool        `yaml:"auto_stop_machines" toml:"auto_stop_machines"`
+	AutoStartMachines  bool        `yaml:"auto_start_machines" toml:"auto_start_machines"`
+	MinMachinesRunning int         `yaml:"min_machines_running" toml:"min_machines_running"`
+	Concurrency        Concurrency `yaml:"concurrency" toml:"concurrency"`
+	Ports              []Port      `yaml:"ports" toml:"ports"`
 }
