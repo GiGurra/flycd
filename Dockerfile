@@ -28,7 +28,7 @@ ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 RUN mkdir -p /flycd
 COPY ./cmd /flycd/cmd
 COPY ./internal /flycd/internal
-COPY ./main.go /flycd/main.go
+COPY ./*.go /flycd/
 COPY ./go.mod /flycd/go.mod
 COPY ./go.sum /flycd/go.sum
 COPY ./LICENSE /flycd/LICENSE

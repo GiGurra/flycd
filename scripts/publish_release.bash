@@ -2,6 +2,11 @@
 
 set -e
 
+# check that the build works
+go clean ./...
+go build ./...
+go test ./...
+
 # Check that everything is committed to git
 if [[ -n $(git status -s) ]]; then
   echo "Commit everything to git first"

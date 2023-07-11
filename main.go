@@ -1,13 +1,11 @@
 package main
 
 import (
-	"embed"
 	_ "embed"
 	"fmt"
 	"github.com/gigurra/flycd/cmd/deploy"
 	"github.com/gigurra/flycd/cmd/install"
 	"github.com/gigurra/flycd/cmd/monitor"
-	"github.com/gigurra/flycd/internal/flycd/util/util_embed_fs"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -51,7 +49,7 @@ func main() {
 	rootCmd.AddCommand(
 		deploy.Cmd,
 		monitor.Cmd,
-		install.Cmd(EmbeddedFileSystem),
+		install.Cmd(PackagedFileSystem),
 	)
 
 	// run cli
@@ -61,43 +59,4 @@ func main() {
 	}
 
 	fmt.Printf("FlyCD %s exiting normally, bye!\n", Version)
-}
-
-//go:embed Dockerfile
-var EmbeddedDockerfile string
-
-//go:embed main.go
-var EmbeddedMainGo string
-
-//go:embed LICENSE
-var EmbeddedLICENSE string
-
-//go:embed README.md
-var EmbeddedREADME string
-
-//go:embed go.mod
-var EmbeddedGoMod string
-
-//go:embed go.sum
-var EmbeddedGoSum string
-
-//go:embed cmd/*
-var EmbeddedCmd embed.FS
-
-//go:embed internal/*
-var EmbeddedInternal embed.FS
-
-var EmbeddedFileSystem = util_embed_fs.EmbeddedFileSystem{
-	Files: []util_embed_fs.EmbeddedFile{
-		{Name: "main.go", Contents: EmbeddedMainGo},
-		{Name: "Dockerfile", Contents: EmbeddedDockerfile},
-		{Name: "LICENSE", Contents: EmbeddedLICENSE},
-		{Name: "README.md", Contents: EmbeddedREADME},
-		{Name: "go.mod", Contents: EmbeddedGoMod},
-		{Name: "go.sum", Contents: EmbeddedGoSum},
-	},
-	Directories: []embed.FS{
-		EmbeddedCmd,
-		EmbeddedInternal,
-	},
 }

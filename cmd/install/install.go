@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
-	"github.com/gigurra/flycd/internal/flycd/util/util_embed_fs"
+	"github.com/gigurra/flycd/internal/flycd/util/util_packaged"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/gigurra/flycd/internal/flyctl"
 	"github.com/spf13/cobra"
@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func Cmd(selfFs util_embed_fs.EmbeddedFileSystem) *cobra.Command {
+func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 	return &cobra.Command{
 		Use:   "install <flycd app name> <fly.io org slug> <fly.io region>",
 		Short: "Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos",
@@ -99,7 +99,7 @@ func Cmd(selfFs util_embed_fs.EmbeddedFileSystem) *cobra.Command {
 				os.Exit(1)
 			}
 			defer tempDir.RemoveAll()
-			err = selfFs.WriteOut(tempDir.Cwd())
+			err = packaged.WriteOut(tempDir.Cwd())
 			if err != nil {
 				fmt.Printf("Error writing embedded files: %v\n", err)
 				os.Exit(1)

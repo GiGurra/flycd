@@ -1,4 +1,4 @@
-package util_embed_fs
+package util_packaged
 
 import (
 	"embed"
@@ -10,19 +10,19 @@ import (
 	"path/filepath"
 )
 
-type EmbeddedFile struct {
+type PackagedFile struct {
 	Name     string
 	Contents string
 }
 
-type EmbeddedFileSystem struct {
-	Files       []EmbeddedFile
+type PackagedFileSystem struct {
+	Files       []PackagedFile
 	Directories []embed.FS
 }
 
-func (embedded EmbeddedFileSystem) WriteOut(path string) error {
+func (embedded PackagedFileSystem) WriteOut(path string) error {
 	if path == "" {
-		return fmt.Errorf("EmbeddedFileSystem.WriteOut: path cannot be empty")
+		return fmt.Errorf("PackagedFileSystem.WriteOut: path cannot be empty")
 	}
 
 	workDir := util_work_dir.NewWorkDir(path)
