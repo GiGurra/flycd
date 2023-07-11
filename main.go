@@ -11,7 +11,7 @@ import (
 	"os/exec"
 )
 
-const Version = "v0.0.13"
+const Version = "v0.0.14"
 
 var rootCmd = &cobra.Command{
 	Use:   "flycd",
