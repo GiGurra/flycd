@@ -194,7 +194,11 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		// check if srcDir exists
 		if !srcDir.Exists() {
 			// Try with it as an absolute path
+			fmt.Printf("Local path '%s' does not exist, trying as absolute path\n", cfg.Source.Path)
 			srcDir = util_work_dir.NewWorkDir(cfg.Source.Path)
+			if !srcDir.Exists() {
+				return fmt.Errorf("local path '%s' does not exist", cfg.Source.Path)
+			}
 		}
 
 		err = srcDir.CopyContentsTo(tempDir)
