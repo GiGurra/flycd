@@ -269,10 +269,22 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 	}
 
 	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
-	if _, err := os.Stat(filepath.Join(tempDir.Cwd(), ".dockerignore")); os.IsNotExist(err) {
-		_, err = tempDir.NewCommand("sh", "-c", "git ls-files -i --exclude-from=.gitignore | xargs -0 -I {} echo {} >> .dockerignore").Run(ctx)
-		if err != nil {
-			return fmt.Errorf("error producing .dockerignore from .gitignore in folder %s: %w", path, err)
+	wantedDockerIgnoreFilePath := filepath.Join(tempDir.Cwd(), ".dockerignore")
+	if _, err := os.Stat(wantedDockerIgnoreFilePath); os.IsNotExist(err) {
+		// Check if a git ignore file exists
+		gitIgnoreFilePath := filepath.Join(tempDir.Cwd(), ".gitignore")
+		if _, err := os.Stat(gitIgnoreFilePath); os.IsNotExist(err) {
+			// No git ignore file, so create an empty docker ignore file
+			err = tempDir.WriteFile(".dockerignore", "")
+			if err != nil {
+				return fmt.Errorf("error writing .dockerignore: %w", err)
+			}
+		} else {
+			// Copy the git ignore file to docker ignore
+			err = tempDir.CopyFile(".gitignore", ".dockerignore")
+			if err != nil {
+				return fmt.Errorf("error copying .gitignore to .dockerignore: %w", err)
+			}
 		}
 	}
 

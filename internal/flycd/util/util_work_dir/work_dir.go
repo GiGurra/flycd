@@ -92,3 +92,9 @@ func (t WorkDir) Exists() bool {
 	_, err := os.Stat(t.Cwd())
 	return err == nil
 }
+
+func (t WorkDir) CopyFile(from string, to string) error {
+	fromAbs := filepath.Join(t.Cwd(), from)
+	toAbs := filepath.Join(t.Cwd(), to)
+	return cp.Copy(fromAbs, toAbs)
+}
