@@ -3,66 +3,50 @@ package util_work_dir
 import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
+	cp "github.com/otiai10/copy"
 	"os"
+	"path/filepath"
 )
 
-type WorkDirImpl struct {
+type WorkDir struct {
 	root string
 	cwd  string
 }
 
-type WorkDir interface {
-	NewCommand(command string, args ...string) util_cmd.Command
-	ReadFile(name string) (string, error)
-	WriteFile(name string, content string) error
-	Root() string
-	Cwd() string
-	SetCwd(path string)
-}
-
-type TempDirImpl struct {
-	WorkDirImpl
-}
-
-type TempDir interface {
-	WorkDir
-	RemoveAll()
-}
-
-func (t TempDirImpl) RemoveAll() {
+func (t WorkDir) RemoveAll() {
 	err := os.RemoveAll(t.Root())
 	if err != nil {
 		fmt.Printf("error removing dir %s: %s", t.Root(), err)
 	}
 }
 
-func NewTempDir(name string, root string) (TempDir, error) {
+func NewTempDir(name string, root string) (WorkDir, error) {
 	pattern := "flycd"
 	if name != "" {
 		pattern = name
 	}
 	tempDir, err := os.MkdirTemp(root, pattern)
 	if err != nil {
-		return &TempDirImpl{}, fmt.Errorf("error creating temp tempDir: %w", err)
+		return WorkDir{}, fmt.Errorf("error creating temp tempDir: %w", err)
 	}
-	return &TempDirImpl{WorkDirImpl{
+	return WorkDir{
 		root: tempDir,
 		cwd:  tempDir,
-	}}, nil
+	}, nil
 }
 
 func NewWorkDir(path string) WorkDir {
-	return &WorkDirImpl{
+	return WorkDir{
 		root: path,
 		cwd:  path,
 	}
 }
 
-func (t *WorkDirImpl) NewCommand(command string, args ...string) util_cmd.Command {
+func (t WorkDir) NewCommand(command string, args ...string) util_cmd.Command {
 	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd())
 }
 
-func (t *WorkDirImpl) ReadFile(name string) (string, error) {
+func (t WorkDir) ReadFile(name string) (string, error) {
 	data, err := os.ReadFile(t.Cwd() + "/" + name)
 	if err != nil {
 		return "", fmt.Errorf("error reading file %s: %w", name, err)
@@ -70,18 +54,36 @@ func (t *WorkDirImpl) ReadFile(name string) (string, error) {
 	return string(data), nil
 }
 
-func (t *WorkDirImpl) WriteFile(name string, contents string) error {
+func (t WorkDir) WriteFile(name string, contents string) error {
 	return os.WriteFile(t.Cwd()+"/"+name, []byte(contents), 0644)
 }
 
-func (t *WorkDirImpl) Root() string {
+func (t WorkDir) Root() string {
 	return t.root
 }
 
-func (t *WorkDirImpl) Cwd() string {
+func (t WorkDir) Cwd() string {
 	return t.cwd
 }
 
-func (t *WorkDirImpl) SetCwd(path string) {
-	t.cwd = path
+func (t WorkDir) WithPushCwd(path string) WorkDir {
+
+	if path == "" {
+		return t
+	}
+
+	if path == "." {
+		return t
+	}
+
+	t.cwd = filepath.Join(t.cwd, path)
+	return t
+}
+
+func (t WorkDir) CopyContentsTo(target WorkDir) error {
+	err := cp.Copy(t.Cwd(), target.Cwd())
+	if err != nil {
+		return fmt.Errorf("error copying contents from %s to %s: %w", t.Cwd(), target.Cwd(), err)
+	}
+	return nil
 }

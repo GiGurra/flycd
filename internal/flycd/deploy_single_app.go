@@ -160,7 +160,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
-			tempDir.SetCwd(tempDir.Cwd() + "/repo")
+			tempDir = tempDir.WithPushCwd("repo")
 
 		} else if cfg.Source.Ref.Branch != "" {
 			_, err = tempDir.
@@ -170,7 +170,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
-			tempDir.SetCwd(tempDir.Cwd() + "/repo")
+			tempDir = tempDir.WithPushCwd("repo")
 		} else {
 			_, err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1").
 				WithStdLogging().
@@ -178,7 +178,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 			if err != nil {
 				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
 			}
-			tempDir.SetCwd(tempDir.Cwd() + "/repo")
+			tempDir = tempDir.WithPushCwd("repo")
 		}
 
 		res, err := tempDir.
@@ -189,15 +189,11 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		}
 		appHash = strings.TrimSpace(res.StdOut)
 	case SourceTypeLocal:
-		// Copy the local folder to the temp tempDir
-		sourcePath := "."
-		if cfg.Source.Path != "" {
-			sourcePath = cfg.Source.Path
+		srcDir := cfgDir.WithPushCwd(cfg.Source.Path)
+		err = srcDir.CopyContentsTo(tempDir)
+		if err != nil {
+			return fmt.Errorf("error copying local folder %s: %w", srcDir.Cwd(), err)
 		}
-
-		_, err = cfgDir.
-			NewCommand("sh", "-c", fmt.Sprintf("cp -R \"%s/.\" \"%s/\"", sourcePath, tempDir.Cwd())).
-			Run(ctx)
 
 		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
 		if err != nil {

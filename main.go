@@ -36,7 +36,7 @@ func main() {
 	fmt.Printf("Starting FlyCD %s...\n", Version)
 
 	// Check that required applications are installed
-	requiredApps := []string{"flyctl", "git", "ssh", "cat", "cp"}
+	requiredApps := []string{"flyctl", "git", "ssh"}
 	for _, app := range requiredApps {
 		_, err := exec.LookPath(app)
 		if err != nil {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd"
-	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_packaged"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/gigurra/flycd/internal/flyctl"
+	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"os"
 	"strings"
@@ -115,10 +115,8 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			// Copy cwd/projects to tempDir
 			projectsDir := fmt.Sprintf("%s/projects", cwd)
 			if _, err := os.Stat(projectsDir); err == nil {
-				fmt.Printf("Copying projects dir to temp dir...\n")
-				_, err = util_cmd.
-					NewCommand("cp", "-r", projectsDir, fmt.Sprintf("%s/projects", tempDir.Cwd())).
-					Run(ctx)
+				fmt.Printf("Copying projects dir to temp dir %s...\n", tempDir.Cwd())
+				err = cp.Copy(projectsDir, fmt.Sprintf("%s/projects", tempDir.Cwd()))
 				if err != nil {
 					fmt.Printf("Error copying projects dir: %v\n", err)
 					os.Exit(1)
