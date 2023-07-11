@@ -9,7 +9,6 @@ import (
 	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -269,21 +268,19 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 	}
 
 	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
-	wantedDockerIgnoreFilePath := filepath.Join(tempDir.Cwd(), ".dockerignore")
-	if _, err := os.Stat(wantedDockerIgnoreFilePath); os.IsNotExist(err) {
+	if !tempDir.ExistsChild(".dockerignore") {
 		// Check if a git ignore file exists
-		gitIgnoreFilePath := filepath.Join(tempDir.Cwd(), ".gitignore")
-		if _, err := os.Stat(gitIgnoreFilePath); os.IsNotExist(err) {
-			// No git ignore file, so create an empty docker ignore file
-			err = tempDir.WriteFile(".dockerignore", "")
-			if err != nil {
-				return fmt.Errorf("error writing .dockerignore: %w", err)
-			}
-		} else {
+		if tempDir.ExistsChild(".gitignore") {
 			// Copy the git ignore file to docker ignore
 			err = tempDir.CopyFile(".gitignore", ".dockerignore")
 			if err != nil {
 				return fmt.Errorf("error copying .gitignore to .dockerignore: %w", err)
+			}
+		} else {
+			// No git ignore file, so create an empty docker ignore file
+			err = tempDir.WriteFile(".dockerignore", "")
+			if err != nil {
+				return fmt.Errorf("error writing .dockerignore: %w", err)
 			}
 		}
 	}
