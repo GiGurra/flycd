@@ -183,7 +183,7 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 	c.logBeforeRun()
 
 	accessToken := getAccessToken(ctx)
-	if accessToken != "" && (c.App == "fly" || c.App == "fly") {
+	if accessToken != "" && (c.App == "fly" || c.App == "flyctl") {
 		c.Args = append(c.Args, "--access-token", accessToken)
 	}
 
