@@ -3,10 +3,10 @@ package install
 import (
 	"context"
 	"fmt"
+	"github.com/gigurra/flycd/internal/fly_cli"
 	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_packaged"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
-	"github.com/gigurra/flycd/internal/flyctl"
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"os"
@@ -57,7 +57,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 				}
 			}
 
-			existsAccessTokenSecret, err := flyctl.ExistsSecret(ctx, flyctl.ExistsSecretCmd{
+			existsAccessTokenSecret, err := fly_cli.ExistsSecret(ctx, fly_cli.ExistsSecretCmd{
 				AppName:    appName,
 				SecretName: "FLY_ACCESS_TOKEN",
 			})
@@ -69,7 +69,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			if !existsAccessTokenSecret {
 
 				fmt.Printf("App name successfully reserved... creating access token for org '%s'\n", orgSlug)
-				token, err := flyctl.CreateOrgToken(orgSlug)
+				token, err := fly_cli.CreateOrgToken(ctx, orgSlug)
 				if err != nil {
 					fmt.Printf("Error creating org token: %v\n", err)
 					os.Exit(1)
@@ -78,7 +78,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 
 				fmt.Printf("Token created.. storing it...\n")
 
-				err = flyctl.StoreSecret(ctx, flyctl.StoreSecretCmd{
+				err = fly_cli.StoreSecret(ctx, fly_cli.StoreSecretCmd{
 					AppName:     appName,
 					SecretName:  "FLY_ACCESS_TOKEN",
 					SecretValue: token,

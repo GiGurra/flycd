@@ -1,4 +1,4 @@
-package flyctl
+package fly_cli
 
 import (
 	"context"
@@ -6,31 +6,27 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"github.com/samber/lo"
-	"os"
-	"os/exec"
 	"strings"
 	"time"
 )
 
-func CreateOrgToken(orgSlug string) (string, error) {
+func CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
 
-	// Initialize a shell command for creating an org token with flyctl
-	// This operation is interactive, so we need to forward stdin, stdout, and stderr
-	// so the user can interact with flyctl
+	result, err := util_cmd.
+		NewCommandA("fly", "tokens", "create", "org", orgSlug).
+		WithTimeout(10 * time.Second).
+		WithTimeoutRetries(5).
+		Run(ctx)
 
-	// Run the command
-	cmd := exec.Command("flyctl", "tokens", "create", "org", orgSlug)
-
-	cmd.Stderr = os.Stderr
-
-	// Run the command
-	stdOut, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("error running flyctl tokens create org: %w", err)
+		return "", fmt.Errorf("error running 'fly tokens create org': %w", err)
 	}
 
+	// Run the command
+	stdOut := result.StdOut
+
 	// split stdout by lines, in an os agnostic way
-	lines := strings.Split(string(stdOut), "\n")
+	lines := strings.Split(stdOut, "\n")
 
 	// find the first line starting with "Fly"
 	iLineToken := -1
@@ -43,7 +39,7 @@ func CreateOrgToken(orgSlug string) (string, error) {
 
 	// if we didn't find a line starting with "Fly", return an error
 	if iLineToken == -1 {
-		return "", fmt.Errorf("error parsing flyctl tokens create org output")
+		return "", fmt.Errorf("error parsing fly tokens create org output")
 	}
 
 	return strings.TrimSpace(lines[iLineToken]), nil
@@ -83,19 +79,19 @@ func ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
 	}
 
 	res, err := util_cmd.
-		NewCommandA("flyctl", args...).
+		NewCommandA("fly", args...).
 		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(10).
+		WithTimeoutRetries(5).
 		Run(ctx)
 	if err != nil {
-		return false, fmt.Errorf("error running flyctl secrets list for '%s': %w", cmd.AppName, err)
+		return false, fmt.Errorf("error running fly secrets list for '%s': %w", cmd.AppName, err)
 	}
 
 	// Parse strResp as json array of flySecretListItem
 	var secrets []flySecretListItem
 	err = json.Unmarshal([]byte(res.StdOut), &secrets)
 	if err != nil {
-		return false, fmt.Errorf("error parsing flyctl secrets list for '%s': %w", cmd.AppName, err)
+		return false, fmt.Errorf("error parsing fly secrets list for '%s': %w", cmd.AppName, err)
 	}
 
 	return lo.ContainsBy(secrets, func(item flySecretListItem) bool {
@@ -124,13 +120,13 @@ func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 	}
 
 	_, err := util_cmd.
-		NewCommandA("flyctl", args...).
+		NewCommandA("fly", args...).
 		WithTimeout(240 * time.Second).
 		WithTimeoutRetries(5).
 		WithStdLogging().
 		Run(ctx)
 	if err != nil {
-		return fmt.Errorf("error running flyctl secrets set for '%s': %w", cmd.SecretName, err)
+		return fmt.Errorf("error running fly secrets set for '%s': %w", cmd.SecretName, err)
 	}
 
 	return nil

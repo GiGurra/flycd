@@ -18,7 +18,7 @@ ENV PATH="/root/go/bin:${PATH}"
 # Install yaml tools
 RUN go install github.com/sclevine/yj/v5@v5.1.0
 
-# Install flyctl/fly.io cli
+# Install fly.io cli
 RUN curl -L https://fly.io/install.sh | sh
 
 ENV FLYCTL_INSTALL="/root/.fly"
@@ -43,8 +43,8 @@ RUN go mod download
 # Build the latest version of the app
 RUN go build -o flycd
 
-# grab the latest version of flyctl
-RUN flyctl version upgrade
+# grab the latest version of fly.io cli
+RUN fly version upgrade
 
 # store known hosts for github.com and bitbucket.org
 RUN mkdir -p /root/.ssh

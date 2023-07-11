@@ -285,11 +285,11 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		}
 	}
 
-	// Now run flyctl and check if the app exists
+	// Now run fly.io cli and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
 	appExists, err := AppIsDeployed(ctx, cfg.App)
 	if err != nil {
-		return fmt.Errorf("error running flyctl status in folder %s: %w", path, err)
+		return fmt.Errorf("error running fly status in folder %s: %w", path, err)
 	}
 
 	if appExists {
@@ -333,9 +333,9 @@ func createNewApp(
 		allParams = append(allParams, "--build-only")
 	}
 	_, err := tempDir.
-		NewCommand("flyctl", allParams...).
+		NewCommand("fly", allParams...).
 		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(10).
+		WithTimeoutRetries(5).
 		WithStdLogging().
 		Run(ctx)
 	if err != nil {
@@ -354,7 +354,7 @@ func deployExistingApp(
 	allParams = append(allParams, "--remote-only", "--detach")
 
 	_, err := tempDir.
-		NewCommand("flyctl", allParams...).
+		NewCommand("fly", allParams...).
 		WithTimeout(deployCfg.AttemptTimeout).
 		WithTimeoutRetries(deployCfg.Retries).
 		WithStdLogging().

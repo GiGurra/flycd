@@ -83,9 +83,9 @@ func DeployAll(
 
 func AppIsDeployed(ctx context.Context, name string) (bool, error) {
 	res, err := util_cmd.
-		NewCommand("flyctl", "status", "-a", name).
+		NewCommand("fly", "status", "-a", name).
 		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(10).
+		WithTimeoutRetries(5).
 		Run(ctx)
 	if err != nil {
 		if strings.Contains(strings.ToLower(res.Combined), "could not find app") {
@@ -100,9 +100,9 @@ func GetDeployedAppConfig(ctx context.Context, name string) (AppConfig, error) {
 
 	// Compare the current deployed appVersion with the new appVersion
 	res, err := util_cmd.
-		NewCommand("flyctl", "config", "show", "-a", name).
+		NewCommand("fly", "config", "show", "-a", name).
 		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(10).
+		WithTimeoutRetries(5).
 		Run(ctx)
 	if err != nil {
 
@@ -110,13 +110,13 @@ func GetDeployedAppConfig(ctx context.Context, name string) (AppConfig, error) {
 			return AppConfig{Env: map[string]string{}}, nil
 		}
 
-		return AppConfig{}, fmt.Errorf("error running flyctl config show for app %s: %w", name, err)
+		return AppConfig{}, fmt.Errorf("error running fly config show for app %s: %w", name, err)
 	}
 
 	var deployedCfg AppConfig
 	err = json.Unmarshal([]byte(res.StdOut), &deployedCfg)
 	if err != nil {
-		return AppConfig{}, fmt.Errorf("error unmarshalling flyctl config for app %s: %w", name, err)
+		return AppConfig{}, fmt.Errorf("error unmarshalling fly config for app %s: %w", name, err)
 	}
 
 	return deployedCfg, nil

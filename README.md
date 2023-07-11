@@ -6,7 +6,7 @@ FlyCD is a tool designed to add ArgoCD/Flux style git-ops support for Fly.io. Al
 functionality is still to be implemented, the following are the features it aims to provide:
 
 * Extending the regular fly.io fly.toml specifications with additional configuration parameters,
-  removing the need for running **_any_** flyctl commands manually.
+  removing the need for running **_any_** fly.io cli commands manually.
 
 * FlyCD separates app development from app environment deployment/composition.
     * You write code in one repo and push updates to your app. Don't include any environment specific configuration in

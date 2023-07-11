@@ -102,7 +102,7 @@ var Cmd = &cobra.Command{
 		}
 
 		// ensure we have a token loaded for the org we are monitoring
-		res, err := util_cmd.NewCommand("flyctl", "apps", "list").Run(ctx)
+		res, err := util_cmd.NewCommand("fly", "apps", "list").Run(ctx)
 		if err != nil {
 			fmt.Printf("Error getting apps list. Do you have a token loaded?: %v\n", err)
 			os.Exit(1)

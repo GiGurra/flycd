@@ -15,7 +15,7 @@ const Version = "v0.0.14"
 
 var rootCmd = &cobra.Command{
 	Use:   "flycd",
-	Short: "flycd deployment of fly apps entirely from code, without manual flyctl commands... I hope :D",
+	Short: "flycd deployment of fly apps entirely from code, without manual fly.io cli commands... I hope :D",
 	Long:  `Complete documentation is available at https://github.com/gigurra/flycd`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
@@ -37,9 +37,9 @@ func main() {
 
 	// Check that required applications are installed
 	// At some point we should just use a go library instead,
-	// and maybe even embed flyctl into our app :P
+	// and maybe even embed fly.io cli into our app :P
 	// (Alternatively we could integrate directly with fly.io API)
-	requiredApps := []string{"flyctl", "git", "ssh"}
+	requiredApps := []string{"fly", "git", "ssh"}
 	for _, app := range requiredApps {
 		_, err := exec.LookPath(app)
 		if err != nil {
