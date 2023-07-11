@@ -32,6 +32,8 @@ COPY ./main.go /flycd/main.go
 COPY ./go.mod /flycd/go.mod
 COPY ./go.sum /flycd/go.sum
 COPY ./LICENSE /flycd/LICENSE
+COPY ./Dockerfile /flycd/Dockerfile
+COPY ./README.md /flycd/README.md
 WORKDIR /flycd
 ENV PATH="/flycd:${PATH}"
 
