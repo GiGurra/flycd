@@ -1,6 +1,4 @@
 /.git
 /.idea
-/Dockerfile
 /scripts
-/README.md
 .gitignore
