@@ -70,17 +70,6 @@ type FetchedProject struct {
 	IsTempDir     bool
 }
 
-/*func FetchProject(config model.ProjectConfig) (FetchedProject, error) {
-	switch config.Source.Type {
-	case model.SourceTypeGit:
-		return FetchProjectFromGit(config)
-	case model.SourceTypeLocal:
-		return FetchProjectFromLocal(config)
-	default:
-		return FetchedProject{}, fmt.Errorf("unsupported source type: %s", config.Source.Type)
-	}
-}*/
-
 func DeployAll(
 	ctx context.Context,
 	path string,
