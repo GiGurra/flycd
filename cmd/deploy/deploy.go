@@ -22,7 +22,7 @@ var Cmd = &cobra.Command{
 
 		deployCfg := flycd.
 			NewDeployConfig().
-			WithRetries(0).
+			WithRetries(1).
 			WithForce(*flags.force).
 			WithAbortOnFirstError(true)
 
