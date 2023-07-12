@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -21,7 +22,7 @@ var Cmd = &cobra.Command{
 		path := args[0]
 		fmt.Printf("Deploying from: %s\n", path)
 
-		deployCfg := flycd.
+		deployCfg := model.
 			NewDeployConfig().
 			WithRetries(1).
 			WithForce(*flags.force).

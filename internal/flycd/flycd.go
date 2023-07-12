@@ -71,7 +71,7 @@ type FetchedProject struct {
 func DeployAll(
 	ctx context.Context,
 	path string,
-	deployCfg DeployConfig,
+	deployCfg model.DeployConfig,
 ) (DeployResult, error) {
 
 	result := NewEmptyDeployResult()

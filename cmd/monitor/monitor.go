@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_tab_table"
 	"github.com/gigurra/flycd/internal/github"
@@ -125,7 +126,7 @@ var Cmd = &cobra.Command{
 		if *flags.startupSync {
 			fmt.Printf("Syncing/Deploying all apps in %s\n", path)
 
-			deployCfg := flycd.
+			deployCfg := model.
 				NewDeployConfig().
 				WithAbortOnFirstError(false)
 

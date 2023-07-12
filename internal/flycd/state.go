@@ -3,6 +3,7 @@ package flycd
 import (
 	"context"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/github"
 	"github.com/samber/lo"
 	"strings"
@@ -32,7 +33,8 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 					fmt.Printf("Found app %s matching webhook url %s. Deploying...\n", app.AppConfig.App, payload.Repository.Url)
 
 					ctx := context.Background()
-					deployCfg := NewDeployConfig().
+					deployCfg := model.
+						NewDeployConfig().
 						WithRetries(1).
 						WithForce(false)
 					_, err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
