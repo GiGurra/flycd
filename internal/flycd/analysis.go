@@ -12,6 +12,7 @@ import (
 
 type TraversalStepAnalysis struct {
 	HasAppYaml            bool
+	HasProjectYaml        bool
 	HasProjectsDir        bool
 	TraversableCandidates []os.DirEntry
 }
@@ -204,6 +205,7 @@ func analyseTraversalCandidate(path string) (TraversalStepAnalysis, error) {
 	traversableCandidates := make([]os.DirEntry, 0)
 	hasAppYaml := false
 	hasProjectsDir := false
+	hasProjectYaml := false
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -225,10 +227,15 @@ func analyseTraversalCandidate(path string) (TraversalStepAnalysis, error) {
 
 			hasAppYaml = true
 
+		} else if entry.Name() == "project.yaml" {
+
+			hasProjectYaml = true
+
 		}
 	}
 	return TraversalStepAnalysis{
 		HasAppYaml:            hasAppYaml,
+		HasProjectYaml:        hasProjectYaml,
 		HasProjectsDir:        hasProjectsDir,
 		TraversableCandidates: traversableCandidates,
 	}, nil
