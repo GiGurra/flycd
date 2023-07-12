@@ -3,6 +3,7 @@ package flycd
 import (
 	"context"
 	"fmt"
+	"github.com/gigurra/flycd/internal/fly_cli"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
@@ -13,8 +14,77 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
+
+var SkippedNotValid = fmt.Errorf("skipped: not a valid app")
+var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
+
+func DeployAll(
+	ctx context.Context,
+	path string,
+	deployCfg model.DeployConfig,
+) (model.DeployResult, error) {
+
+	result := model.NewEmptyDeployResult()
+
+	err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
+		ValidAppCb: func(appNode model.AppNode) error {
+			fmt.Printf("Considering app %s @ %s\n", appNode.AppConfig.App, appNode.Path)
+			if deployCfg.AbortOnFirstError && result.HasErrors() {
+				fmt.Printf("Aborted earlier, skipping!\n")
+				result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
+					Spec:  appNode,
+					Cause: SkippedAbortedEarlier,
+				})
+				return nil
+			} else {
+				res, err := DeployAppFromFolder(ctx, appNode.Path, deployCfg)
+				if err != nil {
+					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
+						Spec:  appNode,
+						Cause: err,
+					})
+				} else {
+					result.SucceededApps = append(result.SucceededApps, model.AppDeploySuccess{
+						Spec:        appNode,
+						SuccessType: res,
+					})
+				}
+				return nil
+			}
+		},
+		InvalidAppCb: func(appNode model.AppNode) error {
+			result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
+				Spec:  appNode,
+				Cause: SkippedNotValid,
+			})
+			return nil
+		},
+		ValidProjectCb: func(appNode model.ProjectNode) error {
+			if deployCfg.AbortOnFirstError && result.HasErrors() {
+				result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
+					Spec:  appNode,
+					Cause: SkippedAbortedEarlier,
+				})
+				return nil
+			} else {
+				result.ProcessedProjects = append(result.ProcessedProjects, appNode)
+				return nil
+			}
+		},
+		InvalidProjectCb: func(appNode model.ProjectNode) error {
+			result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
+				Spec:  appNode,
+				Cause: SkippedNotValid,
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return result, fmt.Errorf("error traversing app tree: %w", err)
+	}
+	return result, nil
+}
 
 func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
 
@@ -179,14 +249,14 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 
 	// Now run fly.io cli and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
-	appExists, err := ExistsApp(ctx, cfg.App)
+	appExists, err := fly_cli.ExistsApp(ctx, cfg.App)
 	if err != nil {
 		return "", fmt.Errorf("error running fly status in folder %s: %w", path, err)
 	}
 
 	if appExists {
 		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfg.App)
-		deployedCfg, err := GetDeployedAppConfig(ctx, cfg.App)
+		deployedCfg, err := fly_cli.GetDeployedAppConfig(ctx, cfg.App)
 		if err != nil {
 			return "", fmt.Errorf("error getting deployed app config: %w", err)
 		}
@@ -196,7 +266,7 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
-			err = deployExistingApp(ctx, cfg, tempDir, deployCfg)
+			err = fly_cli.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 			if err != nil {
 				return "", err
 			}
@@ -207,61 +277,17 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 		}
 	} else {
 		println("App not found, creating it")
-		err = createNewApp(ctx, cfg, tempDir, true)
+		err = fly_cli.CreateNewApp(ctx, cfg, tempDir, true)
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
 		println("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation")
-		err = deployExistingApp(ctx, cfg, tempDir, deployCfg)
+		err = fly_cli.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 		if err != nil {
 			return "", err
 		}
 		return model.SingleAppDeployCreated, nil
 	}
-}
-
-func createNewApp(
-	ctx context.Context,
-	cfg model.AppConfig,
-	tempDir util_work_dir.WorkDir,
-	twoStep bool,
-) error {
-	allParams := append([]string{"launch"}, cfg.LaunchParams...)
-	allParams = append(allParams, "--remote-only")
-	if twoStep {
-		allParams = append(allParams, "--build-only")
-	}
-	_, err := tempDir.
-		NewCommand("fly", allParams...).
-		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(5).
-		WithStdLogging().
-		Run(ctx)
-	if err != nil {
-		return fmt.Errorf("error creating app %s: %w", cfg.App, err)
-	}
-	return nil
-}
-
-func deployExistingApp(
-	ctx context.Context,
-	cfg model.AppConfig,
-	tempDir util_work_dir.WorkDir,
-	deployCfg model.DeployConfig,
-) error {
-	allParams := append([]string{"deploy"}, cfg.DeployParams...)
-	allParams = append(allParams, "--remote-only", "--detach")
-
-	_, err := tempDir.
-		NewCommand("fly", allParams...).
-		WithTimeout(deployCfg.AttemptTimeout).
-		WithTimeoutRetries(deployCfg.Retries).
-		WithStdLogging().
-		Run(ctx)
-	if err != nil {
-		return fmt.Errorf("error deploying app %s: %w", cfg.App, err)
-	}
-	return nil
 }
 
 func readAppConfig(path string) (model.AppConfig, error) {

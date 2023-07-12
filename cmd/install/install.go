@@ -98,7 +98,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			ctx := context.Background()
 
 			fmt.Printf("Check if app named '%s' already exists\n", appName)
-			appExists, err := flycd.ExistsApp(ctx, appName)
+			appExists, err := fly_cli.ExistsApp(ctx, appName)
 			if err != nil {
 				fmt.Printf("Error checking if app exists: %v\n", err)
 				os.Exit(1)
