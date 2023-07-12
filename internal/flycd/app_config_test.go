@@ -173,7 +173,6 @@ func TestReadFlyToml(t *testing.T) {
 
 	flyToml := `
 app = "example-project1-local-app-foobar12341"
-org = "personal"
 primary_region = "arn"
 
 
