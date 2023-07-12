@@ -34,6 +34,11 @@ var Cmd = &cobra.Command{
 			return
 		}
 
+		fmt.Printf("Deployed %d projects\n", len(result.SucceededProjects))
+		for _, success := range result.SucceededProjects {
+			fmt.Printf(" - %s @ %s\n", success.ProjectConfig.Project, success.Path)
+		}
+
 		fmt.Printf("Deployed %d apps\n", len(result.SucceededApps))
 		for _, success := range result.SucceededApps {
 			fmt.Printf(" - %s @ %s (%s)\n", success.Spec.AppConfig.App, success.Spec.Path, success.SuccessType)
@@ -43,6 +48,11 @@ var Cmd = &cobra.Command{
 			fmt.Printf("Failed to deploy %d apps\n", len(result.FailedApps))
 			for _, failure := range result.FailedApps {
 				fmt.Printf(" - %s @ %s: %v\n", failure.Spec.AppConfig.App, failure.Spec.Path, failure.Cause)
+			}
+
+			fmt.Printf("Failed to deploy %d projects\n", len(result.FailedProjects))
+			for _, failure := range result.FailedProjects {
+				fmt.Printf(" - %s @ %s: %v\n", failure.Spec.ProjectConfig.Project, failure.Spec.Path, failure.Cause)
 			}
 			os.Exit(1)
 		}

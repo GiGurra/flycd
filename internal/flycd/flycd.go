@@ -144,6 +144,19 @@ func DeployAll(
 							return fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
 						}
 
+						if innerResult.Success() {
+							result.SucceededProjects = append(result.SucceededProjects, ProjectNode{
+								ProjectConfig: project.ProjectConfig,
+								Path:          cloneResult.Dir.Cwd(),
+							})
+						} else {
+
+							innerResult.FailedProjects = append(innerResult.FailedProjects, ProjectDeployFailure{
+								Spec:  project,
+								Cause: fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err),
+							})
+						}
+
 						result = result.Plus(innerResult)
 					}
 
@@ -170,6 +183,19 @@ func DeployAll(
 
 					if err != nil {
 						return result, fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
+					}
+
+					if innerResult.Success() {
+						result.SucceededProjects = append(result.SucceededProjects, ProjectNode{
+							ProjectConfig: project.ProjectConfig,
+							Path:          absPath,
+						})
+					} else {
+
+						innerResult.FailedProjects = append(innerResult.FailedProjects, ProjectDeployFailure{
+							Spec:  project,
+							Cause: fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err),
+						})
 					}
 
 					result = result.Plus(innerResult)
