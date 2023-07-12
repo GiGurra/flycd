@@ -2,19 +2,19 @@
 
 ## Overview
 
-FlyCD is an tool engineered to introduce ArgoCD/Flux style git-ops support for Fly.io. It aspires to deliver the
-following features:
+FlyCD adds ArgoCD/Flux style git-ops support for Fly.io, through the following:
 
-* Adapting the standard fly.io fly.toml specifications with supplementary configuration parameters to eliminate the need
+* Extending the standard fly.io fly.toml specifications with supplementary configuration parameters to eliminate the
+  need
   for manual execution of any fly.io CLI commands.
 
-* FlyCD separates the processes of application development and environment deployment/composition.
+* Separatting the processes of application development and environment deployment/composition.
     * You can develop the code in one repository and push updates to your app, keeping the repository devoid of any
       environment-specific configuration.
     * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
       configurations, eliminating the necessity of embedding environment-specific configurations into your app.
-    * It offers the flexibility to deploy or reference any app, whether from your repositories or owned by others, and
-      separately compose the cloud environment from the application development.
+    * It offers the flexibility to deploy or reference any app (or version of any app), whether from your repositories
+      or owned by others, and separately compose the cloud environment from the application development.
 
 * FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks
   from git pushes, fetches the most recent (or particular) versions of your apps from git, and deploys them to fly.io.
@@ -55,7 +55,7 @@ The sample below gives a glimpse of potential configuration (though it doesn't n
 FlyCD is built on the principle of bootstrapping itself.
 
 * It can install itself to an existing fly.io environment and point to a config repo
-  * where it listens and acts on both config repo and app repo webhooks
+    * where it listens and acts on both config repo and app repo webhooks
 * It can also operate as a manual CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
     * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
     * the target organisation to deploy to
@@ -74,6 +74,8 @@ FlyCD is built on the principle of bootstrapping itself.
   webhooks.
 * It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are trivial to
   create :S.
+* It currently only supports git repos and file system directories as app sources. It might be useful to also support
+  regular docker images (right now to deploy from an image, you have to create a proxy Dockerfile)
 
 **I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
 Consider it proof of concept, and nothing more.
