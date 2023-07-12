@@ -1,4 +1,4 @@
-project: external-project
+project: external-git-project
 source:
   type: git
   repo: "https://github.com/gigurra/flycd-test-project"

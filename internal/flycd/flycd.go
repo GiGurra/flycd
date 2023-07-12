@@ -128,7 +128,7 @@ func DeployAll(
 							Cause: fmt.Errorf("git clone failed for project %s: %w", project.ProjectConfig.Project, err),
 						})
 					} else {
-						innerResult, err := DeployAll(ctx, cloneResult.Dir.Cwd(), deployCfg)
+						innerResult, err := DeployAll(ctx, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), deployCfg)
 						if err != nil {
 							return fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
 						}
