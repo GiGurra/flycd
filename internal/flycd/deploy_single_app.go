@@ -11,6 +11,7 @@ import (
 	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -125,7 +126,13 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		appHash = cloneResult.Hash
 
 	case model.SourceTypeLocal:
-		srcDir := cfgDir.WithChildCwd(cfg.Source.Path)
+		srcDir := func() util_work_dir.WorkDir {
+			if filepath.IsAbs(cfg.Source.Path) {
+				return cfgDir.WithRootFsCwd(cfg.Source.Path)
+			} else {
+				return cfgDir.WithChildCwd(cfg.Source.Path)
+			}
+		}()
 
 		// check if srcDir exists
 		if !srcDir.Exists() {

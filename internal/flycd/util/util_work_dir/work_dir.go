@@ -80,6 +80,11 @@ func (t WorkDir) WithChildCwd(path string) WorkDir {
 	return t
 }
 
+func (t WorkDir) WithRootFsCwd(path string) WorkDir {
+	t.cwd = path
+	return t
+}
+
 func (t WorkDir) CopyContentsTo(target WorkDir) error {
 	err := cp.Copy(t.Cwd(), target.Cwd())
 	if err != nil {
