@@ -5,8 +5,7 @@
 FlyCD adds ArgoCD/Flux style git-ops support for Fly.io, through the following:
 
 * Extending the standard fly.io fly.toml specifications with supplementary configuration parameters to eliminate the
-  need
-  for manual execution of any fly.io CLI commands.
+  need for manual execution of fly.io CLI commands.
 
 * Separatting the processes of application development and environment deployment/composition.
     * You can develop the code in one repository and push updates to your app, keeping the repository devoid of any
