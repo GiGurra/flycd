@@ -165,6 +165,92 @@ func ScanForApps(path string) ([]AppNode, error) {
 	return analysis.Apps()
 }
 
+type TraverseAppTreeOptions struct {
+	ValidAppCb       func(AppNode) error
+	InvalidAppCb     func(AppNode) error
+	ValidProjectCb   func(ProjectNode) error
+	InvalidProjectCb func(ProjectNode) error
+}
+
+func TraverseDeepAppTree(
+	path string,
+	opts TraverseAppTreeOptions,
+) error {
+
+	analysis, err := ScanDir(path)
+	if err != nil {
+		return fmt.Errorf("error analysing %s: %w", path, err)
+	}
+
+	apps, err := analysis.Apps()
+	if err != nil {
+		return fmt.Errorf("error getting apps at '%s': %w", path, err)
+	}
+
+	projects, err := analysis.Projects()
+	if err != nil {
+		return fmt.Errorf("error getting projects at '%s': %w", path, err)
+	}
+
+	for _, app := range apps {
+		if app.IsValidApp() {
+			if opts.ValidAppCb != nil {
+				err := opts.ValidAppCb(app)
+				if err != nil {
+					return fmt.Errorf("error calling function for valid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
+				}
+			}
+		} else {
+			if opts.InvalidAppCb != nil {
+				err := opts.InvalidAppCb(app)
+				if err != nil {
+					return fmt.Errorf("error calling function for invalid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
+				}
+			}
+		}
+	}
+
+	for _, project := range projects {
+		if project.IsValidProject() {
+
+			switch project.ProjectConfig.Source.Type {
+			case model.SourceTypeLocal:
+				absPath := func() string {
+					if filepath.IsAbs(project.ProjectConfig.Source.Path) {
+						return project.ProjectConfig.Source.Path
+					} else {
+						return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
+					}
+				}()
+				err := TraverseDeepAppTree(absPath, opts)
+				if err != nil {
+					return fmt.Errorf("error traversing local project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+				}
+			case model.SourceTypeGit:
+				//
+			default:
+				fmt.Printf("unknown source type '%s' for project '%s' @ %s\n", project.ProjectConfig.Source.Type, project.ProjectConfig.Project, project.Path)
+				if opts.InvalidProjectCb != nil {
+					err := opts.InvalidProjectCb(project)
+					if err != nil {
+						return fmt.Errorf("error calling function for invalid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+					}
+				}
+			}
+
+		} else {
+			if opts.InvalidProjectCb != nil {
+				err := opts.InvalidProjectCb(project)
+				if err != nil {
+					return fmt.Errorf("error calling function for invalid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func ScanForProjects(path string) ([]ProjectNode, error) {
 
 	analysis, err := ScanDir(path)
