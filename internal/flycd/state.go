@@ -14,9 +14,9 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 	// TODO: Implement some kind of persistence and/or caching here... So we don't have to clone everything every time...
 
 	fmt.Printf("Traversing projects and apps for matching webhook url %s...\n", payload.Repository.Url)
-	ctx := context.Background()
 	go func() {
 
+		ctx := context.Background()
 		err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
 			ValidAppCb: func(app AppNode) error {
 				localKey := strings.ToLower(app.AppConfig.Source.Repo)
@@ -32,7 +32,6 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 				if lo.Contains(remoteKeys, localKey) {
 					fmt.Printf("Found app %s matching webhook url %s. Deploying...\n", app.AppConfig.App, payload.Repository.Url)
 
-					ctx := context.Background()
 					deployCfg := model.
 						NewDeployConfig().
 						WithRetries(1).
