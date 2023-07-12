@@ -231,6 +231,50 @@ func ScanDir(path string) (SpecNode, error) {
 			},
 			Children: []SpecNode{},
 		}, nil
+	} else if nodeInfo.HasProjectYaml {
+
+		workDir := util_work_dir.NewWorkDir(path)
+		projectYaml, err := workDir.ReadFile("project.yaml")
+		if err != nil {
+			return SpecNode{}, fmt.Errorf("error reading project.yaml: %w", err)
+		}
+
+		var projectConfig model.ProjectConfig
+		err = yaml.Unmarshal([]byte(projectYaml), &projectConfig)
+		if err != nil {
+			return SpecNode{
+				Path: path,
+				Project: &ProjectNode{
+					Path:                   path,
+					ProjectYaml:            projectYaml,
+					ProjectConfigSyntaxErr: err,
+				},
+				Children: []SpecNode{},
+			}, nil
+		}
+
+		err = projectConfig.Validate()
+		if err != nil {
+			return SpecNode{
+				Path: path,
+				Project: &ProjectNode{
+					Path:                path,
+					ProjectYaml:         projectYaml,
+					ProjectConfigSemErr: err,
+				},
+				Children: []SpecNode{},
+			}, nil
+		}
+
+		return SpecNode{
+			Path: path,
+			Project: &ProjectNode{
+				Path:          path,
+				ProjectYaml:   projectYaml,
+				ProjectConfig: projectConfig,
+			},
+			Children: []SpecNode{},
+		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
 		child, err := ScanDir(filepath.Join(path, "projects"))
@@ -268,9 +312,6 @@ func analyseTraversalCandidate(path string) (TraversalStepAnalysis, error) {
 
 	// Collect potentially traversable dirs
 	traversableCandidates := make([]os.DirEntry, 0)
-	hasAppYaml := false
-	hasProjectsDir := false
-	hasProjectYaml := false
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -283,25 +324,39 @@ func analyseTraversalCandidate(path string) (TraversalStepAnalysis, error) {
 			}
 
 			if entry.Name() == "projects" {
-				hasProjectsDir = true
+				return TraversalStepAnalysis{
+					HasAppYaml:            false,
+					HasProjectYaml:        false,
+					HasProjectsDir:        true,
+					TraversableCandidates: []os.DirEntry{},
+				}, nil
 			}
 
 			traversableCandidates = append(traversableCandidates, entry)
 
 		} else if entry.Name() == "app.yaml" {
 
-			hasAppYaml = true
+			return TraversalStepAnalysis{
+				HasAppYaml:            true,
+				HasProjectYaml:        false,
+				HasProjectsDir:        false,
+				TraversableCandidates: []os.DirEntry{},
+			}, nil
 
 		} else if entry.Name() == "project.yaml" {
 
-			hasProjectYaml = true
-
+			return TraversalStepAnalysis{
+				HasAppYaml:            false,
+				HasProjectYaml:        true,
+				HasProjectsDir:        false,
+				TraversableCandidates: []os.DirEntry{},
+			}, nil
 		}
 	}
 	return TraversalStepAnalysis{
-		HasAppYaml:            hasAppYaml,
-		HasProjectYaml:        hasProjectYaml,
-		HasProjectsDir:        hasProjectsDir,
+		HasAppYaml:            false,
+		HasProjectYaml:        false,
+		HasProjectsDir:        false,
 		TraversableCandidates: traversableCandidates,
 	}, nil
 }
