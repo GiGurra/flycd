@@ -68,7 +68,7 @@ func CloneShallow(
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
-		workDir = workDir.WithPushCwd("repo")
+		workDir = workDir.WithChildCwd("repo")
 
 	} else if source.Ref.Branch != "" {
 		_, err = workDir.
@@ -78,7 +78,7 @@ func CloneShallow(
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
-		workDir = workDir.WithPushCwd("repo")
+		workDir = workDir.WithChildCwd("repo")
 	} else {
 		_, err = workDir.NewCommand("git", "clone", source.Repo, "repo", "--depth", "1").
 			WithStdLogging().
@@ -86,7 +86,7 @@ func CloneShallow(
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
-		workDir = workDir.WithPushCwd("repo")
+		workDir = workDir.WithChildCwd("repo")
 	}
 
 	res, err := workDir.

@@ -125,7 +125,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		appHash = cloneResult.Hash
 
 	case model.SourceTypeLocal:
-		srcDir := cfgDir.WithPushCwd(cfg.Source.Path)
+		srcDir := cfgDir.WithChildCwd(cfg.Source.Path)
 
 		// check if srcDir exists
 		if !srcDir.Exists() {

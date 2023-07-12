@@ -66,7 +66,7 @@ func (t WorkDir) Cwd() string {
 	return t.cwd
 }
 
-func (t WorkDir) WithPushCwd(path string) WorkDir {
+func (t WorkDir) WithChildCwd(path string) WorkDir {
 
 	if path == "" {
 		return t
