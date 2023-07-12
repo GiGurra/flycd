@@ -127,14 +127,14 @@ func DeployAll(
 					defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
 
 					// Clone to temp dir
-					cloneDir, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
+					cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
 					if err != nil {
 						result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
 							Spec:  project,
 							Cause: fmt.Errorf("git clone failed for project %s: %w", project.ProjectConfig.Project, err),
 						})
 					} else {
-						innerResult, err := DeployAll(ctx, cloneDir.Dir.Cwd(), deployCfg)
+						innerResult, err := DeployAll(ctx, cloneResult.Dir.Cwd(), deployCfg)
 						if err != nil {
 							return fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
 						}
