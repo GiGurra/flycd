@@ -50,7 +50,6 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 					fmt.Printf("Error deploying project %s: %v\n", project.ProjectConfig.Project, err)
 				}
 			}()
-			return nil
 		}
 	}
 
@@ -86,7 +85,6 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 					fmt.Printf("Error deploying app %s: %v\n", app.AppConfig.App, err)
 				}
 			}()
-			return nil
 		}
 	}
 
