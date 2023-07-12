@@ -34,10 +34,10 @@ func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig
 		return "", fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return DeploySingleAppFromFolder(ctx, cfgDir.Root(), deployCfg)
+	return DeployAppFromFolder(ctx, cfgDir.Root(), deployCfg)
 }
 
-func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
+func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 

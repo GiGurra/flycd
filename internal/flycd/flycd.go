@@ -32,7 +32,7 @@ func DeployAll(
 				})
 				return nil
 			} else {
-				res, err := DeploySingleAppFromFolder(ctx, appNode.Path, deployCfg)
+				res, err := DeployAppFromFolder(ctx, appNode.Path, deployCfg)
 				if err != nil {
 					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 						Spec:  appNode,
