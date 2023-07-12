@@ -208,6 +208,8 @@ func DeployAll(
 					Cause: err,
 				})
 				fmt.Printf("Error deploying %s @ %s: %v\n:", app.AppConfig.App, app.Path, err)
+			} else {
+				result.SucceededApps = append(result.SucceededApps, app)
 			}
 		} else {
 			fmt.Printf("App is NOT valid, skipping!\n")
