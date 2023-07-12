@@ -157,7 +157,7 @@ func DeployAll(
 					} else {
 						return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
 					}
-				}
+				}()
 				innerResult, err := DeployAll(ctx, absPath, deployCfg)
 				if err != nil {
 					return result, fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
