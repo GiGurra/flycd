@@ -34,7 +34,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 	flags := Flags{}
 
 	cmd := &cobra.Command{
-		Use:   "install <flycd app name> <fly.io org slug> <fly.io region>",
+		Use:   "install",
 		Short: "Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, _ []string) {
