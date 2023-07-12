@@ -170,7 +170,7 @@ func TraverseDeepAppTree(
 	opts TraverseAppTreeOptions,
 ) error {
 
-	analysis, err := ScanDir(path)
+	analysis, err := scanDir(path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -278,7 +278,7 @@ func TraverseDeepAppTree(
 	return nil
 }
 
-func ScanDir(path string) (SpecNode, error) {
+func scanDir(path string) (SpecNode, error) {
 
 	// convert path to absolut path
 	path, err := filepath.Abs(path)
@@ -380,7 +380,7 @@ func ScanDir(path string) (SpecNode, error) {
 		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
-		child, err := ScanDir(filepath.Join(path, "projects"))
+		child, err := scanDir(filepath.Join(path, "projects"))
 		if err != nil {
 			return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -392,7 +392,7 @@ func ScanDir(path string) (SpecNode, error) {
 
 		children := make([]SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := ScanDir(filepath.Join(path, entry.Name()))
+			child, err := scanDir(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
