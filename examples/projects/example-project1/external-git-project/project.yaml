@@ -1,0 +1,4 @@
+project: external-project
+source:
+  type: git
+  repo: "https://github.com/gigurra/flycd-test-project"

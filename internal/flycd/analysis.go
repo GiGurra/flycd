@@ -1,8 +1,10 @@
 package flycd
 
 import (
+	"context"
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
+	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
@@ -173,6 +175,7 @@ type TraverseAppTreeOptions struct {
 }
 
 func TraverseDeepAppTree(
+	ctx context.Context,
 	path string,
 	opts TraverseAppTreeOptions,
 ) error {
@@ -222,12 +225,39 @@ func TraverseDeepAppTree(
 						return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
 					}
 				}()
-				err := TraverseDeepAppTree(absPath, opts)
+				err := TraverseDeepAppTree(ctx, absPath, opts)
 				if err != nil {
 					return fmt.Errorf("error traversing local project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 				}
 			case model.SourceTypeGit:
-				//
+
+				err := func() error {
+
+					// Clone to a temp folder
+					tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
+					if err != nil {
+						return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
+					}
+					defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
+
+					// Clone to temp dir
+					cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
+					if err != nil {
+						return fmt.Errorf("cloning project %s: %w", project.ProjectConfig.Project, err)
+					} else {
+						err := TraverseDeepAppTree(ctx, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), opts)
+						if err != nil {
+							return fmt.Errorf("error traversing cloned project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+						}
+					}
+
+					return nil
+				}()
+
+				if err != nil {
+					return err
+				}
+
 			default:
 				fmt.Printf("unknown source type '%s' for project '%s' @ %s\n", project.ProjectConfig.Source.Type, project.ProjectConfig.Project, project.Path)
 				if opts.InvalidProjectCb != nil {
