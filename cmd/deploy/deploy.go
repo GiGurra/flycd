@@ -36,7 +36,7 @@ var Cmd = &cobra.Command{
 
 		fmt.Printf("Deployed %d apps\n", len(result.SucceededApps))
 		for _, success := range result.SucceededApps {
-			fmt.Printf(" - %s @ %s\n", success.AppConfig.App, success.Path)
+			fmt.Printf(" - %s @ %s (%s)\n", success.Spec.AppConfig.App, success.Spec.Path, success.SuccessType)
 		}
 
 		if !result.Success() {

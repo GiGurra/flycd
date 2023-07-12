@@ -23,10 +23,15 @@ type ProjectDeployFailure struct {
 	Cause error
 }
 
+type AppDeploySuccess struct {
+	Spec        AppNode
+	SuccessType SingleAppDeploySuccessType
+}
+
 type DeployResult struct {
-	SucceededApps     []AppNode
+	SucceededApps     []AppDeploySuccess
 	FailedApps        []AppDeployFailure
-	SucceededProjects []AppNode
+	SucceededProjects []ProjectNode
 	FailedProjects    []ProjectDeployFailure
 }
 
@@ -49,9 +54,9 @@ func (r DeployResult) HasErrors() bool {
 
 func NewDeployResult() DeployResult {
 	return DeployResult{
-		SucceededApps:     make([]AppNode, 0),
+		SucceededApps:     make([]AppDeploySuccess, 0),
 		FailedApps:        make([]AppDeployFailure, 0),
-		SucceededProjects: make([]AppNode, 0),
+		SucceededProjects: make([]ProjectNode, 0),
 		FailedProjects:    make([]ProjectDeployFailure, 0),
 	}
 }
@@ -201,7 +206,7 @@ func DeployAll(
 			continue
 		}
 		if app.IsValidApp() {
-			err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
+			res, err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
 			if err != nil {
 				result.FailedApps = append(result.FailedApps, AppDeployFailure{
 					Spec:  app,
@@ -209,7 +214,10 @@ func DeployAll(
 				})
 				fmt.Printf("Error deploying %s @ %s: %v\n:", app.AppConfig.App, app.Path, err)
 			} else {
-				result.SucceededApps = append(result.SucceededApps, app)
+				result.SucceededApps = append(result.SucceededApps, AppDeploySuccess{
+					Spec:        app,
+					SuccessType: res,
+				})
 			}
 		} else {
 			fmt.Printf("App is NOT valid, skipping!\n")

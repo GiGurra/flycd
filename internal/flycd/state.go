@@ -84,7 +84,7 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 				deployCfg := NewDeployConfig().
 					WithRetries(1).
 					WithForce(false)
-				err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
+				_, err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
 				if err != nil {
 					fmt.Printf("Error deploying app %s: %v\n", app.AppConfig.App, err)
 				}

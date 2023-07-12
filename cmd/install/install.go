@@ -43,7 +43,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 				deployCfg := flycd.NewDeployConfig().WithRetries(0)
 
 				fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-				err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
+				_, err := flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 					App:           appName,
 					Org:           orgSlug,
 					PrimaryRegion: region,
@@ -135,7 +135,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			// Deploy it!
 			fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
 			deployCfg := flycd.NewDeployConfig().WithForce(true).WithRetries(0)
-			err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
+			_, err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 				App:           appName,
 				Org:           orgSlug,
 				PrimaryRegion: region,
