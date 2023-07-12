@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/fly_cli"
 	"github.com/gigurra/flycd/internal/flycd"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_packaged"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	cp "github.com/otiai10/copy"
@@ -42,14 +43,14 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 				deployCfg := flycd.NewDeployConfig().WithRetries(0)
 
 				fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-				err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, flycd.AppConfig{
+				err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 					App:           appName,
 					Org:           orgSlug,
 					PrimaryRegion: region,
-					Source:        flycd.NewInlineDockerFileSource("FROM nginx:latest"),
-					LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
-					DeployParams:  flycd.NewDefaultDeployParams(),
-					Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
+					Source:        model.NewInlineDockerFileSource("FROM nginx:latest"),
+					LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
+					DeployParams:  model.NewDefaultDeployParams(),
+					Services:      []model.Service{model.NewDefaultServiceConfig()},
 				})
 				if err != nil {
 					fmt.Printf("Error creating dummy app: %v\n", err)
@@ -134,14 +135,14 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			// Deploy it!
 			fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
 			deployCfg := flycd.NewDeployConfig().WithForce(true).WithRetries(0)
-			err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, flycd.AppConfig{
+			err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 				App:           appName,
 				Org:           orgSlug,
 				PrimaryRegion: region,
-				Source:        flycd.NewLocalFolderSource(tempDir.Cwd()),
-				LaunchParams:  flycd.NewDefaultLaunchParams(appName, orgSlug),
-				DeployParams:  flycd.NewDefaultDeployParams(),
-				Services:      []flycd.Service{flycd.NewDefaultServiceConfig()},
+				Source:        model.NewLocalFolderSource(tempDir.Cwd()),
+				LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
+				DeployParams:  model.NewDefaultDeployParams(),
+				Services:      []model.Service{model.NewDefaultServiceConfig()},
 			})
 			if err != nil {
 				fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)

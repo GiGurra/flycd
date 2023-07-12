@@ -3,6 +3,7 @@ package flycd
 import (
 	"context"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/google/uuid"
@@ -65,7 +66,7 @@ func (c DeployConfig) WithAttemptTimeout(timeout ...time.Duration) DeployConfig 
 	return c
 }
 
-func DeployAppFromInlineConfig(ctx context.Context, deployCfg DeployConfig, cfg AppConfig) error {
+func DeployAppFromInlineConfig(ctx context.Context, deployCfg DeployConfig, cfg model.AppConfig) error {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
@@ -112,7 +113,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 	}
 
 	switch cfg.Source.Type {
-	case SourceTypeGit:
+	case model.SourceTypeGit:
 
 		var err error
 
@@ -187,7 +188,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 			return fmt.Errorf("error getting git commit hash: %w", err)
 		}
 		appHash = strings.TrimSpace(res.StdOut)
-	case SourceTypeLocal:
+	case model.SourceTypeLocal:
 		srcDir := cfgDir.WithPushCwd(cfg.Source.Path)
 
 		// check if srcDir exists
@@ -213,7 +214,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 		if err != nil {
 			return fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
 		}
-	case SourceTypeInlineDockerFile:
+	case model.SourceTypeInlineDockerFile:
 		// Copy the local folder to the temp tempDir
 		err := tempDir.WriteFile("Dockerfile", cfg.Source.Inline)
 		if err != nil {
@@ -323,7 +324,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 
 func createNewApp(
 	ctx context.Context,
-	cfg AppConfig,
+	cfg model.AppConfig,
 	tempDir util_work_dir.WorkDir,
 	twoStep bool,
 ) error {
@@ -346,7 +347,7 @@ func createNewApp(
 
 func deployExistingApp(
 	ctx context.Context,
-	cfg AppConfig,
+	cfg model.AppConfig,
 	tempDir util_work_dir.WorkDir,
 	deployCfg DeployConfig,
 ) error {
@@ -365,17 +366,17 @@ func deployExistingApp(
 	return nil
 }
 
-func readAppConfig(path string) (AppConfig, error) {
-	var cfg AppConfig
+func readAppConfig(path string) (model.AppConfig, error) {
+	var cfg model.AppConfig
 
 	appYaml, err := os.ReadFile(path + "/app.yaml")
 	if err != nil {
-		return AppConfig{}, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
+		return model.AppConfig{}, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
 	}
 
 	err = yaml.Unmarshal(appYaml, &cfg)
 	if err != nil {
-		return AppConfig{}, fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
+		return model.AppConfig{}, fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
 	}
 
 	err = cfg.Validate()

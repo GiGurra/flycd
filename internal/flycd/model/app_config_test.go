@@ -1,4 +1,4 @@
-package flycd
+package model
 
 import (
 	"fmt"

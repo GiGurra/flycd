@@ -2,6 +2,7 @@ package flycd
 
 import (
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
@@ -18,7 +19,7 @@ type TraversalStepAnalysis struct {
 type SpecNode struct {
 	Path               string
 	AppYaml            string
-	AppConfig          AppConfig
+	AppConfig          model.AppConfig
 	AppConfigSyntaxErr error
 	AppConfigSemErr    error
 	Children           []SpecNode
@@ -101,7 +102,7 @@ func AnalyseSpec(path string) (SpecNode, error) {
 			return SpecNode{}, fmt.Errorf("error reading app.yaml: %w", err)
 		}
 
-		var appConfig AppConfig
+		var appConfig model.AppConfig
 		err = yaml.Unmarshal([]byte(appYaml), &appConfig)
 		if err != nil {
 			return SpecNode{

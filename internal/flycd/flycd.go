@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"strings"
 	"time"
@@ -96,7 +97,7 @@ func ExistsApp(ctx context.Context, name string) (bool, error) {
 	return true, nil
 }
 
-func GetDeployedAppConfig(ctx context.Context, name string) (AppConfig, error) {
+func GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error) {
 
 	// Compare the current deployed appVersion with the new appVersion
 	res, err := util_cmd.
@@ -107,16 +108,16 @@ func GetDeployedAppConfig(ctx context.Context, name string) (AppConfig, error) {
 	if err != nil {
 
 		if strings.Contains(strings.ToLower(err.Error()), "no machines configured for this app") {
-			return AppConfig{Env: map[string]string{}}, nil
+			return model.AppConfig{Env: map[string]string{}}, nil
 		}
 
-		return AppConfig{}, fmt.Errorf("error running fly config show for app %s: %w", name, err)
+		return model.AppConfig{}, fmt.Errorf("error running fly config show for app %s: %w", name, err)
 	}
 
-	var deployedCfg AppConfig
+	var deployedCfg model.AppConfig
 	err = json.Unmarshal([]byte(res.StdOut), &deployedCfg)
 	if err != nil {
-		return AppConfig{}, fmt.Errorf("error unmarshalling fly config for app %s: %w", name, err)
+		return model.AppConfig{}, fmt.Errorf("error unmarshalling fly config for app %s: %w", name, err)
 	}
 
 	return deployedCfg, nil
