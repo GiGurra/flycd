@@ -12,7 +12,7 @@ FlyCD adds ArgoCD/Flux style git-ops support for Fly.io:
     configurations, eliminating the necessity of embedding environment-specific configurations into your app.
 
 * FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks
-  from git pushes, fetches the most recent (or particular) versions of your apps from git, and deploys them to fly.io.
+  from git pushes, fetches the most recent (or specific) versions of your apps from git, and deploys them to fly.io.
 
 The illustration below gives an idea of FlyCD enabled configuration:
 
