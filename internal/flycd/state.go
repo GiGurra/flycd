@@ -40,19 +40,16 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 		if lo.Contains(remoteKeys, localKey) {
 			fmt.Printf("Found project %s matching webhook url %s. Scheduling deploy...\n", project.ProjectConfig.Project, payload.Repository.Url)
 
-			// TODO: Implement some kind of persistence here...
-			fmt.Printf("Not implemented yet!\n")
-
-			/*go func() {
+			go func() {
 				ctx := context.Background()
 				deployCfg := NewDeployConfig().
 					WithRetries(1).
 					WithForce(false)
-				_, err := DeployAll(ctx, app.Path, deployCfg)
+				_, err := DeployAll(ctx, project.Path, deployCfg)
 				if err != nil {
-					fmt.Printf("Error deploying app %s: %v\n", app.AppConfig.App, err)
+					fmt.Printf("Error deploying project %s: %v\n", project.ProjectConfig.Project, err)
 				}
-			}()*/
+			}()
 			return nil
 		}
 	}
