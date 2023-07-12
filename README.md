@@ -2,25 +2,17 @@
 
 ## Overview
 
-FlyCD adds ArgoCD/Flux style git-ops support for Fly.io, through the following:
+FlyCD adds ArgoCD/Flux style git-ops support for Fly.io:
 
-* Extending the standard fly.io fly.toml specifications with supplementary configuration parameters to eliminate the
-  need for manual execution of fly.io CLI commands.
+* Extending the standard fly.io fly.toml with supplementary parameters to eliminate the need for manual execution of
+  fly.io CLI commands.
 
-* Separating the process of application development from environment deployment/composition.
-    * You can develop the code in one repository and push updates to your app, keeping the repository devoid of any
-      environment-specific configuration.
-    * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
-      configurations, eliminating the necessity of embedding environment-specific configurations into your app.
-    * It offers the flexibility to deploy or reference any app (or version of any app), whether from your repositories
-      or owned by others, and separately compose the cloud environment from the application development.
+* Keeping app repos separate from your environment configuration repos.
+  * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
+    configurations, eliminating the necessity of embedding environment-specific configurations into your app.
 
 * FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks
   from git pushes, fetches the most recent (or particular) versions of your apps from git, and deploys them to fly.io.
-
-* The specification format of FlyCD is a strict superset of regular fly.io toml files. Despite fly.io using toml and
-  FlyCD utilizing yaml, both formats are interchangeable. In the future, FlyCD may adopt toml if the authors reconsider
-  their stance on toml.
 
 The illustration below gives an idea of FlyCD enabled configuration:
 
