@@ -53,8 +53,6 @@ FlyCD v0.0.18 exiting normally, bye!
 
 ## Current state
 
-FlyCD is built on the principle of bootstrapping itself.
-
 * It can install itself to an existing fly.io environment and point to a config repo
     * where it listens and acts on both config repo and app repo webhooks
 * It can also operate as a manual CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
