@@ -165,6 +165,16 @@ func ScanForApps(path string) ([]AppNode, error) {
 	return analysis.Apps()
 }
 
+func ScanForProjects(path string) ([]ProjectNode, error) {
+
+	analysis, err := ScanDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("error analysing %s: %w", path, err)
+	}
+
+	return analysis.Projects()
+}
+
 func ScanDir(path string) (SpecNode, error) {
 
 	// convert path to absolut path

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
+	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"strings"
 	"time"
 )
@@ -33,6 +34,23 @@ func NewDeployResult() DeployResult {
 
 var SkippedNotValid = fmt.Errorf("skipped: not a valid app")
 var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
+
+type FetchedProject struct {
+	ProjectConfig model.ProjectConfig
+	WorkDir       util_work_dir.WorkDir
+	IsTempDir     bool
+}
+
+/*func FetchProject(config model.ProjectConfig) (FetchedProject, error) {
+	switch config.Source.Type {
+	case model.SourceTypeGit:
+		return FetchProjectFromGit(config)
+	case model.SourceTypeLocal:
+		return FetchProjectFromLocal(config)
+	default:
+		return FetchedProject{}, fmt.Errorf("unsupported source type: %s", config.Source.Type)
+	}
+}*/
 
 func DeployAll(
 	ctx context.Context,
