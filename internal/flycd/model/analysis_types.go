@@ -36,30 +36,13 @@ type SpecNode struct {
 	Children []SpecNode
 }
 
-func (s SpecNode) Apps(followProjects ...bool) []AppNode {
-
-	follow := false
-	if len(followProjects) > 0 {
-		follow = followProjects[0]
-	}
+func (s SpecNode) Apps() []AppNode {
 
 	nodeList := s.Flatten()
 
 	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
 		return node.IsAppNode()
 	})
-
-	projects := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
-		return node.IsProjectNode()
-	})
-
-	if follow && len(projects) > 0 {
-		fmt.Printf("analysis.SpecNode.Apps.follow: Not implemented yet!\n")
-		fmt.Printf("Would have followed %d projects\n", len(projects))
-		for _, project := range projects {
-			fmt.Printf(" - %s\n", project.Path)
-		}
-	}
 
 	return lo.Map(apps, func(item SpecNode, index int) AppNode {
 		return *item.App
