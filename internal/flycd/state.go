@@ -18,7 +18,7 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 
 		ctx := context.Background()
 		err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
-			ValidAppCb: func(app AppNode) error {
+			ValidAppCb: func(app model.AppNode) error {
 				localKey := strings.ToLower(app.AppConfig.Source.Repo)
 				remoteKeys := []string{
 					strings.ToLower(payload.Repository.Url),

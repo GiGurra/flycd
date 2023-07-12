@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (SingleAppDeploySuccessType, error) {
+func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
@@ -37,15 +37,7 @@ func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig
 	return DeploySingleAppFromFolder(ctx, cfgDir.Root(), deployCfg)
 }
 
-type SingleAppDeploySuccessType string
-
-const (
-	SingleAppDeployCreated  SingleAppDeploySuccessType = "created"
-	SingleAppDeployUpdated  SingleAppDeploySuccessType = "updated"
-	SingleAppDeployNoChange SingleAppDeploySuccessType = "no-change"
-)
-
-func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (SingleAppDeploySuccessType, error) {
+func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
@@ -208,10 +200,10 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg model
 			if err != nil {
 				return "", err
 			}
-			return SingleAppDeployUpdated, nil
+			return model.SingleAppDeployUpdated, nil
 		} else {
 			println("App is already up to date, skipping deploy")
-			return SingleAppDeployNoChange, nil
+			return model.SingleAppDeployNoChange, nil
 		}
 	} else {
 		println("App not found, creating it")
@@ -224,7 +216,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg model
 		if err != nil {
 			return "", err
 		}
-		return SingleAppDeployCreated, nil
+		return model.SingleAppDeployCreated, nil
 	}
 }
 

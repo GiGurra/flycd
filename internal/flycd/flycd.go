@@ -10,54 +10,6 @@ import (
 	"time"
 )
 
-type AppDeployFailure struct {
-	Spec  AppNode
-	Cause error
-}
-
-type ProjectProcessingFailure struct {
-	Spec  ProjectNode
-	Cause error
-}
-
-type AppDeploySuccess struct {
-	Spec        AppNode
-	SuccessType SingleAppDeploySuccessType
-}
-
-type DeployResult struct {
-	SucceededApps     []AppDeploySuccess
-	FailedApps        []AppDeployFailure
-	ProcessedProjects []ProjectNode
-	FailedProjects    []ProjectProcessingFailure
-}
-
-func (r DeployResult) Plus(other DeployResult) DeployResult {
-	return DeployResult{
-		SucceededApps:     append(r.SucceededApps, other.SucceededApps...),
-		FailedApps:        append(r.FailedApps, other.FailedApps...),
-		ProcessedProjects: append(r.ProcessedProjects, other.ProcessedProjects...),
-		FailedProjects:    append(r.FailedProjects, other.FailedProjects...),
-	}
-}
-
-func (r DeployResult) Success() bool {
-	return len(r.FailedApps) == 0 && len(r.FailedProjects) == 0
-}
-
-func (r DeployResult) HasErrors() bool {
-	return len(r.FailedApps) != 0 || len(r.FailedProjects) != 0
-}
-
-func NewEmptyDeployResult() DeployResult {
-	return DeployResult{
-		SucceededApps:     make([]AppDeploySuccess, 0),
-		FailedApps:        make([]AppDeployFailure, 0),
-		ProcessedProjects: make([]ProjectNode, 0),
-		FailedProjects:    make([]ProjectProcessingFailure, 0),
-	}
-}
-
 var SkippedNotValid = fmt.Errorf("skipped: not a valid app")
 var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
 
@@ -65,16 +17,16 @@ func DeployAll(
 	ctx context.Context,
 	path string,
 	deployCfg model.DeployConfig,
-) (DeployResult, error) {
+) (model.DeployResult, error) {
 
-	result := NewEmptyDeployResult()
+	result := model.NewEmptyDeployResult()
 
 	err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
-		ValidAppCb: func(appNode AppNode) error {
+		ValidAppCb: func(appNode model.AppNode) error {
 			fmt.Printf("Considering app %s @ %s\n", appNode.AppConfig.App, appNode.Path)
 			if deployCfg.AbortOnFirstError && result.HasErrors() {
 				fmt.Printf("Aborted earlier, skipping!\n")
-				result.FailedApps = append(result.FailedApps, AppDeployFailure{
+				result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 					Spec:  appNode,
 					Cause: SkippedAbortedEarlier,
 				})
@@ -82,12 +34,12 @@ func DeployAll(
 			} else {
 				res, err := DeploySingleAppFromFolder(ctx, appNode.Path, deployCfg)
 				if err != nil {
-					result.FailedApps = append(result.FailedApps, AppDeployFailure{
+					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 						Spec:  appNode,
 						Cause: err,
 					})
 				} else {
-					result.SucceededApps = append(result.SucceededApps, AppDeploySuccess{
+					result.SucceededApps = append(result.SucceededApps, model.AppDeploySuccess{
 						Spec:        appNode,
 						SuccessType: res,
 					})
@@ -95,16 +47,16 @@ func DeployAll(
 				return nil
 			}
 		},
-		InvalidAppCb: func(appNode AppNode) error {
-			result.FailedApps = append(result.FailedApps, AppDeployFailure{
+		InvalidAppCb: func(appNode model.AppNode) error {
+			result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 				Spec:  appNode,
 				Cause: SkippedNotValid,
 			})
 			return nil
 		},
-		ValidProjectCb: func(appNode ProjectNode) error {
+		ValidProjectCb: func(appNode model.ProjectNode) error {
 			if deployCfg.AbortOnFirstError && result.HasErrors() {
-				result.FailedProjects = append(result.FailedProjects, ProjectProcessingFailure{
+				result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
 					Spec:  appNode,
 					Cause: SkippedAbortedEarlier,
 				})
@@ -114,8 +66,8 @@ func DeployAll(
 				return nil
 			}
 		},
-		InvalidProjectCb: func(appNode ProjectNode) error {
-			result.FailedProjects = append(result.FailedProjects, ProjectProcessingFailure{
+		InvalidProjectCb: func(appNode model.ProjectNode) error {
+			result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
 				Spec:  appNode,
 				Cause: SkippedNotValid,
 			})
