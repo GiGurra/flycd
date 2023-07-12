@@ -106,13 +106,13 @@ func TestConvertYaml2TomlEqualConfigsAsYaml(t *testing.T) {
 	mapData := make(map[string]any)
 	err := yaml.Unmarshal([]byte(srcYaml), &mapData)
 	if err != nil {
-		t.Fatalf("Failed to parse yaml: %v", err)
+		t.Fatalf("FailedApps to parse yaml: %v", err)
 	}
 
 	fmt.Printf("Parsed yaml: %+v\n", mapData)
 	backToYaml1, err := yaml.Marshal(mapData)
 	if err != nil {
-		t.Fatalf("Failed to convert yaml to yaml: %v", err)
+		t.Fatalf("FailedApps to convert yaml to yaml: %v", err)
 	}
 
 	// create an io.writer buffer to write the toml to
@@ -120,7 +120,7 @@ func TestConvertYaml2TomlEqualConfigsAsYaml(t *testing.T) {
 	// Convert the map to toml
 	tomlStr, err := util_toml.Marshal(mapData)
 	if err != nil {
-		t.Fatalf("Failed to convert yaml to toml: %v", err)
+		t.Fatalf("FailedApps to convert yaml to toml: %v", err)
 	}
 
 	fmt.Printf("Converted toml: \n%s\n", tomlStr)
@@ -129,13 +129,13 @@ func TestConvertYaml2TomlEqualConfigsAsYaml(t *testing.T) {
 	var mapData2 map[string]any
 	err = util_toml.Unmarshal(tomlStr, &mapData2)
 	if err != nil {
-		t.Fatalf("Failed to convert toml to yaml: %v", err)
+		t.Fatalf("FailedApps to convert toml to yaml: %v", err)
 	}
 
 	// Convert the map to yaml
 	backToYaml2, err := yaml.Marshal(mapData2)
 	if err != nil {
-		t.Fatalf("Failed to convert toml to yaml: %v", err)
+		t.Fatalf("FailedApps to convert toml to yaml: %v", err)
 	}
 
 	// Check that the maps are equal
@@ -153,13 +153,13 @@ func TestConvertYaml2TomlEqualConfigsAsObjects(t *testing.T) {
 	// Parse the yaml as a cfg
 	err := yaml.Unmarshal([]byte(srcYaml), &cfgFromYaml)
 	if err != nil {
-		t.Fatalf("Failed to parse yaml: %v", err)
+		t.Fatalf("FailedApps to parse yaml: %v", err)
 	}
 
 	// Parse the toml as a cfg
 	err = util_toml.Unmarshal(srcToml, &cfgFromToml)
 	if err != nil {
-		t.Fatalf("Failed to parse toml: %v", err)
+		t.Fatalf("FailedApps to parse toml: %v", err)
 	}
 
 	// Check that the configs are equal
@@ -206,7 +206,7 @@ port = 443
 	// Parse the toml as a cfg
 	err := util_toml.Unmarshal(flyToml, &cfg)
 	if err != nil {
-		t.Fatalf("Failed to parse toml: %v", err)
+		t.Fatalf("FailedApps to parse toml: %v", err)
 	}
 
 	fmt.Printf("Parsed toml: %+v\n", cfg)
@@ -218,7 +218,7 @@ port = 443
 
 	err = cfg.Validate(NewValidateAppConfigOptions().WithValidateSource(false))
 	if err != nil {
-		t.Fatalf("Failed to validate cfg: %v", err)
+		t.Fatalf("FailedApps to validate cfg: %v", err)
 	}
 
 }

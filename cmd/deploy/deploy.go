@@ -35,8 +35,8 @@ var Cmd = &cobra.Command{
 		}
 
 		if !result.Success() {
-			fmt.Printf("Failed to deploy %d apps\n", len(result.Failed))
-			for _, failure := range result.Failed {
+			fmt.Printf("Failed to deploy %d apps\n", len(result.FailedApps))
+			for _, failure := range result.FailedApps {
 				fmt.Printf(" - %s: %v\n", failure.Spec.Path, failure.Cause)
 			}
 			os.Exit(1)

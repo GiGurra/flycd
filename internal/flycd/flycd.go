@@ -11,24 +11,33 @@ import (
 	"time"
 )
 
-type DeployFailure struct {
+type AppDeployFailure struct {
 	Spec  AppNode
 	Cause error
 }
 
+type ProjectDeployFailure struct {
+	Spec  ProjectNode
+	Cause error
+}
+
 type DeployResult struct {
-	Succeeded []AppNode
-	Failed    []DeployFailure
+	SucceededApps     []AppNode
+	FailedApps        []AppDeployFailure
+	SucceededProjects []AppNode
+	FailedProjects    []ProjectDeployFailure
 }
 
 func (r DeployResult) Success() bool {
-	return len(r.Failed) == 0
+	return len(r.FailedApps) == 0 && len(r.FailedProjects) == 0
 }
 
 func NewDeployResult() DeployResult {
 	return DeployResult{
-		Succeeded: make([]AppNode, 0),
-		Failed:    make([]DeployFailure, 0),
+		SucceededApps:     make([]AppNode, 0),
+		FailedApps:        make([]AppDeployFailure, 0),
+		SucceededProjects: make([]AppNode, 0),
+		FailedProjects:    make([]ProjectDeployFailure, 0),
 	}
 }
 
@@ -60,17 +69,61 @@ func DeployAll(
 
 	result := NewDeployResult()
 
-	apps, err := ScanForApps(path)
+	analysis, err := ScanDir(path)
 	if err != nil {
-		return result, fmt.Errorf("Error finding apps: %w\n", err)
+		return NewDeployResult(), fmt.Errorf("error analysing %s: %w", path, err)
+	}
+
+	projects, err := analysis.Projects()
+	if err != nil {
+		return NewDeployResult(), fmt.Errorf("finding projects %s: %w", path, err)
+	}
+
+	apps, err := analysis.Apps()
+	if err != nil {
+		return NewDeployResult(), fmt.Errorf("finding apps %s: %w", path, err)
 	}
 
 	aborted := false
+
+	// Deploy projects
+	for _, project := range projects {
+		fmt.Printf("Considering project %s @ %s\n", project.ProjectConfig.Project, project.Path)
+		if aborted {
+			fmt.Printf("Aborted earlier, skipping!\n")
+			result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
+				Spec:  project,
+				Cause: SkippedAbortedEarlier,
+			})
+			continue
+		}
+		if project.IsValidProject() {
+			err := DeploySingleProject(ctx, project.Path, deployCfg)
+			if err != nil {
+				result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
+					Spec:  project,
+					Cause: err,
+				})
+				if deployCfg.AbortOnFirstError {
+					aborted = true
+				}
+				fmt.Printf("Error deploying %s @ %s: %v\n:", project.ProjectConfig.Project, project.Path, err)
+			}
+		} else {
+			fmt.Printf("Project is NOT valid, skipping!\n")
+			result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
+				Spec:  project,
+				Cause: SkippedNotValid,
+			})
+		}
+	}
+
+	// Deploy apps
 	for _, app := range apps {
 		fmt.Printf("Considering app %s @ %s\n", app.AppConfig.App, app.Path)
 		if aborted {
 			fmt.Printf("Aborted earlier, skipping!\n")
-			result.Failed = append(result.Failed, DeployFailure{
+			result.FailedApps = append(result.FailedApps, AppDeployFailure{
 				Spec:  app,
 				Cause: SkippedAbortedEarlier,
 			})
@@ -79,7 +132,7 @@ func DeployAll(
 		if app.IsValidApp() {
 			err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
 			if err != nil {
-				result.Failed = append(result.Failed, DeployFailure{
+				result.FailedApps = append(result.FailedApps, AppDeployFailure{
 					Spec:  app,
 					Cause: err,
 				})
@@ -90,7 +143,7 @@ func DeployAll(
 			}
 		} else {
 			fmt.Printf("App is NOT valid, skipping!\n")
-			result.Failed = append(result.Failed, DeployFailure{
+			result.FailedApps = append(result.FailedApps, AppDeployFailure{
 				Spec:  app,
 				Cause: SkippedNotValid,
 			})
