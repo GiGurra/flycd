@@ -36,7 +36,41 @@ type ProjectNode struct {
 type SpecNode struct {
 	Path     string
 	App      *AppNode
+	Project  *ProjectNode
 	Children []SpecNode
+}
+
+func (s SpecNode) Apps(followProjects ...bool) ([]AppNode, error) {
+
+	follow := false
+	if len(followProjects) > 0 {
+		follow = followProjects[0]
+	}
+
+	nodeList, err := s.Flatten()
+	if err != nil {
+		return nil, fmt.Errorf("error flattening analysis: %w", err)
+	}
+
+	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
+		return node.IsAppNode()
+	})
+
+	projects := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
+		return node.IsProjectNode()
+	})
+
+	if follow && len(projects) > 0 {
+		fmt.Printf("analysis.SpecNode.Apps.follow: Not implemented yet!\n")
+		fmt.Printf("Would have followed %d projects\n", len(projects))
+		for _, project := range projects {
+			fmt.Printf(" - %s\n", project.Path)
+		}
+	}
+
+	return lo.Map(apps, func(item SpecNode, index int) AppNode {
+		return *item.App
+	}), nil
 }
 
 func (s SpecNode) Traverse(t func(node SpecNode) error) error {
@@ -69,6 +103,10 @@ func (s SpecNode) IsAppNode() bool {
 	return s.App != nil && s.App.IsAppNode()
 }
 
+func (s SpecNode) IsProjectNode() bool {
+	return s.Project != nil && s.Project.IsProjectNode()
+}
+
 func (s SpecNode) IsAppSyntaxValid() bool {
 	return s.App != nil && s.App.IsAppSyntaxValid()
 }
@@ -89,6 +127,18 @@ func (s AppNode) IsValidApp() bool {
 	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigSemErr == nil
 }
 
+func (s ProjectNode) IsProjectNode() bool {
+	return s.ProjectYaml != ""
+}
+
+func (s ProjectNode) IsProjectSyntaxValid() bool {
+	return s.IsProjectNode() && s.ProjectConfig.Project != "" && s.ProjectConfigSyntaxErr == nil
+}
+
+func (s ProjectNode) IsValidProject() bool {
+	return s.IsProjectNode() && s.IsProjectSyntaxValid() && s.ProjectConfigSemErr == nil
+}
+
 func ScanForApps(path string) ([]AppNode, error) {
 
 	analysis, err := ScanDir(path)
@@ -96,18 +146,7 @@ func ScanForApps(path string) ([]AppNode, error) {
 		return nil, fmt.Errorf("error analysing %s: %w", path, err)
 	}
 
-	nodeList, err := analysis.Flatten()
-	if err != nil {
-		return nil, fmt.Errorf("error flattening analysis of %s: %w", path, err)
-	}
-
-	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
-		return node.IsAppNode()
-	})
-
-	return lo.Map(apps, func(item SpecNode, index int) AppNode {
-		return *item.App
-	}), nil
+	return analysis.Apps()
 }
 
 func ScanDir(path string) (SpecNode, error) {
