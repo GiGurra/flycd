@@ -1,0 +1,4 @@
+project: external-project
+source:
+  type: local
+  path: "../../../external-project"

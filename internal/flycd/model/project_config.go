@@ -10,12 +10,13 @@ type ProjectConfig struct {
 	Project string `yaml:"project" toml:"project"`
 	// Source Required. Where the app configs of the project are located
 	Source Source `yaml:"source" toml:"source"`
+	// TODO: Implement the below
 	// Org Optional. Default org to be used by all apps in the project
-	Org string `yaml:"org" toml:"org"`
+	//Org string `yaml:"org" toml:"org"`
 	// PrimaryRegion Optional. Default region to be used by all apps in the project
-	PrimaryRegion string `yaml:"primary_region" toml:"primary_region"`
+	//PrimaryRegion string `yaml:"primary_region" toml:"primary_region"`
 	// Env Optional. Default env vars to be used by all apps in the project
-	Env map[string]string `yaml:"env" toml:"env"`
+	//Env map[string]string `yaml:"env" toml:"env"`
 }
 
 func (cfg *ProjectConfig) Validate() error {
