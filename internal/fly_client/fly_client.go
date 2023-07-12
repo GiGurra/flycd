@@ -1,4 +1,4 @@
-package fly_cli
+package fly_client
 
 import (
 	"context"

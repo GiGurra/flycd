@@ -3,7 +3,7 @@ package flycd
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/internal/fly_cli"
+	"github.com/gigurra/flycd/internal/fly_client"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
@@ -249,14 +249,14 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 
 	// Now run fly.io cli and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
-	appExists, err := fly_cli.ExistsApp(ctx, cfg.App)
+	appExists, err := fly_client.ExistsApp(ctx, cfg.App)
 	if err != nil {
 		return "", fmt.Errorf("error running fly status in folder %s: %w", path, err)
 	}
 
 	if appExists {
 		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfg.App)
-		deployedCfg, err := fly_cli.GetDeployedAppConfig(ctx, cfg.App)
+		deployedCfg, err := fly_client.GetDeployedAppConfig(ctx, cfg.App)
 		if err != nil {
 			return "", fmt.Errorf("error getting deployed app config: %w", err)
 		}
@@ -266,7 +266,7 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
-			err = fly_cli.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
+			err = fly_client.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 			if err != nil {
 				return "", err
 			}
@@ -277,12 +277,12 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 		}
 	} else {
 		println("App not found, creating it")
-		err = fly_cli.CreateNewApp(ctx, cfg, tempDir, true)
+		err = fly_client.CreateNewApp(ctx, cfg, tempDir, true)
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
 		println("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation")
-		err = fly_cli.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
+		err = fly_client.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 		if err != nil {
 			return "", err
 		}
