@@ -73,6 +73,22 @@ func (s SpecNode) Apps(followProjects ...bool) ([]AppNode, error) {
 	}), nil
 }
 
+func (s SpecNode) Projects() ([]ProjectNode, error) {
+
+	nodeList, err := s.Flatten()
+	if err != nil {
+		return nil, fmt.Errorf("error flattening analysis: %w", err)
+	}
+
+	projects := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
+		return node.IsProjectNode()
+	})
+
+	return lo.Map(projects, func(item SpecNode, index int) ProjectNode {
+		return *item.Project
+	}), nil
+}
+
 func (s SpecNode) Traverse(t func(node SpecNode) error) error {
 	err := t(s)
 	if err != nil {
