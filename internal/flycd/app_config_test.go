@@ -168,3 +168,58 @@ func TestConvertYaml2TomlEqualConfigsAsObjects(t *testing.T) {
 		t.Fatalf("Configs are not equal: %v", diff)
 	}
 }
+
+func TestReadFlyToml(t *testing.T) {
+
+	flyToml := `
+app = "example-project1-local-app-foobar12341"
+org = "personal"
+primary_region = "arn"
+
+
+[env]
+ENV = "development"
+
+[[services]]
+internal_port = 80
+protocol = "tcp"
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 0
+[services.concurrency]
+type = "requests"
+soft_limit = 200
+hard_limit = 250
+
+[[services.ports]]
+handlers = ["http"]
+port = 80
+force_https = true
+
+[[services.ports]]
+handlers = ["tls", "http"]
+port = 443
+`
+
+	cfg := AppConfig{}
+
+	// Parse the toml as a cfg
+	err := util_toml.Unmarshal(flyToml, &cfg)
+	if err != nil {
+		t.Fatalf("Failed to parse toml: %v", err)
+	}
+
+	fmt.Printf("Parsed toml: %+v\n", cfg)
+
+	err = cfg.Validate()
+	if err == nil {
+		t.Fatalf("Souuld have failed source validation!")
+	}
+
+	err = cfg.Validate(NewValidateAppConfigOptions().WithValidateSource(false))
+	if err != nil {
+		t.Fatalf("Failed to validate cfg: %v", err)
+	}
+
+}

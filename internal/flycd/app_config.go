@@ -16,9 +16,33 @@ type AppConfig struct {
 	Env           map[string]string `yaml:"env" toml:"env"`
 }
 
-func (a *AppConfig) Validate() error {
+type ValidateAppConfigOptions struct {
+	ValidateSource bool
+}
+
+func (opts ValidateAppConfigOptions) WithValidateSource(validateSource ...bool) ValidateAppConfigOptions {
+	if len(validateSource) > 0 {
+		opts.ValidateSource = validateSource[0]
+	} else {
+		opts.ValidateSource = true
+	}
+	return opts
+}
+
+func NewValidateAppConfigOptions() ValidateAppConfigOptions {
+	return ValidateAppConfigOptions{
+		ValidateSource: true,
+	}
+}
+
+func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 	if a.App == "" {
 		return fmt.Errorf("app name is required")
+	}
+
+	opts := NewValidateAppConfigOptions()
+	if len(options) > 0 {
+		opts = options[0]
 	}
 
 	// only permit apps that are valid dns names
@@ -29,9 +53,11 @@ func (a *AppConfig) Validate() error {
 		return fmt.Errorf("app name '%s' is not a valid subdomain prefix", a.App)
 	}
 
-	err := a.Source.Validate()
-	if err != nil {
-		return err
+	if opts.ValidateSource {
+		err := a.Source.Validate()
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(a.LaunchParams) == 0 {
