@@ -91,7 +91,7 @@ func (s AppNode) IsValidApp() bool {
 
 func ScanForApps(path string) ([]AppNode, error) {
 
-	analysis, err := AnalyseSpec(path)
+	analysis, err := AnalyseDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -110,7 +110,7 @@ func ScanForApps(path string) ([]AppNode, error) {
 	}), nil
 }
 
-func AnalyseSpec(path string) (SpecNode, error) {
+func AnalyseDir(path string) (SpecNode, error) {
 
 	// convert path to absolut path
 	path, err := filepath.Abs(path)
@@ -168,7 +168,7 @@ func AnalyseSpec(path string) (SpecNode, error) {
 		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
-		child, err := AnalyseSpec(filepath.Join(path, "projects"))
+		child, err := AnalyseDir(filepath.Join(path, "projects"))
 		if err != nil {
 			return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -180,7 +180,7 @@ func AnalyseSpec(path string) (SpecNode, error) {
 
 		children := make([]SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := AnalyseSpec(filepath.Join(path, entry.Name()))
+			child, err := AnalyseDir(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
