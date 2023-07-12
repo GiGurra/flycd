@@ -29,15 +29,8 @@ func TraverseDeepAppTree(
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
 
-	apps, err := analysis.Apps()
-	if err != nil {
-		return fmt.Errorf("error getting apps at '%s': %w", path, err)
-	}
-
-	projects, err := analysis.Projects()
-	if err != nil {
-		return fmt.Errorf("error getting projects at '%s': %w", path, err)
-	}
+	apps := analysis.Apps()
+	projects := analysis.Projects()
 
 	for _, app := range apps {
 		if app.IsValidApp() {

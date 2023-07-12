@@ -36,17 +36,14 @@ type SpecNode struct {
 	Children []SpecNode
 }
 
-func (s SpecNode) Apps(followProjects ...bool) ([]AppNode, error) {
+func (s SpecNode) Apps(followProjects ...bool) []AppNode {
 
 	follow := false
 	if len(followProjects) > 0 {
 		follow = followProjects[0]
 	}
 
-	nodeList, err := s.Flatten()
-	if err != nil {
-		return nil, fmt.Errorf("error flattening analysis: %w", err)
-	}
+	nodeList := s.Flatten()
 
 	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
 		return node.IsAppNode()
@@ -66,23 +63,19 @@ func (s SpecNode) Apps(followProjects ...bool) ([]AppNode, error) {
 
 	return lo.Map(apps, func(item SpecNode, index int) AppNode {
 		return *item.App
-	}), nil
+	})
 }
 
-func (s SpecNode) Projects() ([]ProjectNode, error) {
+func (s SpecNode) Projects() []ProjectNode {
 
-	nodeList, err := s.Flatten()
-	if err != nil {
-		return nil, fmt.Errorf("error flattening analysis: %w", err)
-	}
-
+	nodeList := s.Flatten()
 	projects := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
 		return node.IsProjectNode()
 	})
 
 	return lo.Map(projects, func(item SpecNode, index int) ProjectNode {
 		return *item.Project
-	}), nil
+	})
 }
 
 func (s SpecNode) Traverse(t func(node SpecNode) error) error {
@@ -99,16 +92,19 @@ func (s SpecNode) Traverse(t func(node SpecNode) error) error {
 	return nil
 }
 
-func (s SpecNode) Flatten() ([]SpecNode, error) {
-	var result []SpecNode
-	err := s.Traverse(func(node SpecNode) error {
-		result = append(result, node)
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error flattening node '%s': %w", s.Path, err)
+func (s SpecNode) TraverseNoErr(t func(node SpecNode)) {
+	t(s)
+	for _, child := range s.Children {
+		child.TraverseNoErr(t)
 	}
-	return result, nil
+}
+
+func (s SpecNode) Flatten() []SpecNode {
+	var result []SpecNode
+	s.TraverseNoErr(func(node SpecNode) {
+		result = append(result, node)
+	})
+	return result
 }
 
 func (s SpecNode) IsAppNode() bool {
