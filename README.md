@@ -1,91 +1,91 @@
 # FlyCD
 
-## Concept
+## Overview
 
-FlyCD is a tool designed to add ArgoCD/Flux style git-ops support for Fly.io. Although its fully automated git-ops
-functionality is still to be implemented, the following are the features it aims to provide:
+FlyCD is an tool engineered to introduce ArgoCD/Flux style git-ops support for Fly.io. It aspires to deliver the
+following features:
 
-* Extending the regular fly.io fly.toml specifications with additional configuration parameters,
-  removing the need for running **_any_** fly.io cli commands manually.
+* Adapting the standard fly.io fly.toml specifications with supplementary configuration parameters to eliminate the need
+  for manual execution of any fly.io CLI commands.
 
-* FlyCD separates app development from app environment deployment/composition.
-    * You write code in one repo and push updates to your app. Don't include any environment specific configuration in
-      your app repo.
-    * Have arbitrary number of fly.io environments making use of that app, in different
-      versions, configurations etc. No need to embed environment specific configurations into your app.
-    * Reference/deploy any app, from your own repos or repos owned by others, and compose the cloud environment you want
-      separately from app development.
+* FlyCD separates the processes of application development and environment deployment/composition.
+    * You can develop the code in one repository and push updates to your app, keeping the repository devoid of any
+      environment-specific configuration.
+    * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
+      configurations, eliminating the necessity of embedding environment-specific configurations into your app.
+    * It offers the flexibility to deploy or reference any app, whether from your repositories or owned by others, and
+      separately compose the cloud environment from the application development.
 
-* FlyCD is installed and runs as any other fly.io app inside the fly.io environment you install it in, listening to
-  webhooks from git pushes,
-  and grabbing the latest versions (or specific versions) of your applications from git, and deploying them to fly.io.
+* FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks
+  from git pushes, fetches the most recent (or particular) versions of your apps from git, and deploys them to fly.io.
 
-* FlyCD spec format is a strict superset of regular fly.io toml files. Although fly.io uses toml and flycd uses yaml,
-  they are 1:1 convertible between, and who knows, flycd might use toml in the future if flycd author(s) stop hating
-  toml :).
+* The specification format of FlyCD is a strict superset of regular fly.io toml files. Despite fly.io using toml and
+  FlyCD utilizing yaml, both formats are interchangeable. In the future, FlyCD may adopt toml if the authors reconsider
+  their stance on toml.
 
-Example of what it could look like (doesn't have to include multiple envs, or anything like this):
+The illustration below gives an idea of FlyCD enabled configuration:
 
 ![alt text](https://raw.githubusercontent.com/GiGurra/flycd/master/concept.svg)
-
 
 ```
 $flycd --help
 
-Starting FlyCD v0.0.9...
-Complete documentation is available at https://github.com/gigurra/flycd
+# FlyCD
 
-Usage:
-  flycd [flags]
-  flycd [command]
+## Overview
 
-Available Commands:
-  completion  Generate the autocompletion script for the specified shell
-  deploy      Manually deploy a single flycd app, or all flycd apps inside a folder
-  help        Help about any command
-  install     Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos
-  monitor     (Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc
+FlyCD is an innovative tool engineered to introduce ArgoCD/Flux style git-ops support for Fly.io. Although the complete automation through git-ops remains in development, it aspires to deliver several exciting features:
 
-Flags:
-  -h, --help   help for flycd
+* Adapting the standard fly.io fly.toml specifications with supplementary configuration parameters to eliminate the need for manual execution of any fly.io CLI commands.
 
-Use "flycd [command] --help" for more information about a command.
-FlyCD v0.0.9 exiting normally, bye!
+* FlyCD separates the processes of application development and environment deployment/composition.
+    * You can develop the code in one repository and push updates to your app, keeping the repository devoid of any environment-specific configuration.
+    * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and configurations, eliminating the necessity of embedding environment-specific configurations into your app.
+    * It offers the flexibility to deploy or reference any app, whether from your repositories or owned by others, and separately compose the cloud environment from the application development.
+
+* FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks from git pushes, fetches the most recent (or particular) versions of your apps from git, and deploys them to fly.io.
+
+* The specification format of FlyCD is a strict superset of regular fly.io toml files. Despite fly.io using toml and FlyCD utilizing yaml, both formats are interchangeable. In the future, FlyCD may adopt toml if the authors reconsider their stance on toml.
+
+The sample below gives a glimpse of potential configuration (though it doesn't necessarily include multiple environments or similar features):
 ```
 
 ## Current state
 
 FlyCD is built on the principle of bootstrapping itself.
 
-* It can install/launch/deploy specifications to an existing fly.io environment
-* It can operate as a manual Git-Ops CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
+* It can install itself to an existing fly.io environment and point to a config repo
+  * where it listens and acts on both config repo and app repo webhooks
+* It can also operate as a manual CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
     * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
     * the target organisation to deploy to
     * figures out if a deployment is actually warranted, by configuration folder and app folder checksum/app git hash
       with hashes saved to fly.io env for the app (using app env vars for this)
 * It can deploy many apps at the same time. Simply point it to a directory structure/hierarchy containing multiple
   app.yaml files, and flycd will traverse the structure recursively, clone each app's source repo and deploy each app
-* It can currently install itself into an existing fly.io environment
-* Needs some persistence and queueing of incoming webhook commands to no run into data races, or lose data if flycd
-  crashes or is re-deployed :S. Currently, it just spins up a go-routine for running the new deployment.
-* Needs a better way to scan existing available apps than re-read all of their specs from disk on every webhook event.
-* Need separate config repo(s) and webhooks. Right now flycd when deployed needs locally mounted projects/ folder.
-* Need regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably can't add
+
+### Where it needs improvement
+
+* It needs some persistence and queueing of incoming webhook commands to no run into data races, or lose data if flycd
+  crashes or is re-deployed :S. Currently, it just spins up a new go-routine for each webhook request.
+* It needs a better way to scan existing available apps than re-read all of their specs from disk on every webhook
+  event.
+* It needs regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably can't add
   webhooks.
-* Need some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are trivial to create :S. 
+* It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are trivial to
+  create :S.
 
 **I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
 Consider it proof of concept, and nothing more.
 
-## Current issues
+## Other concerns
 
-* SUPER HACKY code right now, just a 3-day hack so far with most work delegated to shell commands instead of proper go
-  libraries :D
-    * Lots of refactoring needed!
+* Pretty hacky code right now, without too many automated tests, just a 1-week hack so far with a lot of work delegated
+  to shell commands instead of proper go libraries :D
+    * Refactoring needed!
 * This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
   discussion thread over at fly.io community forums.
-    *
-  see https://community.fly.io/t/simple-self-contained-argocd-style-git-ops-with-fly-io-what-are-the-options-poc-flycd-app/14032
+    * https://community.fly.io/t/simple-self-contained-argocd-style-git-ops-with-fly-io-what-are-the-options-poc-flycd-app/14032
 * Only supports GitHub webhooks
 * The current handling of private repos is hacky (currently you have to manually save a fly.io secret with a private key
   for git over ssh)
@@ -102,36 +102,22 @@ Consider it proof of concept, and nothing more.
 * Machine types, ram & cpu modifications
 * fly.io native postgres, redis, etc...
 
-## Using it
+## Getting started
 
-### Getting started
+### Quick setup
 
-1. Fork this repo
-2. Modify the contents of the `project` folder (or create one), and add the app specifications you like
-3. Run `go run . deploy projects` to ensure it deploys things the way you expect
-4. Run `go run . install <your-preferred-flycd-app-name> <org> <region>` to install flycd into your fly.io environment.
-   This will create a new fly.io app with <your-preferred-flycd-app-name> running flycd in monitoring mode/webhook
-   listening mode. There are some env vars you can use to modify the webhook path. The `install` command will
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.18`)
+2. Run `flycd deploy <your projects folder>` to ensure it deploys things the way you expect
+3. Run `flycd install --project-path <your projects folder>` to install flycd into your fly.io environment.
+   This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
    automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
    flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
    verify that it works.
-5. Add a webhook to your git repo, pointing to your flycd app's url,
+4. Add a webhook to your git repo, pointing to your flycd app's url,
    e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports GitHub push
    webhooks.
-6. Watch the magic happen!
+5. Watch the magic happen!
 
-## Sample project structure
+### Sample project structure
 
-Replace the `projects/` folder in your fork with something more useful.
-
-```
-projects/
-└── example-project1
-    ├── local_app
-    │   ├── Dockerfile
-    │   └── app.yaml
-    └── x_git_app
-        └── app.yaml
-```
-
-Check the examples in here to see how to configure your apps, or just check my hacky code :D
+Check the [examples](examples) directory for some ideas.
