@@ -44,7 +44,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			appName := *flags.appName
 			if appName == "" {
 				// Ask the user for app name
-				fmt.Printf("Enter a name for your flycd app: ")
+				fmt.Printf("Enter an app name to use for flycd: ")
 				_, err = fmt.Scanln(&appName)
 				if err != nil {
 					fmt.Printf("Error reading app name: %v\n", err)
