@@ -81,7 +81,7 @@ func DeployAll(
 	return result, nil
 }
 
-func IsAppDeployed(ctx context.Context, name string) (bool, error) {
+func ExistsApp(ctx context.Context, name string) (bool, error) {
 	res, err := util_cmd.
 		NewCommand("fly", "status", "-a", name).
 		WithTimeout(10 * time.Second).

@@ -287,7 +287,7 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 
 	// Now run fly.io cli and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
-	appExists, err := IsAppDeployed(ctx, cfg.App)
+	appExists, err := ExistsApp(ctx, cfg.App)
 	if err != nil {
 		return fmt.Errorf("error running fly status in folder %s: %w", path, err)
 	}
