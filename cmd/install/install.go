@@ -11,6 +11,7 @@ import (
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -25,6 +26,7 @@ func (f *Flags) Init(cmd *cobra.Command) {
 	f.appName = cmd.Flags().StringP("app-name", "a", "", "App name to give flycd in your fly.io account")
 	f.orgSlug = cmd.Flags().StringP("org", "o", "", "Slug of the fly.io org to install to")
 	f.region = cmd.Flags().StringP("region", "r", "", "Region of the fly.io app to install")
+	f.projectPath = cmd.Flags().StringP("project-path", "p", "projects", "Path to the projects folder to use. This can contain both projects (project.yaml) and apps (app.yaml)")
 }
 
 func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
@@ -76,6 +78,21 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			if err != nil {
 				fmt.Printf("Error getting current working directory: %v\n", err)
 				os.Exit(1)
+			}
+
+			projectPath := *flags.projectPath
+			if projectPath == "" {
+				// Ask the user for region
+				fmt.Printf("Enter the path to the projects folder to use: ")
+				_, err = fmt.Scanln(&projectPath)
+				if err != nil {
+					fmt.Printf("Error reading project path: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				if !filepath.IsAbs(projectPath) {
+					projectPath = filepath.Join(cwd, projectPath)
+				}
 			}
 
 			fmt.Printf("Installing flycd with app-name='%s', org='%s' \n", appName, orgSlug)
@@ -158,10 +175,9 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			}
 
 			// Copy cwd/projects to tempDir
-			projectsDir := fmt.Sprintf("%s/projects", cwd)
-			if _, err := os.Stat(projectsDir); err == nil {
+			if _, err := os.Stat(projectPath); err == nil {
 				fmt.Printf("Copying projects dir to temp dir %s...\n", tempDir.Cwd())
-				err = cp.Copy(projectsDir, fmt.Sprintf("%s/projects", tempDir.Cwd()))
+				err = cp.Copy(projectPath, fmt.Sprintf("%s/projects", tempDir.Cwd()))
 				if err != nil {
 					fmt.Printf("Error copying projects dir: %v\n", err)
 					os.Exit(1)
