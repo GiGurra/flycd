@@ -39,13 +39,11 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, _ []string) {
 
-			var err error
-
 			appName := *flags.appName
 			if appName == "" {
 				// Ask the user for app name
 				fmt.Printf("Enter an app name to use for flycd: ")
-				_, err = fmt.Scanln(&appName)
+				_, err := fmt.Scanln(&appName)
 				if err != nil {
 					fmt.Printf("Error reading app name: %v\n", err)
 					os.Exit(1)
@@ -56,7 +54,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			if orgSlug == "" {
 				// Ask the user for org slug
 				fmt.Printf("Enter the slug of the fly.io org to install to: ")
-				_, err = fmt.Scanln(&orgSlug)
+				_, err := fmt.Scanln(&orgSlug)
 				if err != nil {
 					fmt.Printf("Error reading org slug: %v\n", err)
 					os.Exit(1)
@@ -67,7 +65,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			if region == "" {
 				// Ask the user for region
 				fmt.Printf("Enter the region of the fly.io app to install: ")
-				_, err = fmt.Scanln(&region)
+				_, err := fmt.Scanln(&region)
 				if err != nil {
 					fmt.Printf("Error reading region: %v\n", err)
 					os.Exit(1)
