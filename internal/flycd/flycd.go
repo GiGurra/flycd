@@ -134,7 +134,7 @@ func DeployAll(
 						}
 
 						if innerResult.Success() {
-							result.SucceededProjects = append(result.SucceededProjects, ProjectNode{
+							innerResult.SucceededProjects = append(result.SucceededProjects, ProjectNode{
 								ProjectConfig: project.ProjectConfig,
 								Path:          cloneResult.Dir.Cwd(),
 							})
@@ -175,7 +175,7 @@ func DeployAll(
 					}
 
 					if innerResult.Success() {
-						result.SucceededProjects = append(result.SucceededProjects, ProjectNode{
+						innerResult.SucceededProjects = append(result.SucceededProjects, ProjectNode{
 							ProjectConfig: project.ProjectConfig,
 							Path:          absPath,
 						})
