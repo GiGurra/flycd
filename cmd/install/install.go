@@ -14,20 +14,71 @@ import (
 	"strings"
 )
 
+type Flags struct {
+	appName     *string
+	orgSlug     *string
+	region      *string
+	projectPath *string
+}
+
+func (f *Flags) Init(cmd *cobra.Command) {
+	f.appName = cmd.Flags().StringP("app-name", "a", "", "App name to give flycd in your fly.io account")
+	f.orgSlug = cmd.Flags().StringP("org", "o", "", "Slug of the fly.io org to install to")
+	f.region = cmd.Flags().StringP("region", "r", "", "Region of the fly.io app to install")
+}
+
 func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
-	return &cobra.Command{
+
+	flags := Flags{}
+
+	cmd := &cobra.Command{
 		Use:   "install <flycd app name> <fly.io org slug> <fly.io region>",
 		Short: "Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos",
-		Args:  cobra.ExactArgs(3),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, _ []string) {
 
-			appName := args[0]
+			var err error
 
-			orgSlug := args[1]
+			appName := *flags.appName
+			if appName == "" {
+				// Ask the user for app name
+				fmt.Printf("Enter a name for your flycd app: ")
+				_, err = fmt.Scanln(&appName)
+				if err != nil {
+					fmt.Printf("Error reading app name: %v\n", err)
+					os.Exit(1)
+				}
+			}
 
-			region := args[2]
+			orgSlug := *flags.orgSlug
+			if orgSlug == "" {
+				// Ask the user for org slug
+				fmt.Printf("Enter the slug of the fly.io org to install to: ")
+				_, err = fmt.Scanln(&orgSlug)
+				if err != nil {
+					fmt.Printf("Error reading org slug: %v\n", err)
+					os.Exit(1)
+				}
+			}
 
-			fmt.Printf("Installing flycd with app name '%s' to org '%s'\n", appName, orgSlug)
+			region := *flags.region
+			if region == "" {
+				// Ask the user for region
+				fmt.Printf("Enter the region of the fly.io app to install: ")
+				_, err = fmt.Scanln(&region)
+				if err != nil {
+					fmt.Printf("Error reading region: %v\n", err)
+					os.Exit(1)
+				}
+			}
+
+			cwd, err := os.Getwd()
+			if err != nil {
+				fmt.Printf("Error getting current working directory: %v\n", err)
+				os.Exit(1)
+			}
+
+			fmt.Printf("Installing flycd with app-name='%s', org='%s' \n", appName, orgSlug)
 
 			ctx := context.Background()
 
@@ -106,13 +157,6 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 				os.Exit(1)
 			}
 
-			// Check if projects dir exists in cwd
-			cwd, err := os.Getwd()
-			if err != nil {
-				fmt.Printf("Error getting current working directory: %v\n", err)
-				os.Exit(1)
-			}
-
 			// Copy cwd/projects to tempDir
 			projectsDir := fmt.Sprintf("%s/projects", cwd)
 			if _, err := os.Stat(projectsDir); err == nil {
@@ -150,4 +194,8 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 			}
 		},
 	}
+
+	flags.Init(cmd)
+
+	return cmd
 }
