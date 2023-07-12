@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
+	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -28,8 +30,21 @@ type DeployResult struct {
 	FailedProjects    []ProjectDeployFailure
 }
 
+func (r DeployResult) Plus(other DeployResult) DeployResult {
+	return DeployResult{
+		SucceededApps:     append(r.SucceededApps, other.SucceededApps...),
+		FailedApps:        append(r.FailedApps, other.FailedApps...),
+		SucceededProjects: append(r.SucceededProjects, other.SucceededProjects...),
+		FailedProjects:    append(r.FailedProjects, other.FailedProjects...),
+	}
+}
+
 func (r DeployResult) Success() bool {
 	return len(r.FailedApps) == 0 && len(r.FailedProjects) == 0
+}
+
+func (r DeployResult) HasErrors() bool {
+	return len(r.FailedApps) != 0 || len(r.FailedProjects) != 0
 }
 
 func NewDeployResult() DeployResult {
@@ -84,12 +99,10 @@ func DeployAll(
 		return NewDeployResult(), fmt.Errorf("finding apps %s: %w", path, err)
 	}
 
-	aborted := false
-
 	// Deploy projects
 	for _, project := range projects {
 		fmt.Printf("Considering project %s @ %s\n", project.ProjectConfig.Project, project.Path)
-		if aborted {
+		if deployCfg.AbortOnFirstError && result.HasErrors() {
 			fmt.Printf("Aborted earlier, skipping!\n")
 			result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
 				Spec:  project,
@@ -98,16 +111,57 @@ func DeployAll(
 			continue
 		}
 		if project.IsValidProject() {
-			err := DeploySingleProject(ctx, project.Path, deployCfg)
-			if err != nil {
+
+			// Check what the project source is. Clone to a git repo if it is a git repo
+			// Use local directly if it is a local folder
+			switch project.ProjectConfig.Source.Type {
+			case model.SourceTypeGit:
+
+				err = func() error {
+
+					// Clone to a temp folder
+					tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
+					if err != nil {
+						return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
+					}
+					defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
+
+					// Clone to temp dir
+					cloneDir, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
+					if err != nil {
+						result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
+							Spec:  project,
+							Cause: fmt.Errorf("git clone failed for project %s: %w", project.ProjectConfig.Project, err),
+						})
+					} else {
+						innerResult, err := DeployAll(ctx, cloneDir.Dir.Cwd(), deployCfg)
+						if err != nil {
+							return fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
+						}
+
+						result = result.Plus(innerResult)
+					}
+
+					return nil
+				}()
+
+				if err != nil {
+					return result, err
+				}
+
+			case model.SourceTypeLocal:
+				// Use the local folder directly
+				innerResult, err := DeployAll(ctx, filepath.Join(project.Path, project.ProjectConfig.Source.Path), deployCfg)
+				if err != nil {
+					return result, fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
+				}
+
+				result = result.Plus(innerResult)
+			default:
 				result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
 					Spec:  project,
-					Cause: err,
+					Cause: fmt.Errorf("unsupported source type: %s", project.ProjectConfig.Source.Type),
 				})
-				if deployCfg.AbortOnFirstError {
-					aborted = true
-				}
-				fmt.Printf("Error deploying %s @ %s: %v\n:", project.ProjectConfig.Project, project.Path, err)
 			}
 		} else {
 			fmt.Printf("Project is NOT valid, skipping!\n")
@@ -121,7 +175,7 @@ func DeployAll(
 	// Deploy apps
 	for _, app := range apps {
 		fmt.Printf("Considering app %s @ %s\n", app.AppConfig.App, app.Path)
-		if aborted {
+		if deployCfg.AbortOnFirstError && result.HasErrors() {
 			fmt.Printf("Aborted earlier, skipping!\n")
 			result.FailedApps = append(result.FailedApps, AppDeployFailure{
 				Spec:  app,
@@ -136,9 +190,6 @@ func DeployAll(
 					Spec:  app,
 					Cause: err,
 				})
-				if deployCfg.AbortOnFirstError {
-					aborted = true
-				}
 				fmt.Printf("Error deploying %s @ %s: %v\n:", app.AppConfig.App, app.Path, err)
 			}
 		} else {
