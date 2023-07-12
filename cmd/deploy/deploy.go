@@ -9,7 +9,8 @@ import (
 )
 
 var flags struct {
-	force *bool
+	force      *bool
+	abortEarly *bool
 }
 
 var Cmd = &cobra.Command{
@@ -24,7 +25,7 @@ var Cmd = &cobra.Command{
 			NewDeployConfig().
 			WithRetries(1).
 			WithForce(*flags.force).
-			WithAbortOnFirstError(true)
+			WithAbortOnFirstError(*flags.abortEarly)
 
 		ctx := context.Background()
 
@@ -61,4 +62,5 @@ var Cmd = &cobra.Command{
 
 func init() {
 	flags.force = Cmd.Flags().BoolP("force", "f", false, "Force deploy even if no changes detected")
+	flags.abortEarly = Cmd.Flags().BoolP("abort-early", "a", false, "Abort on first error")
 }
