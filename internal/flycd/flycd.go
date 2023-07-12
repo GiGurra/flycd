@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
-	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -18,7 +16,7 @@ type AppDeployFailure struct {
 	Cause error
 }
 
-type ProjectDeployFailure struct {
+type ProjectProcessingFailure struct {
 	Spec  ProjectNode
 	Cause error
 }
@@ -31,15 +29,15 @@ type AppDeploySuccess struct {
 type DeployResult struct {
 	SucceededApps     []AppDeploySuccess
 	FailedApps        []AppDeployFailure
-	SucceededProjects []ProjectNode
-	FailedProjects    []ProjectDeployFailure
+	ProcessedProjects []ProjectNode
+	FailedProjects    []ProjectProcessingFailure
 }
 
 func (r DeployResult) Plus(other DeployResult) DeployResult {
 	return DeployResult{
 		SucceededApps:     append(r.SucceededApps, other.SucceededApps...),
 		FailedApps:        append(r.FailedApps, other.FailedApps...),
-		SucceededProjects: append(r.SucceededProjects, other.SucceededProjects...),
+		ProcessedProjects: append(r.ProcessedProjects, other.ProcessedProjects...),
 		FailedProjects:    append(r.FailedProjects, other.FailedProjects...),
 	}
 }
@@ -52,12 +50,12 @@ func (r DeployResult) HasErrors() bool {
 	return len(r.FailedApps) != 0 || len(r.FailedProjects) != 0
 }
 
-func NewDeployResult() DeployResult {
+func NewEmptyDeployResult() DeployResult {
 	return DeployResult{
 		SucceededApps:     make([]AppDeploySuccess, 0),
 		FailedApps:        make([]AppDeployFailure, 0),
-		SucceededProjects: make([]ProjectNode, 0),
-		FailedProjects:    make([]ProjectDeployFailure, 0),
+		ProcessedProjects: make([]ProjectNode, 0),
+		FailedProjects:    make([]ProjectProcessingFailure, 0),
 	}
 }
 
@@ -76,173 +74,64 @@ func DeployAll(
 	deployCfg DeployConfig,
 ) (DeployResult, error) {
 
-	result := NewDeployResult()
+	result := NewEmptyDeployResult()
 
-	analysis, err := ScanDir(path)
-	if err != nil {
-		return NewDeployResult(), fmt.Errorf("error analysing %s: %w", path, err)
-	}
-
-	projects, err := analysis.Projects()
-	if err != nil {
-		return NewDeployResult(), fmt.Errorf("finding projects %s: %w", path, err)
-	}
-
-	apps, err := analysis.Apps()
-	if err != nil {
-		return NewDeployResult(), fmt.Errorf("finding apps %s: %w", path, err)
-	}
-
-	// Deploy projects
-	for _, project := range projects {
-		fmt.Printf("Considering project %s @ %s\n", project.ProjectConfig.Project, project.Path)
-		if deployCfg.AbortOnFirstError && result.HasErrors() {
-			fmt.Printf("Aborted earlier, skipping!\n")
-			result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
-				Spec:  project,
-				Cause: SkippedAbortedEarlier,
-			})
-			continue
-		}
-		if project.IsValidProject() {
-
-			// Check what the project source is. Clone to a git repo if it is a git repo
-			// Use local directly if it is a local folder
-			switch project.ProjectConfig.Source.Type {
-			case model.SourceTypeGit:
-
-				err = func() error {
-
-					// Clone to a temp folder
-					tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
-					if err != nil {
-						return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
-					}
-					defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
-
-					// Clone to temp dir
-					cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
-					if err != nil {
-						result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
-							Spec:  project,
-							Cause: fmt.Errorf("git clone failed for project %s: %w", project.ProjectConfig.Project, err),
-						})
-					} else {
-						innerResult, err := DeployAll(ctx, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), deployCfg)
-						if err != nil {
-							return fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
-						}
-
-						if innerResult.Success() {
-							innerResult.SucceededProjects = append(result.SucceededProjects, ProjectNode{
-								ProjectConfig: project.ProjectConfig,
-								Path:          cloneResult.Dir.Cwd(),
-							})
-						} else {
-
-							innerResult.FailedProjects = append(innerResult.FailedProjects, ProjectDeployFailure{
-								Spec:  project,
-								Cause: fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err),
-							})
-						}
-
-						result = result.Plus(innerResult)
-					}
-
-					return nil
-				}()
-
+	err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
+		ValidAppCb: func(appNode AppNode) error {
+			fmt.Printf("Considering app %s @ %s\n", appNode.AppConfig.App, appNode.Path)
+			if deployCfg.AbortOnFirstError && result.HasErrors() {
+				fmt.Printf("Aborted earlier, skipping!\n")
+				result.FailedApps = append(result.FailedApps, AppDeployFailure{
+					Spec:  appNode,
+					Cause: SkippedAbortedEarlier,
+				})
+				return nil
+			} else {
+				res, err := DeploySingleAppFromFolder(ctx, appNode.Path, deployCfg)
 				if err != nil {
-					return result, err
-				}
-
-			case model.SourceTypeLocal:
-				// Use the local folder directly
-				absPath := func() string {
-					if filepath.IsAbs(project.ProjectConfig.Source.Path) {
-						return project.ProjectConfig.Source.Path
-					} else {
-						return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
-					}
-				}()
-
-				if util_work_dir.NewWorkDir(absPath).Exists() {
-
-					innerResult, err := DeployAll(ctx, absPath, deployCfg)
-
-					if err != nil {
-						return result, fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err)
-					}
-
-					if innerResult.Success() {
-						innerResult.SucceededProjects = append(result.SucceededProjects, ProjectNode{
-							ProjectConfig: project.ProjectConfig,
-							Path:          absPath,
-						})
-					} else {
-
-						innerResult.FailedProjects = append(innerResult.FailedProjects, ProjectDeployFailure{
-							Spec:  project,
-							Cause: fmt.Errorf("deploying project %s: %w", project.ProjectConfig.Project, err),
-						})
-					}
-
-					result = result.Plus(innerResult)
+					result.FailedApps = append(result.FailedApps, AppDeployFailure{
+						Spec:  appNode,
+						Cause: err,
+					})
 				} else {
-					result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
-						Spec:  project,
-						Cause: fmt.Errorf("local path does not exist: %s", absPath),
+					result.SucceededApps = append(result.SucceededApps, AppDeploySuccess{
+						Spec:        appNode,
+						SuccessType: res,
 					})
 				}
-			default:
-				result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
-					Spec:  project,
-					Cause: fmt.Errorf("unsupported source type: %s", project.ProjectConfig.Source.Type),
-				})
+				return nil
 			}
-		} else {
-			fmt.Printf("Project is NOT valid, skipping!\n")
-			result.FailedProjects = append(result.FailedProjects, ProjectDeployFailure{
-				Spec:  project,
+		},
+		InvalidAppCb: func(appNode AppNode) error {
+			result.FailedApps = append(result.FailedApps, AppDeployFailure{
+				Spec:  appNode,
 				Cause: SkippedNotValid,
 			})
-		}
-	}
-
-	// Deploy apps
-	for _, app := range apps {
-		fmt.Printf("Considering app %s @ %s\n", app.AppConfig.App, app.Path)
-		if deployCfg.AbortOnFirstError && result.HasErrors() {
-			fmt.Printf("Aborted earlier, skipping!\n")
-			result.FailedApps = append(result.FailedApps, AppDeployFailure{
-				Spec:  app,
-				Cause: SkippedAbortedEarlier,
-			})
-			continue
-		}
-		if app.IsValidApp() {
-			res, err := DeploySingleAppFromFolder(ctx, app.Path, deployCfg)
-			if err != nil {
-				result.FailedApps = append(result.FailedApps, AppDeployFailure{
-					Spec:  app,
-					Cause: err,
+			return nil
+		},
+		ValidProjectCb: func(appNode ProjectNode) error {
+			if deployCfg.AbortOnFirstError && result.HasErrors() {
+				result.FailedProjects = append(result.FailedProjects, ProjectProcessingFailure{
+					Spec:  appNode,
+					Cause: SkippedAbortedEarlier,
 				})
-				fmt.Printf("Error deploying %s @ %s: %v\n:", app.AppConfig.App, app.Path, err)
+				return nil
 			} else {
-				result.SucceededApps = append(result.SucceededApps, AppDeploySuccess{
-					Spec:        app,
-					SuccessType: res,
-				})
+				result.ProcessedProjects = append(result.ProcessedProjects, appNode)
+				return nil
 			}
-		} else {
-			fmt.Printf("App is NOT valid, skipping!\n")
-			result.FailedApps = append(result.FailedApps, AppDeployFailure{
-				Spec:  app,
+		},
+		InvalidProjectCb: func(appNode ProjectNode) error {
+			result.FailedProjects = append(result.FailedProjects, ProjectProcessingFailure{
+				Spec:  appNode,
 				Cause: SkippedNotValid,
 			})
-		}
+			return nil
+		},
+	})
+	if err != nil {
+		return result, fmt.Errorf("error traversing app tree: %w", err)
 	}
-
 	return result, nil
 }
 

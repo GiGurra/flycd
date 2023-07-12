@@ -216,6 +216,13 @@ func TraverseDeepAppTree(
 	for _, project := range projects {
 		if project.IsValidProject() {
 
+			if opts.ValidProjectCb != nil {
+				err := opts.ValidProjectCb(project)
+				if err != nil {
+					return fmt.Errorf("error calling function for valid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+				}
+			}
+
 			switch project.ProjectConfig.Source.Type {
 			case model.SourceTypeLocal:
 				absPath := func() string {

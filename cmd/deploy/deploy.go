@@ -35,8 +35,8 @@ var Cmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("Deployed %d projects\n", len(result.SucceededProjects))
-		for _, success := range result.SucceededProjects {
+		fmt.Printf("Deployed %d projects\n", len(result.ProcessedProjects))
+		for _, success := range result.ProcessedProjects {
 			fmt.Printf(" - %s @ %s\n", success.ProjectConfig.Project, success.Path)
 		}
 
