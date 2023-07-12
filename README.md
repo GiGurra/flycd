@@ -4,12 +4,13 @@
 
 FlyCD adds ArgoCD/Flux style git-ops support for Fly.io:
 
-* Extending the standard fly.io fly.toml with supplementary parameters to eliminate the need for manual execution of
-  fly.io CLI commands.
+* Extending the standard fly.io fly.toml to eliminate the need for manual execution of fly.io CLI commands.
+    * FlyCD uses yaml by default - both formats are interchangeable. In the future, FlyCD may adopt toml if the authors
+      reconsider their stance on toml.
 
 * Keeping app repos separate from your environment configuration repos.
-  * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
-    configurations, eliminating the necessity of embedding environment-specific configurations into your app.
+    * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
+      configurations, eliminating the necessity of embedding environment-specific configurations into your app.
 
 * FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks
   from git pushes, fetches the most recent (or specific) versions of your apps from git, and deploys them to fly.io.
