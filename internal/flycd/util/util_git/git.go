@@ -23,8 +23,6 @@ func CloneShallow(
 		return GitCloneResult{}, fmt.Errorf("unsupported source type (must be git!): %s", source.Type)
 	}
 
-	resultDir := workDir
-
 	var err error
 
 	if source.Ref.Commit != "" {
@@ -70,7 +68,7 @@ func CloneShallow(
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
-		resultDir = workDir.WithPushCwd("repo")
+		workDir = workDir.WithPushCwd("repo")
 
 	} else if source.Ref.Branch != "" {
 		_, err = workDir.
@@ -80,7 +78,7 @@ func CloneShallow(
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
-		resultDir = workDir.WithPushCwd("repo")
+		workDir = workDir.WithPushCwd("repo")
 	} else {
 		_, err = workDir.NewCommand("git", "clone", source.Repo, "repo", "--depth", "1").
 			WithStdLogging().
@@ -88,7 +86,7 @@ func CloneShallow(
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
-		resultDir = workDir.WithPushCwd("repo")
+		workDir = workDir.WithPushCwd("repo")
 	}
 
 	res, err := workDir.
@@ -99,7 +97,7 @@ func CloneShallow(
 	}
 
 	return GitCloneResult{
-		Dir:  resultDir,
+		Dir:  workDir,
 		Hash: strings.TrimSpace(res.StdOut),
 	}, nil
 }

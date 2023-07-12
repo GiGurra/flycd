@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
+	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/google/uuid"
@@ -115,79 +116,14 @@ func DeploySingleAppFromFolder(ctx context.Context, path string, deployCfg Deplo
 	switch cfg.Source.Type {
 	case model.SourceTypeGit:
 
-		var err error
-
-		if cfg.Source.Ref.Commit != "" {
-			// Shallow clone of specific commit
-			// https://stackoverflow.com/questions/31278902/how-to-shallow-clone-a-specific-commit-with-depth-1
-			_, err = tempDir.
-				NewCommand("git", "init").
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error initializing git repo: %w", err)
-			}
-
-			_, err = tempDir.
-				NewCommand("git", "remote", "add", "origin", cfg.Source.Repo).
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error adding git remote: %w", err)
-			}
-
-			_, err = tempDir.
-				NewCommand("git", "fetch", "--depth", "1", "origin", cfg.Source.Ref.Commit).
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error fetching git commit: %w", err)
-			}
-
-			_, err = tempDir.
-				NewCommand("git", "checkout", "FETCH_HEAD").
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error checking out git commit: %w", err)
-			}
-
-		} else if cfg.Source.Ref.Tag != "" {
-			_, err = tempDir.
-				NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Tag).
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
-			}
-			tempDir = tempDir.WithPushCwd("repo")
-
-		} else if cfg.Source.Ref.Branch != "" {
-			_, err = tempDir.
-				NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1", "--branch", cfg.Source.Ref.Branch).
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
-			}
-			tempDir = tempDir.WithPushCwd("repo")
-		} else {
-			_, err = tempDir.NewCommand("git", "clone", cfg.Source.Repo, "repo", "--depth", "1").
-				WithStdLogging().
-				Run(ctx)
-			if err != nil {
-				return fmt.Errorf("error cloning git repo %s: %w", cfg.Source.Repo, err)
-			}
-			tempDir = tempDir.WithPushCwd("repo")
-		}
-
-		res, err := tempDir.
-			NewCommand("git", "rev-parse", "HEAD").
-			Run(ctx)
+		cloneResult, err := util_git.CloneShallow(ctx, cfg.Source, tempDir)
 		if err != nil {
-			return fmt.Errorf("error getting git commit hash: %w", err)
+			return fmt.Errorf("cloning git repo: %w", err)
 		}
-		appHash = strings.TrimSpace(res.StdOut)
+
+		tempDir = cloneResult.Dir
+		appHash = cloneResult.Hash
+
 	case model.SourceTypeLocal:
 		srcDir := cfgDir.WithPushCwd(cfg.Source.Path)
 
