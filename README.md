@@ -53,7 +53,8 @@ FlyCD v0.0.18 exiting normally, bye!
 ## Current state
 
 * It can install itself to an existing fly.io environment and point to a config repo
-    * where it listens and acts on both config repo and app repo webhooks
+    * It listens and acts on both config repo and app repo webhooks
+    * Config repos can point to app repos, or to other config repos, or a mix of both
 * It can also operate as a manual CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
     * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
     * the target organisation to deploy to
