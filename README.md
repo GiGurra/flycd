@@ -81,7 +81,7 @@ Consider it proof of concept, and nothing more.
 
 ## Other concerns
 
-* Pretty hacky code right now, without too many automated tests, just a 1-week hack so far with a lot of work delegated
+* Pretty hacky code right now, without many automated tests, just a 1-week hack so far with a lot of work delegated
   to shell commands instead of proper go libraries :D
     * Refactoring needed!
 * This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
