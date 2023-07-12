@@ -34,13 +34,6 @@ func NewLocalFolderSource(path string) Source {
 	}
 }
 
-func NewGitSource(url string) Source {
-	return Source{
-		Type: SourceTypeGit,
-		Repo: url,
-	}
-}
-
 type SourceType string
 
 const (

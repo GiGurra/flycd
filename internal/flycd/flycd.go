@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
-	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"strings"
 	"time"
 )
@@ -61,12 +60,6 @@ func NewEmptyDeployResult() DeployResult {
 
 var SkippedNotValid = fmt.Errorf("skipped: not a valid app")
 var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
-
-type FetchedProject struct {
-	ProjectConfig model.ProjectConfig
-	WorkDir       util_work_dir.WorkDir
-	IsTempDir     bool
-}
 
 func DeployAll(
 	ctx context.Context,
