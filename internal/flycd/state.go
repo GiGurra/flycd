@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func CurrentApps(path string) ([]SpecNode, error) {
+func CurrentApps(path string) ([]AppNode, error) {
 	// TODO: Implement some caching here...
 	return ScanForApps(path)
 }

@@ -16,13 +16,26 @@ type TraversalStepAnalysis struct {
 	TraversableCandidates []os.DirEntry
 }
 
-type SpecNode struct {
+type AppNode struct {
 	Path               string
 	AppYaml            string
 	AppConfig          model.AppConfig
 	AppConfigSyntaxErr error
 	AppConfigSemErr    error
-	Children           []SpecNode
+}
+
+type ProjectNode struct {
+	Path                   string
+	ProjectYaml            string
+	ProjectConfig          model.ProjectConfig
+	ProjectConfigSyntaxErr error
+	ProjectConfigSemErr    error
+}
+
+type SpecNode struct {
+	Path     string
+	App      *AppNode
+	Children []SpecNode
 }
 
 func (s SpecNode) Traverse(t func(node SpecNode) error) error {
@@ -52,18 +65,30 @@ func (s SpecNode) Flatten() ([]SpecNode, error) {
 }
 
 func (s SpecNode) IsAppNode() bool {
-	return s.AppYaml != ""
+	return s.App != nil && s.App.IsAppNode()
 }
 
 func (s SpecNode) IsAppSyntaxValid() bool {
-	return s.AppConfig.App != "" && s.AppConfigSyntaxErr == nil
+	return s.App != nil && s.App.IsAppSyntaxValid()
 }
 
 func (s SpecNode) IsValidApp() bool {
+	return s.App != nil && s.App.IsValidApp()
+}
+
+func (s AppNode) IsAppNode() bool {
+	return s.AppYaml != ""
+}
+
+func (s AppNode) IsAppSyntaxValid() bool {
+	return s.IsAppNode() && s.AppConfig.App != "" && s.AppConfigSyntaxErr == nil
+}
+
+func (s AppNode) IsValidApp() bool {
 	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigSemErr == nil
 }
 
-func ScanForApps(path string) ([]SpecNode, error) {
+func ScanForApps(path string) ([]AppNode, error) {
 
 	analysis, err := AnalyseSpec(path)
 	if err != nil {
@@ -79,7 +104,9 @@ func ScanForApps(path string) ([]SpecNode, error) {
 		return node.IsAppNode()
 	})
 
-	return apps, nil
+	return lo.Map(apps, func(item SpecNode, index int) AppNode {
+		return *item.App
+	}), nil
 }
 
 func AnalyseSpec(path string) (SpecNode, error) {
@@ -106,28 +133,37 @@ func AnalyseSpec(path string) (SpecNode, error) {
 		err = yaml.Unmarshal([]byte(appYaml), &appConfig)
 		if err != nil {
 			return SpecNode{
-				Path:               path,
-				AppYaml:            appYaml,
-				AppConfigSyntaxErr: err,
-				Children:           []SpecNode{},
+				Path: path,
+				App: &AppNode{
+					Path:               path,
+					AppYaml:            appYaml,
+					AppConfigSyntaxErr: err,
+				},
+				Children: []SpecNode{},
 			}, nil
 		}
 
 		err = appConfig.Validate()
 		if err != nil {
 			return SpecNode{
-				Path:            path,
-				AppYaml:         appYaml,
-				AppConfigSemErr: err,
-				Children:        []SpecNode{},
+				Path: path,
+				App: &AppNode{
+					Path:            path,
+					AppYaml:         appYaml,
+					AppConfigSemErr: err,
+				},
+				Children: []SpecNode{},
 			}, nil
 		}
 
 		return SpecNode{
-			Path:      path,
-			AppYaml:   appYaml,
-			AppConfig: appConfig,
-			Children:  []SpecNode{},
+			Path: path,
+			App: &AppNode{
+				Path:      path,
+				AppYaml:   appYaml,
+				AppConfig: appConfig,
+			},
+			Children: []SpecNode{},
 		}, nil
 	} else if nodeInfo.HasProjectsDir {
 
@@ -137,7 +173,6 @@ func AnalyseSpec(path string) (SpecNode, error) {
 		}
 		return SpecNode{
 			Path:     path,
-			AppYaml:  "",
 			Children: []SpecNode{child},
 		}, nil
 	} else {
@@ -153,7 +188,6 @@ func AnalyseSpec(path string) (SpecNode, error) {
 
 		return SpecNode{
 			Path:     path,
-			AppYaml:  "",
 			Children: children,
 		}, nil
 	}

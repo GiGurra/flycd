@@ -11,12 +11,12 @@ import (
 )
 
 type DeployFailure struct {
-	Spec  SpecNode
+	Spec  AppNode
 	Cause error
 }
 
 type DeployResult struct {
-	Succeeded []SpecNode
+	Succeeded []AppNode
 	Failed    []DeployFailure
 }
 
@@ -26,7 +26,7 @@ func (r DeployResult) Success() bool {
 
 func NewDeployResult() DeployResult {
 	return DeployResult{
-		Succeeded: make([]SpecNode, 0),
+		Succeeded: make([]AppNode, 0),
 		Failed:    make([]DeployFailure, 0),
 	}
 }
