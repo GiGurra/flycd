@@ -17,7 +17,7 @@ var flags struct {
 
 var Cmd = &cobra.Command{
 	Use:   "convert <path>",
-	Short: "Convert app/apps from fly.toml(s) to/from app.yaml(s)",
+	Short: "Convert app/apps from fly.toml(s) to app.yaml(s)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		argPath := args[0]
@@ -36,13 +36,6 @@ var Cmd = &cobra.Command{
 		}()
 
 		fmt.Printf("Preparing files inside: %s\n", path)
-
-		// walk the path
-		// for each file, check if it's a fly.toml
-		// if it is, convert it to app.yaml
-		// if it's not, check if it's an app.yaml
-		// if it is, convert it to fly.toml
-		// if it's not, ignore it
 
 		hasErrs := false
 
