@@ -56,6 +56,7 @@ func TestTraverseDeepAppTree_cyclicDetection(t *testing.T) {
 
 	desired := []string{
 		"Begin project: cyclic",
+		"Valid app: my-app-root",
 		"Valid app: my-app",
 		"End project: cyclic",
 	}

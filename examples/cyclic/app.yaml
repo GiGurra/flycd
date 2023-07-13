@@ -1,0 +1,10 @@
+app: my-app-root
+primary_region: arn
+services:
+    - auto_start_machines: true
+      auto_stop_machines: true
+      internal_port: 80
+      min_machines_running: 1
+      protocol: tcp
+source:
+    type: local

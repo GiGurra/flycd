@@ -225,7 +225,9 @@ func scanDir(path string) (model.SpecNode, error) {
 				}
 			}
 		}
-	} else if nodeInfo.HasProjectYaml {
+	}
+
+	if nodeInfo.HasProjectYaml {
 
 		workDir := util_work_dir.NewWorkDir(path)
 		projectYaml, err := workDir.ReadFile("project.yaml")
@@ -325,7 +327,7 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 		}
 	}
 
-	if result.HasAppYaml || result.HasProjectsDir {
+	if result.HasProjectsDir {
 		// Here we don't want to look further down the tree in the regular way
 		result.TraversableCandidates = []os.DirEntry{}
 	}
