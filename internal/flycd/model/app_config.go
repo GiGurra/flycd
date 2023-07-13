@@ -52,7 +52,7 @@ type AppConfig struct {
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
-	Mounts        Mount             `yaml:"mounts" toml:"mounts,omitempty"`
+	Mounts        Mount             `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 }
 
 type ValidateAppConfigOptions struct {

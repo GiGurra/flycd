@@ -199,6 +199,10 @@ func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 		return "", fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
 
+	if cfg.Env == nil {
+		cfg.Env = make(map[string]string)
+	}
+
 	appHash = strings.TrimSpace(appHash)
 	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgHash
 	cfg.Env["FLYCD_APP_VERSION"] = appHash

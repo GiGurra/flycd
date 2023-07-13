@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/spf13/cobra"
@@ -65,15 +66,20 @@ var Cmd = &cobra.Command{
 					return nil
 				}
 
-				parsed := make(map[string]any)
-				err = util_toml.Unmarshal(tomlSrc, &parsed)
+				config := make(map[string]any)
+				err = util_toml.Unmarshal(tomlSrc, &config)
 				if err != nil {
 					hasErrs = true
 					fmt.Printf("Error parsing fly.toml @ %s: %v\n", curDirPath, err)
 					return nil
 				}
 
-				yamlSrc, err := yaml.Marshal(parsed)
+				if _, ok := config["source"]; !ok {
+					// No source, we need to add a default one
+					config["source"] = model.NewLocalFolderSource("")
+				}
+
+				yamlSrc, err := yaml.Marshal(config)
 				if err != nil {
 					hasErrs = true
 					fmt.Printf("Error marshalling fly.toml @ %s: %v\n", curDirPath, err)
