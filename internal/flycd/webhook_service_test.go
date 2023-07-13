@@ -69,9 +69,12 @@ func TestNewWebHookServiceAbc(t *testing.T) {
 	ch := webhookService.HandleGithubWebhook(payload, "../../test/test-projects/webhooks/regular")
 
 	select {
-	case err := <-ch:
+	case err, open := <-ch:
 		if err != nil {
 			t.Fatalf("Failed to handle webhook: %v", err)
+		}
+		if open {
+			t.Fatalf("Expected channel to be closed")
 		}
 	}
 
