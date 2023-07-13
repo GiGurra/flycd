@@ -21,12 +21,32 @@ type AppNode struct {
 	AppConfigSemErr    error
 }
 
+func (s AppNode) ErrCause() error {
+	if s.AppConfigSemErr != nil {
+		return s.AppConfigSemErr
+	}
+	if s.AppConfigSyntaxErr != nil {
+		return s.AppConfigSyntaxErr
+	}
+	return nil
+}
+
 type ProjectNode struct {
 	Path                   string
 	ProjectYaml            string
 	ProjectConfig          ProjectConfig
 	ProjectConfigSyntaxErr error
 	ProjectConfigSemErr    error
+}
+
+func (s ProjectNode) ErrCause() error {
+	if s.ProjectConfigSemErr != nil {
+		return s.ProjectConfigSemErr
+	}
+	if s.ProjectConfigSyntaxErr != nil {
+		return s.ProjectConfigSyntaxErr
+	}
+	return nil
 }
 
 type SpecNode struct {

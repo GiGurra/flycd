@@ -45,6 +45,10 @@ const (
 
 func (s *Source) Validate() error {
 
+	if s == nil || *s == (Source{}) {
+		return fmt.Errorf(".source is required")
+	}
+
 	switch s.Type {
 	case SourceTypeGit:
 		if s.Repo == "" {
@@ -58,7 +62,7 @@ func (s *Source) Validate() error {
 	case SourceTypeDocker:
 		return fmt.Errorf("docker source type not implemented")
 	default:
-		return fmt.Errorf("invalid source type: %s", s.Type)
+		return fmt.Errorf("invalid source type: '%s'", s.Type)
 	}
 
 	return nil

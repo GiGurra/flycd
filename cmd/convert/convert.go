@@ -11,6 +11,7 @@ import (
 )
 
 var flags struct {
+	force *bool
 }
 
 var Cmd = &cobra.Command{
@@ -52,7 +53,7 @@ var Cmd = &cobra.Command{
 			if isFlyToml {
 				curDirPath := filepath.Dir(curFilePath)
 				workDir := util_work_dir.NewWorkDir(curDirPath)
-				if workDir.ExistsChild("app.yaml") {
+				if workDir.ExistsChild("app.yaml") && !*flags.force {
 					fmt.Printf("appl.yaml already esists, skipping conversion @ %s\n", curDirPath)
 					return nil
 				}
@@ -106,4 +107,5 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
+	flags.force = Cmd.Flags().BoolP("force", "f", false, "Force overwrite of existing files")
 }

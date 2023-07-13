@@ -16,7 +16,8 @@ import (
 	"strings"
 )
 
-var SkippedNotValid = fmt.Errorf("skipped: not a valid app")
+func SkippedNotValid(cause error) error { return fmt.Errorf("skipped: not a valid app: %w", cause) }
+
 var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
 
 func DeployAll(
@@ -56,7 +57,7 @@ func DeployAll(
 		InvalidAppCb: func(appNode model.AppNode) error {
 			result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 				Spec:  appNode,
-				Cause: SkippedNotValid,
+				Cause: SkippedNotValid(appNode.ErrCause()),
 			})
 			return nil
 		},
@@ -75,7 +76,7 @@ func DeployAll(
 		InvalidProjectCb: func(appNode model.ProjectNode) error {
 			result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
 				Spec:  appNode,
-				Cause: SkippedNotValid,
+				Cause: SkippedNotValid(appNode.ErrCause()),
 			})
 			return nil
 		},
