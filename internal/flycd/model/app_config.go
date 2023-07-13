@@ -28,6 +28,15 @@ type Service struct {
 	Ports              []Port      `yaml:"ports" toml:"ports,omitempty"`
 }
 
+type HttpService struct {
+	InternalPort       int         `yaml:"internal_port" toml:"internal_port"`
+	ForceHttps         bool        `yaml:"force_https" toml:"force_https"`
+	AutoStopMachines   bool        `yaml:"auto_stop_machines" toml:"auto_stop_machines"`
+	AutoStartMachines  bool        `yaml:"auto_start_machines" toml:"auto_start_machines"`
+	MinMachinesRunning int         `yaml:"min_machines_running" toml:"min_machines_running"`
+	Concurrency        Concurrency `yaml:"concurrency" toml:"concurrency,omitempty"`
+}
+
 type Mount struct {
 	Source      string `yaml:"source" toml:"source"`
 	Destination string `yaml:"destination" toml:"destination"`
@@ -39,6 +48,7 @@ type AppConfig struct {
 	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
 	Source        Source            `yaml:"source" toml:"source"`
 	Services      []Service         `yaml:"services" toml:"services,omitempty"`
+	HttpService   HttpService       `yaml:"http_service" toml:"http_service,omitempty"` // deprecated
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
