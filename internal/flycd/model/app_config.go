@@ -84,6 +84,22 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 		opts = options[0]
 	}
 
+	if a.Env == nil {
+		a.Env = make(map[string]string)
+	}
+
+	if a.Services == nil {
+		a.Services = []Service{}
+	}
+
+	if a.LaunchParams == nil {
+		a.LaunchParams = []string{}
+	}
+
+	if a.DeployParams == nil {
+		a.DeployParams = []string{}
+	}
+
 	// only permit apps that are valid dns names
 	const subdomainPrefixRegExp = `^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$`
 
