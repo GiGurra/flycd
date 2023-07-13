@@ -43,6 +43,7 @@ var Cmd = &cobra.Command{
 		ctx := context.Background()
 		err = flycd.TraverseDeepAppTree(ctx, path, model.TraverseAppTreeOptions{
 			ValidAppCb: func(node model.AppNode) error {
+				fmt.Printf("Checking app %s @ %s...\n", node.AppConfig.App, node.Path)
 				if node.AppConfig.Source.Repo != "" {
 					appRepos = append(appRepos, node)
 				}
@@ -50,6 +51,7 @@ var Cmd = &cobra.Command{
 			},
 			BeginProjectCb: func(node model.ProjectNode) error {
 				if node.IsValidProject() {
+					fmt.Printf("Checking project %s @ %s...\n", node.ProjectConfig.Project, node.Path)
 					if node.ProjectConfig.Source.Repo != "" {
 						projectRepos = append(projectRepos, node)
 					}
