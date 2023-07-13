@@ -61,7 +61,7 @@ func (s SpecNode) Apps() []AppNode {
 	nodeList := s.Flatten()
 
 	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
-		return node.IsAppNode()
+		return node.HasAppNode()
 	})
 
 	return lo.Map(apps, func(item SpecNode, index int) AppNode {
@@ -73,7 +73,7 @@ func (s SpecNode) Projects() []ProjectNode {
 
 	nodeList := s.Flatten()
 	projects := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
-		return node.IsProjectNode()
+		return node.HasProjectNode()
 	})
 
 	return lo.Map(projects, func(item SpecNode, index int) ProjectNode {
@@ -110,11 +110,11 @@ func (s SpecNode) Flatten() []SpecNode {
 	return result
 }
 
-func (s SpecNode) IsAppNode() bool {
+func (s SpecNode) HasAppNode() bool {
 	return s.App != nil && s.App.IsAppNode()
 }
 
-func (s SpecNode) IsProjectNode() bool {
+func (s SpecNode) HasProjectNode() bool {
 	return s.Project != nil && s.Project.IsProjectNode()
 }
 

@@ -11,6 +11,18 @@ import (
 	"path/filepath"
 )
 
+type Seen struct {
+	Apps     map[string]bool
+	Projects map[string]bool
+}
+
+func NewSeen() Seen {
+	return Seen{
+		Apps:     make(map[string]bool),
+		Projects: make(map[string]bool),
+	}
+}
+
 type TraverseAppTreeOptions struct {
 	ValidAppCb     func(model.AppNode) error
 	InvalidAppCb   func(model.AppNode) error
@@ -20,6 +32,15 @@ type TraverseAppTreeOptions struct {
 
 func TraverseDeepAppTree(
 	ctx context.Context,
+	path string,
+	opts TraverseAppTreeOptions,
+) error {
+	return doTraverseDeepAppTree(ctx, NewSeen(), path, opts)
+}
+
+func doTraverseDeepAppTree(
+	ctx context.Context,
+	seen Seen,
 	path string,
 	opts TraverseAppTreeOptions,
 ) error {
@@ -34,6 +55,14 @@ func TraverseDeepAppTree(
 
 	for _, app := range apps {
 		if app.IsValidApp() {
+
+			if seen.Apps[app.AppConfig.App] {
+				fmt.Printf("Skipping app %s @ %s because it has already been seen\n", app.AppConfig.App, app.Path)
+				continue
+			}
+
+			seen.Apps[app.AppConfig.App] = true
+
 			if opts.ValidAppCb != nil {
 				err := opts.ValidAppCb(app)
 				if err != nil {
@@ -51,7 +80,15 @@ func TraverseDeepAppTree(
 	}
 
 	for _, project := range projects {
-		if err := traverseProject(ctx, opts, project); err != nil {
+
+		if seen.Projects[project.ProjectConfig.Project] {
+			fmt.Printf("Skipping project %s @ %s because it has already been seen\n", project.ProjectConfig.Project, project.Path)
+			continue
+		}
+
+		seen.Projects[project.ProjectConfig.Project] = true
+
+		if err := traverseProject(ctx, seen, opts, project); err != nil {
 			return err
 		}
 	}
@@ -59,7 +96,12 @@ func TraverseDeepAppTree(
 	return nil
 }
 
-func traverseProject(ctx context.Context, opts TraverseAppTreeOptions, project model.ProjectNode) error {
+func traverseProject(
+	ctx context.Context,
+	seen Seen,
+	opts TraverseAppTreeOptions,
+	project model.ProjectNode,
+) error {
 	if opts.BeginProjectCb != nil {
 		err := opts.BeginProjectCb(project)
 		if err != nil {
@@ -87,7 +129,7 @@ func traverseProject(ctx context.Context, opts TraverseAppTreeOptions, project m
 					return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
 				}
 			}()
-			err := TraverseDeepAppTree(ctx, absPath, opts)
+			err := doTraverseDeepAppTree(ctx, seen, absPath, opts)
 			if err != nil {
 				return fmt.Errorf("error traversing local project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 			}
@@ -107,7 +149,7 @@ func traverseProject(ctx context.Context, opts TraverseAppTreeOptions, project m
 				if err != nil {
 					return fmt.Errorf("cloning project %s: %w", project.ProjectConfig.Project, err)
 				} else {
-					err := TraverseDeepAppTree(ctx, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), opts)
+					err := doTraverseDeepAppTree(ctx, seen, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), opts)
 					if err != nil {
 						return fmt.Errorf("error traversing cloned project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 					}
@@ -130,130 +172,115 @@ func traverseProject(ctx context.Context, opts TraverseAppTreeOptions, project m
 
 func scanDir(path string) (model.SpecNode, error) {
 
+	result := model.SpecNode{
+		Path:     path,
+		Children: []model.SpecNode{},
+	}
+
 	// convert path to absolut path
 	path, err := filepath.Abs(path)
 	if err != nil {
-		return model.SpecNode{}, fmt.Errorf("error converting path to absolute path: %w", err)
+		return result, fmt.Errorf("error converting path to absolute path: %w", err)
 	}
 
 	nodeInfo, err := analyseTraversalCandidate(path)
 	if err != nil {
-		return model.SpecNode{}, fmt.Errorf("error analysing node '%s': %w", path, err)
+		return result, fmt.Errorf("error analysing node '%s': %w", path, err)
 	}
 
 	if nodeInfo.HasAppYaml {
 		workDir := util_work_dir.NewWorkDir(path)
 		appYaml, err := workDir.ReadFile("app.yaml")
 		if err != nil {
-			return model.SpecNode{}, fmt.Errorf("error reading app.yaml: %w", err)
+			return result, fmt.Errorf("error reading app.yaml: %w", err)
 		}
 
 		var appConfig model.AppConfig
 		err = yaml.Unmarshal([]byte(appYaml), &appConfig)
 		if err != nil {
-			return model.SpecNode{
-				Path: path,
-				App: &model.AppNode{
-					Path:               path,
-					AppYaml:            appYaml,
-					AppConfigSyntaxErr: err,
-				},
-				Children: []model.SpecNode{},
-			}, nil
-		}
+			result.App = &model.AppNode{
+				Path:               path,
+				AppYaml:            appYaml,
+				AppConfigSyntaxErr: err,
+			}
+		} else {
 
-		err = appConfig.Validate()
-		if err != nil {
-			return model.SpecNode{
-				Path: path,
-				App: &model.AppNode{
+			err = appConfig.Validate()
+			if err != nil {
+				result.App = &model.AppNode{
 					Path:            path,
 					AppYaml:         appYaml,
 					AppConfigSemErr: err,
-				},
-				Children: []model.SpecNode{},
-			}, nil
-		}
+				}
+			} else {
 
-		return model.SpecNode{
-			Path: path,
-			App: &model.AppNode{
-				Path:      path,
-				AppYaml:   appYaml,
-				AppConfig: appConfig,
-			},
-			Children: []model.SpecNode{},
-		}, nil
-	} else if nodeInfo.HasProjectYaml {
+				result.App = &model.AppNode{
+					Path:      path,
+					AppYaml:   appYaml,
+					AppConfig: appConfig,
+				}
+			}
+		}
+	}
+
+	if nodeInfo.HasProjectYaml {
 
 		workDir := util_work_dir.NewWorkDir(path)
 		projectYaml, err := workDir.ReadFile("project.yaml")
 		if err != nil {
-			return model.SpecNode{}, fmt.Errorf("error reading project.yaml: %w", err)
+			return result, fmt.Errorf("error reading project.yaml: %w", err)
 		}
 
 		var projectConfig model.ProjectConfig
 		err = yaml.Unmarshal([]byte(projectYaml), &projectConfig)
 		if err != nil {
-			return model.SpecNode{
-				Path: path,
-				Project: &model.ProjectNode{
-					Path:                   path,
-					ProjectYaml:            projectYaml,
-					ProjectConfigSyntaxErr: err,
-				},
-				Children: []model.SpecNode{},
-			}, nil
-		}
+			result.Project = &model.ProjectNode{
+				Path:                   path,
+				ProjectYaml:            projectYaml,
+				ProjectConfigSyntaxErr: err,
+			}
+		} else {
 
-		err = projectConfig.Validate()
-		if err != nil {
-			return model.SpecNode{
-				Path: path,
-				Project: &model.ProjectNode{
+			err = projectConfig.Validate()
+			if err != nil {
+				result.Project = &model.ProjectNode{
 					Path:                path,
 					ProjectYaml:         projectYaml,
 					ProjectConfigSemErr: err,
-				},
-				Children: []model.SpecNode{},
-			}, nil
+				}
+			} else {
+				result.Project = &model.ProjectNode{
+					Path:          path,
+					ProjectYaml:   projectYaml,
+					ProjectConfig: projectConfig,
+				}
+			}
 		}
+	}
 
-		return model.SpecNode{
-			Path: path,
-			Project: &model.ProjectNode{
-				Path:          path,
-				ProjectYaml:   projectYaml,
-				ProjectConfig: projectConfig,
-			},
-			Children: []model.SpecNode{},
-		}, nil
-	} else if nodeInfo.HasProjectsDir {
+	if nodeInfo.HasProjectsDir {
 
 		child, err := scanDir(filepath.Join(path, "projects"))
 		if err != nil {
-			return model.SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
+			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
-		return model.SpecNode{
-			Path:     path,
-			Children: []model.SpecNode{child},
-		}, nil
+
+		result.Children = append(result.Children, child)
 	} else {
 
 		children := make([]model.SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
 			child, err := scanDir(filepath.Join(path, entry.Name()))
 			if err != nil {
-				return model.SpecNode{}, fmt.Errorf("error analysing children of node '%s': %w", path, err)
+				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
 			children[i] = child
 		}
 
-		return model.SpecNode{
-			Path:     path,
-			Children: children,
-		}, nil
+		result.Children = children
 	}
+
+	return result, nil
 }
 
 func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error) {
@@ -264,7 +291,13 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 	}
 
 	// Collect potentially traversable dirs
-	traversableCandidates := make([]os.DirEntry, 0)
+
+	result := model.TraversalStepAnalysis{
+		HasAppYaml:            false,
+		HasProjectYaml:        false,
+		HasProjectsDir:        false,
+		TraversableCandidates: []os.DirEntry{},
+	}
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -277,41 +310,25 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 			}
 
 			if entry.Name() == "projects" {
-				return model.TraversalStepAnalysis{
-					HasAppYaml:            false,
-					HasProjectYaml:        false,
-					HasProjectsDir:        true,
-					TraversableCandidates: []os.DirEntry{},
-				}, nil
+				result.HasProjectsDir = true
 			}
 
-			traversableCandidates = append(traversableCandidates, entry)
+			result.TraversableCandidates = append(result.TraversableCandidates, entry)
 
 		} else if entry.Name() == "app.yaml" {
-
-			return model.TraversalStepAnalysis{
-				HasAppYaml:            true,
-				HasProjectYaml:        false,
-				HasProjectsDir:        false,
-				TraversableCandidates: []os.DirEntry{},
-			}, nil
+			result.HasAppYaml = true
 
 		} else if entry.Name() == "project.yaml" {
-
-			return model.TraversalStepAnalysis{
-				HasAppYaml:            false,
-				HasProjectYaml:        true,
-				HasProjectsDir:        false,
-				TraversableCandidates: []os.DirEntry{},
-			}, nil
+			result.HasProjectYaml = true
 		}
 	}
-	return model.TraversalStepAnalysis{
-		HasAppYaml:            false,
-		HasProjectYaml:        false,
-		HasProjectsDir:        false,
-		TraversableCandidates: traversableCandidates,
-	}, nil
+
+	if result.HasAppYaml || result.HasProjectsDir {
+		// Here we don't want to look further down the tree in the regular way
+		result.TraversableCandidates = []os.DirEntry{}
+	}
+
+	return result, nil
 }
 
 func isSymLink(dir os.DirEntry) (bool, error) {
