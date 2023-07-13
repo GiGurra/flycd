@@ -46,7 +46,7 @@ type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
 	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
-	Source        Source            `yaml:"source" toml:"source"`
+	Source        Source            `yaml:"source,omitempty" toml:"source"`
 	Services      []Service         `yaml:"services" toml:"services,omitempty"`
 	HttpService   HttpService       `yaml:"http_service" toml:"http_service,omitempty"` // deprecated
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
