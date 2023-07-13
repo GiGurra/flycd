@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"github.com/gigurra/flycd/cmd/convert"
 	"github.com/gigurra/flycd/cmd/deploy"
 	"github.com/gigurra/flycd/cmd/install"
 	"github.com/gigurra/flycd/cmd/monitor"
@@ -53,6 +54,7 @@ func main() {
 		deploy.Cmd,
 		monitor.Cmd,
 		install.Cmd(PackagedFileSystem),
+		convert.Cmd,
 	)
 
 	// run cli
