@@ -20,7 +20,49 @@ func SkippedNotValid(cause error) error { return fmt.Errorf("skipped: not a vali
 
 var SkippedAbortedEarlier = fmt.Errorf("skipped: job aborted earlier")
 
-func DeployAll(
+// DeployService We have multiple consumers of this interface from day 1, so it's prob ok to declare it here
+type DeployService interface {
+	DeployAll(
+		ctx context.Context,
+		path string,
+		deployCfg model.DeployConfig,
+	) (model.DeployResult, error)
+
+	DeployAppFromInlineConfig(
+		ctx context.Context,
+		deployCfg model.DeployConfig,
+		cfg model.AppConfig,
+	) (model.SingleAppDeploySuccessType, error)
+
+	DeployAppFromFolder(
+		ctx context.Context,
+		path string,
+		deployCfg model.DeployConfig,
+	) (model.SingleAppDeploySuccessType, error)
+}
+
+type DeployServiceImpl struct{}
+
+func (d DeployServiceImpl) DeployAll(ctx context.Context, path string, deployCfg model.DeployConfig) (model.DeployResult, error) {
+	return deployAll(ctx, path, deployCfg)
+}
+
+func (d DeployServiceImpl) DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
+	return deployAppFromInlineConfig(ctx, deployCfg, cfg)
+}
+
+func (d DeployServiceImpl) DeployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
+	return deployAppFromFolder(ctx, path, deployCfg)
+}
+
+// prove that DeployServiceImpl implements DeployService
+var _ DeployService = DeployServiceImpl{}
+
+func NewDeployService() DeployService {
+	return DeployServiceImpl{}
+}
+
+func deployAll(
 	ctx context.Context,
 	path string,
 	deployCfg model.DeployConfig,
@@ -39,7 +81,7 @@ func DeployAll(
 				})
 				return nil
 			} else {
-				res, err := DeployAppFromFolder(ctx, appNode.Path, deployCfg)
+				res, err := deployAppFromFolder(ctx, appNode.Path, deployCfg)
 				if err != nil {
 					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 						Spec:  appNode,
@@ -86,7 +128,7 @@ func DeployAll(
 	return result, nil
 }
 
-func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
+func deployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
@@ -104,10 +146,10 @@ func DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig
 		return "", fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return DeployAppFromFolder(ctx, cfgDir.Root(), deployCfg)
+	return deployAppFromFolder(ctx, cfgDir.Root(), deployCfg)
 }
 
-func DeployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
+func deployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 

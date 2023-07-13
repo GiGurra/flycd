@@ -29,8 +29,9 @@ var Cmd = &cobra.Command{
 			WithAbortOnFirstError(*flags.abortEarly)
 
 		ctx := context.Background()
+		deployService := flycd.NewDeployService()
 
-		result, err := flycd.DeployAll(ctx, path, deployCfg)
+		result, err := deployService.DeployAll(ctx, path, deployCfg)
 		if err != nil {
 			fmt.Printf("Error deploying: %v\n", err)
 			return

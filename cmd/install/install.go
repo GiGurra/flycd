@@ -39,6 +39,8 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, _ []string) {
 
+			deployService := flycd.NewDeployService()
+
 			appName := *flags.appName
 			if appName == "" {
 				// Ask the user for app name
@@ -109,7 +111,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 				deployCfg := model.NewDeployConfig().WithRetries(0)
 
 				fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
-				_, err := flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
+				_, err := deployService.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 					App:           appName,
 					Org:           orgSlug,
 					PrimaryRegion: region,
@@ -196,7 +198,7 @@ func Cmd(packaged util_packaged.PackagedFileSystem) *cobra.Command {
 				NewDeployConfig().
 				WithForce(true).
 				WithRetries(0)
-			_, err = flycd.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
+			_, err = deployService.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 				App:           appName,
 				Org:           orgSlug,
 				PrimaryRegion: region,

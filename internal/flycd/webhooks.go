@@ -9,31 +9,21 @@ import (
 	"strings"
 )
 
-func matchesSpec(source model.Source, payload github.PushWebhookPayload) bool {
-	if source.Repo == "" {
-		return false
+type WebHookService interface {
+	HandleGithubWebhook(payload github.PushWebhookPayload, path string) error
+}
+
+type WebHookServiceImpl struct {
+	deployService DeployService
+}
+
+func NewWebHookService(deployService DeployService) WebHookService {
+	return &WebHookServiceImpl{
+		deployService: deployService,
 	}
-	localKey := strings.ToLower(source.Repo)
-	remoteKeys := []string{
-		strings.ToLower(payload.Repository.Url),
-		strings.ToLower(payload.Repository.CloneUrl),
-		strings.ToLower(payload.Repository.HtmlUrl),
-		strings.ToLower(payload.Repository.GitUrl),
-		strings.ToLower(payload.Repository.SvnUrl),
-		strings.ToLower(payload.Repository.SshUrl),
-	}
-	return lo.Contains(remoteKeys, localKey)
 }
 
-func matchesApp(app model.AppNode, payload github.PushWebhookPayload) bool {
-	return matchesSpec(app.AppConfig.Source, payload)
-}
-
-func matchesProject(project model.ProjectNode, payload github.PushWebhookPayload) bool {
-	return matchesSpec(project.ProjectConfig.Source, payload)
-}
-
-func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
+func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 
 	// TODO: Implement some kind of persistence and/or caching here... So we don't have to clone everything every time...
 
@@ -57,7 +47,7 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 						NewDeployConfig().
 						WithRetries(1).
 						WithForce(false)
-					_, err := DeployAppFromFolder(ctx, app.Path, deployCfg)
+					_, err := w.deployService.DeployAppFromFolder(ctx, app.Path, deployCfg)
 					if err != nil {
 						fmt.Printf("Error deploying app %s: %v\n", app.AppConfig.App, err)
 					}
@@ -88,4 +78,28 @@ func HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
 	}()
 
 	return nil
+}
+
+func matchesSpec(source model.Source, payload github.PushWebhookPayload) bool {
+	if source.Repo == "" {
+		return false
+	}
+	localKey := strings.ToLower(source.Repo)
+	remoteKeys := []string{
+		strings.ToLower(payload.Repository.Url),
+		strings.ToLower(payload.Repository.CloneUrl),
+		strings.ToLower(payload.Repository.HtmlUrl),
+		strings.ToLower(payload.Repository.GitUrl),
+		strings.ToLower(payload.Repository.SvnUrl),
+		strings.ToLower(payload.Repository.SshUrl),
+	}
+	return lo.Contains(remoteKeys, localKey)
+}
+
+func matchesApp(app model.AppNode, payload github.PushWebhookPayload) bool {
+	return matchesSpec(app.AppConfig.Source, payload)
+}
+
+func matchesProject(project model.ProjectNode, payload github.PushWebhookPayload) bool {
+	return matchesSpec(project.ProjectConfig.Source, payload)
 }

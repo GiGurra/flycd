@@ -31,6 +31,9 @@ var Cmd = &cobra.Command{
 	Short: "(Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc",
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
+
+		deployService := flycd.NewDeployService()
+
 		path, err := os.Getwd()
 		if err != nil {
 			fmt.Printf("Error getting current working directory: %v\n", err)
@@ -130,13 +133,15 @@ var Cmd = &cobra.Command{
 				NewDeployConfig().
 				WithAbortOnFirstError(false)
 
-			_, err := flycd.DeployAll(ctx, path, deployCfg)
+			_, err := deployService.DeployAll(ctx, path, deployCfg)
 			if err != nil {
 				fmt.Printf("Error deploying: %v\n", err)
 				return
 			}
 
 		}
+
+		webhookService := flycd.NewWebHookService(flycd.NewDeployService())
 
 		// Echo instance
 		e := echo.New()
@@ -159,7 +164,7 @@ var Cmd = &cobra.Command{
 		// Routes
 		e.GET("/", processHealth)
 		e.POST(whPath, func(c echo.Context) error {
-			return processWebhook(c, path)
+			return processWebhook(c, path, webhookService)
 		})
 
 		// Start server
@@ -168,7 +173,7 @@ var Cmd = &cobra.Command{
 }
 
 // Handler
-func processWebhook(c echo.Context, path string) error {
+func processWebhook(c echo.Context, path string, webhookService flycd.WebHookService) error {
 
 	body := c.Request().Body
 	bodyBytes, err := io.ReadAll(body)
@@ -198,7 +203,7 @@ func processWebhook(c echo.Context, path string) error {
 		return c.String(http.StatusBadRequest, "Error deserializing webhook payload")
 	}
 
-	err = flycd.HandleGithubWebhook(githubWebhookPayload, path)
+	err = webhookService.HandleGithubWebhook(githubWebhookPayload, path)
 	if err != nil {
 		fmt.Printf("ERROR: handling github webhook: %v\n", err)
 		return c.String(http.StatusInternalServerError, "something went wrong - check flycd server logs!")
