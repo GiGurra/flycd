@@ -24,8 +24,8 @@ type Service struct {
 	AutoStopMachines   bool        `yaml:"auto_stop_machines" toml:"auto_stop_machines"`
 	AutoStartMachines  bool        `yaml:"auto_start_machines" toml:"auto_start_machines"`
 	MinMachinesRunning int         `yaml:"min_machines_running" toml:"min_machines_running"`
-	Concurrency        Concurrency `yaml:"concurrency" toml:"concurrency"`
-	Ports              []Port      `yaml:"ports" toml:"ports"`
+	Concurrency        Concurrency `yaml:"concurrency" toml:"concurrency,omitempty"`
+	Ports              []Port      `yaml:"ports" toml:"ports,omitempty"`
 }
 
 type AppConfig struct {
