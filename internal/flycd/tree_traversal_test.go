@@ -66,3 +66,47 @@ func TestTraverseDeepAppTree_cyclicDetection(t *testing.T) {
 		t.Fatalf("Steps are not equal: %v", diff)
 	}
 }
+
+func TestTraverseDeepAppTree_regularTree(t *testing.T) {
+	path := "../../examples/no-projects"
+
+	actual := make([]string, 0)
+
+	err := TraverseDeepAppTree(context.Background(), path, model.TraverseAppTreeOptions{
+		ValidAppCb: func(node model.AppNode) error {
+			actual = append(actual, fmt.Sprintf("Valid app: %s", node.AppConfig.App))
+			return nil
+		},
+		InvalidAppCb: func(node model.AppNode) error {
+			actual = append(actual, fmt.Sprintf("Invalid app: %s", node.AppConfig.App))
+			return nil
+		},
+		BeginProjectCb: func(node model.ProjectNode) error {
+			actual = append(actual, fmt.Sprintf("Begin project: %s", node.ProjectConfig.Project))
+			return nil
+		},
+		EndProjectCb: func(node model.ProjectNode) error {
+			actual = append(actual, fmt.Sprintf("End project: %s", node.ProjectConfig.Project))
+			return nil
+		},
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, step := range actual {
+		fmt.Printf("step: %s\n", step)
+	}
+
+	desired := []string{
+		"Valid app: root-app",
+		"Valid app: app1",
+		"Valid app: app2",
+	}
+
+	diff := cmp.Diff(actual, desired)
+	if diff != "" {
+		t.Fatalf("Steps are not equal: %v", diff)
+	}
+}
