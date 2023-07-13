@@ -141,7 +141,7 @@ var Cmd = &cobra.Command{
 
 		}
 
-		webhookService := flycd.NewWebHookService(flycd.NewDeployService())
+		webhookService := flycd.NewWebHookService(deployService)
 
 		// Echo instance
 		e := echo.New()
