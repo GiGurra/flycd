@@ -52,7 +52,7 @@ type AppConfig struct {
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
-	Mounts        Mount             `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
+	Mounts        []Mount           `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 }
 
 type ValidateAppConfigOptions struct {
@@ -98,6 +98,10 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 
 	if a.DeployParams == nil {
 		a.DeployParams = []string{}
+	}
+
+	if a.Mounts == nil {
+		a.Mounts = []Mount{}
 	}
 
 	// only permit apps that are valid dns names

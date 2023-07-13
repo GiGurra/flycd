@@ -79,6 +79,14 @@ var Cmd = &cobra.Command{
 					config["source"] = model.NewLocalFolderSource("")
 				}
 
+				if _, ok := config["mounts"]; ok {
+					// fly.toml only has a single mount as a map/object in the mounts field :D
+					mount, isMap := config["mounts"].(map[string]any)
+					if isMap {
+						config["mounts"] = []any{mount}
+					}
+				}
+
 				yamlSrc, err := yaml.Marshal(config)
 				if err != nil {
 					hasErrs = true
