@@ -70,7 +70,7 @@ func deployAll(
 
 	result := model.NewEmptyDeployResult()
 
-	err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
+	err := TraverseDeepAppTree(ctx, path, model.TraverseAppTreeOptions{
 		ValidAppCb: func(appNode model.AppNode) error {
 			fmt.Printf("Considering app %s @ %s\n", appNode.AppConfig.App, appNode.Path)
 			if deployCfg.AbortOnFirstError && result.HasErrors() {

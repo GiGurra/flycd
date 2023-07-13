@@ -6,6 +6,15 @@ import (
 	"os"
 )
 
+type TraverseAppTreeOptions struct {
+	ValidAppCb       func(AppNode) error
+	InvalidAppCb     func(AppNode) error
+	SkippedAppCb     func(AppNode) error
+	BeginProjectCb   func(ProjectNode) error
+	EndProjectCb     func(ProjectNode) error
+	SkippedProjectCb func(ProjectNode) error
+}
+
 type TraversalStepAnalysis struct {
 	HasAppYaml            bool
 	HasProjectYaml        bool

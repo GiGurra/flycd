@@ -11,40 +11,31 @@ import (
 	"path/filepath"
 )
 
-type Seen struct {
+type seen struct {
 	Apps     map[string]bool
 	Projects map[string]bool
 }
 
-func NewSeen() Seen {
-	return Seen{
+func newSeen() seen {
+	return seen{
 		Apps:     make(map[string]bool),
 		Projects: make(map[string]bool),
 	}
 }
 
-type TraverseAppTreeOptions struct {
-	ValidAppCb       func(model.AppNode) error
-	InvalidAppCb     func(model.AppNode) error
-	SkippedAppCb     func(model.AppNode) error
-	BeginProjectCb   func(model.ProjectNode) error
-	EndProjectCb     func(model.ProjectNode) error
-	SkippedProjectCb func(model.ProjectNode) error
-}
-
 func TraverseDeepAppTree(
 	ctx context.Context,
 	path string,
-	opts TraverseAppTreeOptions,
+	opts model.TraverseAppTreeOptions,
 ) error {
-	return doTraverseDeepAppTree(ctx, NewSeen(), path, opts)
+	return doTraverseDeepAppTree(ctx, newSeen(), path, opts)
 }
 
 func doTraverseDeepAppTree(
 	ctx context.Context,
-	seen Seen,
+	seen seen,
 	path string,
-	opts TraverseAppTreeOptions,
+	opts model.TraverseAppTreeOptions,
 ) error {
 
 	analysis, err := scanDir(path)
@@ -111,8 +102,8 @@ func doTraverseDeepAppTree(
 
 func traverseProject(
 	ctx context.Context,
-	seen Seen,
-	opts TraverseAppTreeOptions,
+	seen seen,
+	opts model.TraverseAppTreeOptions,
 	project model.ProjectNode,
 ) error {
 	if opts.BeginProjectCb != nil {

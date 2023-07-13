@@ -10,7 +10,7 @@ import (
 
 func TestTraverseDeepAppTree(t *testing.T) {
 	path := "../../examples/projects"
-	err := TraverseDeepAppTree(context.Background(), path, TraverseAppTreeOptions{
+	err := TraverseDeepAppTree(context.Background(), path, model.TraverseAppTreeOptions{
 		ValidAppCb: func(node model.AppNode) error {
 			fmt.Printf("Valid app: %s @ %s\n", node.AppConfig.App, node.Path)
 			return nil
@@ -27,7 +27,7 @@ func TestTraverseDeepAppTree_cyclicDetection(t *testing.T) {
 
 	actual := make([]string, 0)
 
-	err := TraverseDeepAppTree(context.Background(), path, TraverseAppTreeOptions{
+	err := TraverseDeepAppTree(context.Background(), path, model.TraverseAppTreeOptions{
 		ValidAppCb: func(node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Valid app: %s", node.AppConfig.App))
 			return nil

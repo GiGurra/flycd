@@ -32,7 +32,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 
 		matchedProjCount := 0
 		ctx := context.Background()
-		err := TraverseDeepAppTree(ctx, path, TraverseAppTreeOptions{
+		err := TraverseDeepAppTree(ctx, path, model.TraverseAppTreeOptions{
 			ValidAppCb: func(app model.AppNode) error {
 
 				if matchedProjCount > 0 || matchesApp(app, payload) {
