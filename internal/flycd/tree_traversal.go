@@ -291,27 +291,37 @@ func scan(inputPath string) (model.SpecNode, error) {
 
 func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error) {
 
-	if strings.HasSuffix(path, ".yaml") {
-		dirPath := filepath.Dir(path)
-		fileName := filepath.Base(path)
-		if fileName == "app.yaml" {
-			return model.TraversalStepAnalysis{
-				Path:                  dirPath,
-				HasAppYaml:            true,
-				HasProjectYaml:        false,
-				HasProjectsDir:        false,
-				TraversableCandidates: []os.DirEntry{},
-			}, nil
-		} else if fileName == "project.yaml" {
-			return model.TraversalStepAnalysis{
-				Path:                  dirPath,
-				HasAppYaml:            false,
-				HasProjectYaml:        true,
-				HasProjectsDir:        false,
-				TraversableCandidates: []os.DirEntry{},
-			}, nil
+	// check if path is file or dir
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return model.TraversalStepAnalysis{}, fmt.Errorf("error stating path '%s': %w", path, err)
+	}
+
+	if !fileInfo.IsDir() {
+		if strings.HasSuffix(path, ".yaml") {
+			dirPath := filepath.Dir(path)
+			fileName := filepath.Base(path)
+			if fileName == "app.yaml" {
+				return model.TraversalStepAnalysis{
+					Path:                  dirPath,
+					HasAppYaml:            true,
+					HasProjectYaml:        false,
+					HasProjectsDir:        false,
+					TraversableCandidates: []os.DirEntry{},
+				}, nil
+			} else if fileName == "project.yaml" {
+				return model.TraversalStepAnalysis{
+					Path:                  dirPath,
+					HasAppYaml:            false,
+					HasProjectYaml:        true,
+					HasProjectsDir:        false,
+					TraversableCandidates: []os.DirEntry{},
+				}, nil
+			} else {
+				return model.TraversalStepAnalysis{}, fmt.Errorf("unexpected yaml file '%s'", path)
+			}
 		} else {
-			return model.TraversalStepAnalysis{}, fmt.Errorf("unexpected yaml file '%s'", path)
+			return model.TraversalStepAnalysis{}, fmt.Errorf("unexpected file '%s'", path)
 		}
 	}
 
