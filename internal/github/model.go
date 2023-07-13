@@ -37,6 +37,7 @@ type Commit struct {
 
 type PushWebhookPayload struct {
 	Ref        string     `json:"ref"`
+	HookId     int64      `json:"hook_id"`
 	Repository Repository `json:"repository"`
 	Pusher     User       `json:"pusher"`
 	HeadCommit Commit     `json:"head_commit"`

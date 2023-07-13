@@ -29,8 +29,9 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 
 	// TODO: Implement some kind of persistence and/or caching here... So we don't have to clone everything every time...
 
-	fmt.Printf("Traversing projects and apps for matching webhook url %s...\n", payload.Repository.Url)
 	go func() {
+
+		fmt.Printf("Start processing webhook %d for %s...\n", payload.HookId, payload.Repository.Url)
 
 		defer close(ch)
 
