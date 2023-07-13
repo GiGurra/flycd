@@ -19,6 +19,8 @@ source:
 env:
   ENV: "development"
 
+vm_size: &vm_size "shared-cpu-1x"
+
 primary_region: &primary_region "arn" # default region for tests
 services:
   - internal_port: 80
@@ -52,11 +54,15 @@ launch_params:
   - *primary_region
   - "--org"
   - *org
+  - "--vm-size"
+  - *vm_size
 
 # Modify to your needs. By default, we will deploy the fly.io
 # app without any user interaction/confirmation.
 # For the most simple apps, you probably don't need to modify these at all
 deploy_params:
   - "--ha=false"
+  - "--vm-size"
+  - *vm_size
 
 
