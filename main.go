@@ -52,11 +52,12 @@ func main() {
 
 	// Create services (sigh, feels like java again :S)
 	deployService := flycd.NewDeployService()
+	webhookService := flycd.NewWebHookService(deployService)
 
 	// prepare cli
 	rootCmd.AddCommand(
 		deploy.Cmd(deployService),
-		monitor.Cmd,
+		monitor.Cmd(deployService, webhookService),
 		install.Cmd(PackagedFileSystem, deployService),
 		convert.Cmd,
 	)
