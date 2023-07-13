@@ -329,16 +329,16 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 			}
 			return model.SingleAppDeployUpdated, nil
 		} else {
-			println("App is already up to date, skipping deploy")
+			fmt.Printf("App is already up to date, skipping deploy\n")
 			return model.SingleAppDeployNoChange, nil
 		}
 	} else {
-		println("App not found, creating it")
+		fmt.Printf("App not found, creating it\n")
 		err = fly_client.CreateNewApp(ctx, cfg, tempDir, true)
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
-		println("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation")
+		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
 		err = fly_client.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 		if err != nil {
 			return "", err
