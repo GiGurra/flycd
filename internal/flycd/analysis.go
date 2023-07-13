@@ -24,10 +24,12 @@ func NewSeen() Seen {
 }
 
 type TraverseAppTreeOptions struct {
-	ValidAppCb     func(model.AppNode) error
-	InvalidAppCb   func(model.AppNode) error
-	BeginProjectCb func(model.ProjectNode) error
-	EndProjectCb   func(model.ProjectNode) error
+	ValidAppCb       func(model.AppNode) error
+	InvalidAppCb     func(model.AppNode) error
+	SkippedAppCb     func(model.AppNode) error
+	BeginProjectCb   func(model.ProjectNode) error
+	EndProjectCb     func(model.ProjectNode) error
+	SkippedProjectCb func(model.ProjectNode) error
 }
 
 func TraverseDeepAppTree(
@@ -57,7 +59,12 @@ func doTraverseDeepAppTree(
 	for _, project := range projects {
 
 		if seen.Projects[project.ProjectConfig.Project] {
-			// fmt.Printf("Skipping project %s @ %s because it has already been seen\n", project.ProjectConfig.Project, project.Path)
+			if opts.SkippedProjectCb != nil {
+				err := opts.SkippedProjectCb(project)
+				if err != nil {
+					return fmt.Errorf("error calling function for skipped project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+				}
+			}
 			continue
 		}
 
@@ -72,7 +79,12 @@ func doTraverseDeepAppTree(
 		if app.IsValidApp() {
 
 			if seen.Apps[app.AppConfig.App] {
-				// fmt.Printf("Skipping app %s @ %s because it has already been seen\n", app.AppConfig.App, app.Path)
+				if opts.SkippedAppCb != nil {
+					err := opts.SkippedAppCb(app)
+					if err != nil {
+						return fmt.Errorf("error calling function for skipped app %s @ %s: %w", app.AppConfig.App, app.Path, err)
+					}
+				}
 				continue
 			}
 
