@@ -77,10 +77,14 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 				return nil
 			},
 		})
+
 		if err != nil {
 			fmt.Printf("error traversing app tree: %v", err)
 			ch <- err
 		}
+
+		fmt.Printf("Done processing webhook %d for %s...\n", payload.HookId, payload.Repository.Url)
+
 	}()
 
 	return ch
