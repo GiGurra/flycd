@@ -16,6 +16,7 @@ type TraverseAppTreeOptions struct {
 }
 
 type TraversalStepAnalysis struct {
+	Path                  string
 	HasAppYaml            bool
 	HasProjectYaml        bool
 	HasProjectsDir        bool

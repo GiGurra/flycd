@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type seen struct {
@@ -38,7 +39,7 @@ func doTraverseDeepAppTree(
 	opts model.TraverseAppTreeOptions,
 ) error {
 
-	analysis, err := scanDir(path)
+	analysis, err := scan(path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -174,23 +175,24 @@ func traverseProject(
 	return nil
 }
 
-func scanDir(path string) (model.SpecNode, error) {
+func scan(inputPath string) (model.SpecNode, error) {
 
 	result := model.SpecNode{
-		Path:     path,
+		Path:     inputPath,
 		Children: []model.SpecNode{},
 	}
 
 	// convert path to absolut path
-	path, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(inputPath)
 	if err != nil {
 		return result, fmt.Errorf("error converting path to absolute path: %w", err)
 	}
 
-	nodeInfo, err := analyseTraversalCandidate(path)
+	nodeInfo, err := analyseTraversalCandidate(absPath)
 	if err != nil {
-		return result, fmt.Errorf("error analysing node '%s': %w", path, err)
+		return result, fmt.Errorf("error analysing node '%s': %w", absPath, err)
 	}
+	path := nodeInfo.Path // Could be updated
 
 	if nodeInfo.HasAppYaml {
 		workDir := util_work_dir.NewWorkDir(path)
@@ -264,7 +266,7 @@ func scanDir(path string) (model.SpecNode, error) {
 
 	if nodeInfo.HasProjectsDir {
 
-		child, err := scanDir(filepath.Join(path, "projects"))
+		child, err := scan(filepath.Join(path, "projects"))
 		if err != nil {
 			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -274,7 +276,7 @@ func scanDir(path string) (model.SpecNode, error) {
 
 		children := make([]model.SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := scanDir(filepath.Join(path, entry.Name()))
+			child, err := scan(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
@@ -289,6 +291,30 @@ func scanDir(path string) (model.SpecNode, error) {
 
 func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error) {
 
+	if strings.HasSuffix(path, ".yaml") {
+		dirPath := filepath.Dir(path)
+		fileName := filepath.Base(path)
+		if fileName == "app.yaml" {
+			return model.TraversalStepAnalysis{
+				Path:                  dirPath,
+				HasAppYaml:            true,
+				HasProjectYaml:        false,
+				HasProjectsDir:        false,
+				TraversableCandidates: []os.DirEntry{},
+			}, nil
+		} else if fileName == "project.yaml" {
+			return model.TraversalStepAnalysis{
+				Path:                  dirPath,
+				HasAppYaml:            false,
+				HasProjectYaml:        true,
+				HasProjectsDir:        false,
+				TraversableCandidates: []os.DirEntry{},
+			}, nil
+		} else {
+			return model.TraversalStepAnalysis{}, fmt.Errorf("unexpected yaml file '%s'", path)
+		}
+	}
+
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return model.TraversalStepAnalysis{}, fmt.Errorf("error reading directory: %w", err)
@@ -297,6 +323,7 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 	// Collect potentially traversable dirs
 
 	result := model.TraversalStepAnalysis{
+		Path:                  path,
 		HasAppYaml:            false,
 		HasProjectYaml:        false,
 		HasProjectsDir:        false,
