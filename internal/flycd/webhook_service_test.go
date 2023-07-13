@@ -58,38 +58,67 @@ func (f *fakeDeployServiceT) DeployAppFromFolder(
 
 var _ DeployService = &fakeDeployServiceT{}
 
-func TestNewWebHookServiceAbc(t *testing.T) {
-	fakeDeployService := newFakeDeployService()
-	webhookService := NewWebHookService(fakeDeployService)
+func TestWebHookService(t *testing.T) {
 
-	fmt.Printf("webhookService: %v\n", webhookService)
+	for _, test := range []struct {
+		name    string
+		path    string
+		payload github.PushWebhookPayload
+	}{
+		{
+			name:    "regular payload",
+			path:    "../../test/test-projects/webhooks/regular",
+			payload: generateTestPushWebhookPayload(),
+		},
+		{
+			name:    "payload missing .git in urls",
+			path:    "../../test/test-projects/webhooks/regular",
+			payload: generateTestPushWebhookPayloadWithoutGitSuffix(),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
 
-	payload := generateTestPushWebhookPayload()
+			fakeDeployService := newFakeDeployService()
+			webhookService := NewWebHookService(fakeDeployService)
 
-	ch := webhookService.HandleGithubWebhook(payload, "../../test/test-projects/webhooks/regular")
+			fmt.Printf("webhookService: %v\n", webhookService)
 
-	select {
-	case err, open := <-ch:
-		if err != nil {
-			t.Fatalf("Failed to handle webhook: %v", err)
-		}
-		if open {
-			t.Fatalf("Expected channel to be closed")
-		}
+			payload := test.payload
+
+			ch := webhookService.HandleGithubWebhook(payload, "../../test/test-projects/webhooks/regular")
+
+			select {
+			case err, open := <-ch:
+				if err != nil {
+					t.Fatalf("Failed to handle webhook: %v", err)
+				}
+				if open {
+					t.Fatalf("Expected channel to be closed")
+				}
+			}
+
+			if len(fakeDeployService.deployAppFromFolderInputs) != 1 {
+				t.Fatalf("Expected 1 deployAppFromFolder call, got %d", len(fakeDeployService.deployAppFromFolderInputs))
+			}
+
+			input := fakeDeployService.deployAppFromFolderInputs[0]
+			expPath, err := filepath.Abs("../../test/test-projects/webhooks/regular/app1")
+			if err != nil {
+				t.Fatalf("Failed to get abs path: %v", err)
+			}
+			if input.Path != expPath {
+				t.Fatalf("Expected path to be '%s', got '%s'", expPath, input.Path)
+			}
+		})
 	}
 
-	if len(fakeDeployService.deployAppFromFolderInputs) != 1 {
-		t.Fatalf("Expected 1 deployAppFromFolder call, got %d", len(fakeDeployService.deployAppFromFolderInputs))
-	}
+}
 
-	input := fakeDeployService.deployAppFromFolderInputs[0]
-	expPath, err := filepath.Abs("../../test/test-projects/webhooks/regular/app1")
-	if err != nil {
-		t.Fatalf("Failed to get abs path: %v", err)
-	}
-	if input.Path != expPath {
-		t.Fatalf("Expected path to be '%s', got '%s'", expPath, input.Path)
-	}
+func generateTestPushWebhookPayloadWithoutGitSuffix() github.PushWebhookPayload {
+	result := generateTestPushWebhookPayload()
+	result.Repository.GitUrl = "git://github.com/TestUser/TestRepo"
+	result.Repository.SshUrl = "git@github.com:TestUser/TestRepo"
+	return result
 }
 
 func generateTestPushWebhookPayload() github.PushWebhookPayload {

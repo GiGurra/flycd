@@ -90,15 +90,28 @@ func matchesSpec(source model.Source, payload github.PushWebhookPayload) bool {
 		return false
 	}
 	localKey := strings.ToLower(source.Repo)
-	remoteKeys := []string{
+	remoteKeys := allEntriesBothWithAndWithoutGitSuffix(lo.Uniq([]string{
 		strings.ToLower(payload.Repository.Url),
 		strings.ToLower(payload.Repository.CloneUrl),
 		strings.ToLower(payload.Repository.HtmlUrl),
 		strings.ToLower(payload.Repository.GitUrl),
 		strings.ToLower(payload.Repository.SvnUrl),
 		strings.ToLower(payload.Repository.SshUrl),
-	}
+	}))
 	return lo.Contains(remoteKeys, localKey)
+}
+
+func allEntriesBothWithAndWithoutGitSuffix(entries []string) []string {
+
+	normalized := lo.Map(entries, func(entry string, _ int) string {
+		return strings.TrimSuffix(entry, ".git")
+	})
+
+	withSuffix := lo.Map(normalized, func(entry string, _ int) string {
+		return entry + ".git"
+	})
+
+	return lo.Uniq(append(normalized, withSuffix...))
 }
 
 func matchesApp(app model.AppNode, payload github.PushWebhookPayload) bool {
