@@ -3,9 +3,9 @@ package model
 import "fmt"
 
 type GitRef struct {
-	Branch string `yaml:"branch,omitempty" toml:"branch"`
-	Tag    string `yaml:"tag,omitempty" toml:"tag"`
-	Commit string `yaml:"commit,omitempty" toml:"commit"`
+	Branch string `yaml:"branch,omitempty" toml:"branch" json:"branch,omitempty"`
+	Tag    string `yaml:"tag,omitempty" toml:"tag" json:"tag,omitempty"`
+	Commit string `yaml:"commit,omitempty" toml:"commit" json:"commit,omitempty"`
 }
 
 func (g *GitRef) IsEmpty() bool {
@@ -13,11 +13,11 @@ func (g *GitRef) IsEmpty() bool {
 }
 
 type Source struct {
-	Repo   string     `yaml:"repo,omitempty" toml:"repo"`
-	Path   string     `yaml:"path,omitempty" toml:"path"`
-	Ref    GitRef     `yaml:"ref,omitempty" toml:"ref"`
-	Type   SourceType `yaml:"type,omitempty" toml:"type"`
-	Inline string     `yaml:"inline,omitempty" toml:"inline"`
+	Repo   string     `yaml:"repo,omitempty" toml:"repo" json:"repo,omitempty"`
+	Path   string     `yaml:"path,omitempty" toml:"path" json:"path,omitempty"`
+	Ref    GitRef     `yaml:"ref,omitempty" toml:"ref" json:"ref,omitempty"`
+	Type   SourceType `yaml:"type,omitempty" toml:"type" json:"type,omitempty"`
+	Inline string     `yaml:"inline,omitempty" toml:"inline" json:"inline,omitempty"`
 }
 
 func NewInlineDockerFileSource(inline string) Source {

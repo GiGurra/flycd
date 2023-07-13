@@ -7,6 +7,7 @@ import (
 	"github.com/gigurra/flycd/cmd/deploy"
 	"github.com/gigurra/flycd/cmd/install"
 	"github.com/gigurra/flycd/cmd/monitor"
+	"github.com/gigurra/flycd/cmd/repos"
 	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/spf13/cobra"
 	"os"
@@ -60,6 +61,7 @@ func main() {
 		monitor.Cmd(deployService, webhookService),
 		install.Cmd(PackagedFileSystem, deployService),
 		convert.Cmd,
+		repos.Cmd,
 	)
 
 	// run cli
