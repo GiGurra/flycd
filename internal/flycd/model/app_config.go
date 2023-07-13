@@ -52,7 +52,7 @@ type AppConfig struct {
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
-	Build         map[string]string `yaml:"build" toml:"build,omitempty"`
+	Build         map[string]any    `yaml:"build" toml:"build,omitempty"`
 	Mounts        []Mount           `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 }
 
@@ -90,7 +90,7 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 	}
 
 	if a.Build == nil {
-		a.Build = make(map[string]string)
+		a.Build = make(map[string]any)
 	}
 
 	if a.Services == nil {
