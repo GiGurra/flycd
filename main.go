@@ -7,6 +7,7 @@ import (
 	"github.com/gigurra/flycd/cmd/deploy"
 	"github.com/gigurra/flycd/cmd/install"
 	"github.com/gigurra/flycd/cmd/monitor"
+	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -49,11 +50,14 @@ func main() {
 		}
 	}
 
+	// Create services (sigh, feels like java again :S)
+	deployService := flycd.NewDeployService()
+
 	// prepare cli
 	rootCmd.AddCommand(
-		deploy.Cmd,
+		deploy.Cmd(deployService),
 		monitor.Cmd,
-		install.Cmd(PackagedFileSystem),
+		install.Cmd(PackagedFileSystem, deployService),
 		convert.Cmd,
 	)
 
