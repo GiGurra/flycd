@@ -28,6 +28,11 @@ type Service struct {
 	Ports              []Port      `yaml:"ports" toml:"ports,omitempty"`
 }
 
+type Mount struct {
+	Source      string `yaml:"source" toml:"source"`
+	Destination string `yaml:"destination" toml:"destination"`
+}
+
 type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
@@ -37,6 +42,7 @@ type AppConfig struct {
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
+	Mounts        map[string]string `yaml:"mounts" toml:"mounts,omitempty"`
 }
 
 type ValidateAppConfigOptions struct {
