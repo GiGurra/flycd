@@ -30,13 +30,13 @@ type Service struct {
 
 type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
-	Org           string            `yaml:"org" toml:"org"`
-	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region"`
+	Org           string            `yaml:"org" toml:"org,omitempty"`
+	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
 	Source        Source            `yaml:"source" toml:"source"`
-	Services      []Service         `yaml:"services" toml:"services"`
-	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params"`
+	Services      []Service         `yaml:"services" toml:"services,omitempty"`
+	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
-	Env           map[string]string `yaml:"env" toml:"env"`
+	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
 }
 
 type ValidateAppConfigOptions struct {
