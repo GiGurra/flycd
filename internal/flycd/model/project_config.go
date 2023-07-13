@@ -37,5 +37,14 @@ func (cfg *ProjectConfig) Validate() error {
 		return fmt.Errorf("project source is invalid: %w", err)
 	}
 
+	switch cfg.Source.Type {
+	case SourceTypeLocal:
+		//ok
+	case SourceTypeGit:
+		//ok
+	default:
+		return fmt.Errorf("project source type '%s' is invalid/not allowed", cfg.Source.Type)
+	}
+
 	return nil
 }

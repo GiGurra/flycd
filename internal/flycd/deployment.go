@@ -61,24 +61,23 @@ func DeployAll(
 			})
 			return nil
 		},
-		ValidProjectCb: func(appNode model.ProjectNode) error {
+		BeginProjectCb: func(projNode model.ProjectNode) error {
 			if deployCfg.AbortOnFirstError && result.HasErrors() {
 				result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
-					Spec:  appNode,
+					Spec:  projNode,
 					Cause: SkippedAbortedEarlier,
 				})
 				return nil
+			} else if !projNode.IsValidProject() {
+				result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
+					Spec:  projNode,
+					Cause: SkippedNotValid(projNode.ErrCause()),
+				})
+				return nil
 			} else {
-				result.ProcessedProjects = append(result.ProcessedProjects, appNode)
+				result.ProcessedProjects = append(result.ProcessedProjects, projNode)
 				return nil
 			}
-		},
-		InvalidProjectCb: func(appNode model.ProjectNode) error {
-			result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
-				Spec:  appNode,
-				Cause: SkippedNotValid(appNode.ErrCause()),
-			})
-			return nil
 		},
 	})
 	if err != nil {

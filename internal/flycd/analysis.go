@@ -12,10 +12,10 @@ import (
 )
 
 type TraverseAppTreeOptions struct {
-	ValidAppCb       func(model.AppNode) error
-	InvalidAppCb     func(model.AppNode) error
-	ValidProjectCb   func(model.ProjectNode) error
-	InvalidProjectCb func(model.ProjectNode) error
+	ValidAppCb     func(model.AppNode) error
+	InvalidAppCb   func(model.AppNode) error
+	BeginProjectCb func(model.ProjectNode) error
+	EndProjectCb   func(model.ProjectNode) error
 }
 
 func TraverseDeepAppTree(
@@ -51,77 +51,80 @@ func TraverseDeepAppTree(
 	}
 
 	for _, project := range projects {
-		if project.IsValidProject() {
-
-			if opts.ValidProjectCb != nil {
-				err := opts.ValidProjectCb(project)
-				if err != nil {
-					return fmt.Errorf("error calling function for valid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
-				}
-			}
-
-			switch project.ProjectConfig.Source.Type {
-			case model.SourceTypeLocal:
-				absPath := func() string {
-					if filepath.IsAbs(project.ProjectConfig.Source.Path) {
-						return project.ProjectConfig.Source.Path
-					} else {
-						return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
-					}
-				}()
-				err := TraverseDeepAppTree(ctx, absPath, opts)
-				if err != nil {
-					return fmt.Errorf("error traversing local project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
-				}
-			case model.SourceTypeGit:
-
-				err := func() error {
-
-					// Clone to a temp folder
-					tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
-					if err != nil {
-						return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
-					}
-					defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
-
-					// Clone to temp dir
-					cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
-					if err != nil {
-						return fmt.Errorf("cloning project %s: %w", project.ProjectConfig.Project, err)
-					} else {
-						err := TraverseDeepAppTree(ctx, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), opts)
-						if err != nil {
-							return fmt.Errorf("error traversing cloned project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
-						}
-					}
-
-					return nil
-				}()
-
-				if err != nil {
-					return err
-				}
-
-			default:
-				fmt.Printf("unknown source type '%s' for project '%s' @ %s\n", project.ProjectConfig.Source.Type, project.ProjectConfig.Project, project.Path)
-				if opts.InvalidProjectCb != nil {
-					err := opts.InvalidProjectCb(project)
-					if err != nil {
-						return fmt.Errorf("error calling function for invalid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
-					}
-				}
-			}
-
-		} else {
-			if opts.InvalidProjectCb != nil {
-				err := opts.InvalidProjectCb(project)
-				if err != nil {
-					return fmt.Errorf("error calling function for invalid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
-				}
-			}
+		if err := traverseProject(ctx, opts, project); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+func traverseProject(ctx context.Context, opts TraverseAppTreeOptions, project model.ProjectNode) error {
+	if opts.BeginProjectCb != nil {
+		err := opts.BeginProjectCb(project)
+		if err != nil {
+			return fmt.Errorf("error calling function for valid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+		}
+	}
+
+	defer func() {
+		if opts.EndProjectCb != nil {
+			err := opts.EndProjectCb(project)
+			if err != nil {
+				fmt.Printf("error calling function for valid project %s @ %s: %v", project.ProjectConfig.Project, project.Path, err)
+			}
+		}
+	}()
+
+	if project.IsValidProject() {
+
+		switch project.ProjectConfig.Source.Type {
+		case model.SourceTypeLocal:
+			absPath := func() string {
+				if filepath.IsAbs(project.ProjectConfig.Source.Path) {
+					return project.ProjectConfig.Source.Path
+				} else {
+					return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
+				}
+			}()
+			err := TraverseDeepAppTree(ctx, absPath, opts)
+			if err != nil {
+				return fmt.Errorf("error traversing local project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+			}
+		case model.SourceTypeGit:
+
+			err := func() error {
+
+				// Clone to a temp folder
+				tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
+				if err != nil {
+					return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
+				}
+				defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
+
+				// Clone to temp dir
+				cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
+				if err != nil {
+					return fmt.Errorf("cloning project %s: %w", project.ProjectConfig.Project, err)
+				} else {
+					err := TraverseDeepAppTree(ctx, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), opts)
+					if err != nil {
+						return fmt.Errorf("error traversing cloned project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+					}
+				}
+
+				return nil
+			}()
+
+			if err != nil {
+				return err
+			}
+
+		default:
+			fmt.Printf("BUG: illegal or unknown source type '%s' for project '%s' @ %s\n", project.ProjectConfig.Source.Type, project.ProjectConfig.Project, project.Path)
+		}
+
+	}
 	return nil
 }
 
