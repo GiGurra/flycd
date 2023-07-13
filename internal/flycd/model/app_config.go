@@ -26,6 +26,7 @@ type Service struct {
 	MinMachinesRunning int         `yaml:"min_machines_running" toml:"min_machines_running"`
 	Concurrency        Concurrency `yaml:"concurrency" toml:"concurrency,omitempty"`
 	Ports              []Port      `yaml:"ports" toml:"ports,omitempty"`
+	Processes          []string    `yaml:"processes" toml:"processes,omitempty"`
 }
 
 type HttpService struct {
@@ -35,6 +36,7 @@ type HttpService struct {
 	AutoStartMachines  bool        `yaml:"auto_start_machines" toml:"auto_start_machines"`
 	MinMachinesRunning int         `yaml:"min_machines_running" toml:"min_machines_running"`
 	Concurrency        Concurrency `yaml:"concurrency" toml:"concurrency,omitempty"`
+	Processes          []string    `yaml:"processes" toml:"processes,omitempty"`
 }
 
 type Mount struct {

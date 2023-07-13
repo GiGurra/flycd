@@ -153,7 +153,14 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
+	// we need to read the conf both typed (comparing state values) and untyped (to not lose any data)
+
 	cfg, err := readAppConfig(path)
+	if err != nil {
+		return "", err
+	}
+
+	cfgUntyped, err := readAppConfigUntyped(path)
 	if err != nil {
 		return "", err
 	}
@@ -244,6 +251,8 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 		cfg.Env = make(map[string]string)
 	}
 
+	//
+
 	appHash = strings.TrimSpace(appHash)
 	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgHash
 	cfg.Env["FLYCD_APP_VERSION"] = appHash
@@ -254,8 +263,10 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 	cfg.Env["FLYCD_APP_SOURCE_REF_COMMIT"] = cfg.Source.Ref.Commit
 	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
 
+	cfgUntyped["env"] = cfg.Env
+
 	// Write a new app.yaml file with the appHash
-	cfgBytesYaml, err := yaml.Marshal(cfg)
+	cfgBytesYaml, err := yaml.Marshal(cfgUntyped)
 	if err != nil {
 		return "", fmt.Errorf("error marshalling app.yaml: %w", err)
 	}
@@ -352,6 +363,22 @@ func readAppConfig(path string) (model.AppConfig, error) {
 	err = cfg.Validate()
 	if err != nil {
 		return cfg, fmt.Errorf("error validating app.yaml from folder %s: %w", path, err)
+	}
+
+	return cfg, nil
+}
+
+func readAppConfigUntyped(path string) (map[string]any, error) {
+	cfg := make(map[string]any)
+
+	appYaml, err := os.ReadFile(path + "/app.yaml")
+	if err != nil {
+		return cfg, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
+	}
+
+	err = yaml.Unmarshal(appYaml, &cfg)
+	if err != nil {
+		return cfg, fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
 	}
 
 	return cfg, nil
