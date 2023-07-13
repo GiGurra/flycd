@@ -136,9 +136,6 @@ func generateTestPushWebhookPayload() github.PushWebhookPayload {
 		Private:       false,
 		HtmlUrl:       "https://github.com/TestUser/TestRepo",
 		Url:           "https://github.com/TestUser/TestRepo",
-		CreatedAt:     1616161616,
-		UpdatedAt:     "2022-01-01T00:00:00Z",
-		PushedAt:      1616161616,
 		GitUrl:        "git://github.com/TestUser/TestRepo.git",
 		SshUrl:        "git@github.com:TestUser/TestRepo.git",
 		CloneUrl:      "https://github.com/TestUser/TestRepo.git",
@@ -150,12 +147,11 @@ func generateTestPushWebhookPayload() github.PushWebhookPayload {
 
 	// Create test Commit
 	testCommit := github.Commit{
-		ID:        "abc123",
-		TreeID:    "def456",
-		Message:   "Test commit",
-		Timestamp: "2022-01-01T00:00:00Z",
-		URL:       "https://github.com/TestUser/TestRepo/commit/abc123",
-		Author:    testUser,
+		ID:      "abc123",
+		TreeID:  "def456",
+		Message: "Test commit",
+		URL:     "https://github.com/TestUser/TestRepo/commit/abc123",
+		Author:  testUser,
 	}
 
 	// Create test PushWebhookPayload
