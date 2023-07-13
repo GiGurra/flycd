@@ -22,11 +22,7 @@ var rootCmd = &cobra.Command{
 	Long:  `Complete documentation is available at https://github.com/gigurra/flycd`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			err := cmd.Help() // Display help message
-			if err != nil {
-				fmt.Printf("Error displaying help: %v\n", err)
-			}
-			err = cmd.Usage()
+			err := cmd.Usage()
 			if err != nil {
 				fmt.Printf("error displaying usage: %v\n", err)
 			}

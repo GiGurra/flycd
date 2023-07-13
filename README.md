@@ -31,10 +31,12 @@ Usage:
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
+  convert     Convert app/apps from fly.toml(s) to app.yaml(s)
   deploy      Manually deploy a single flycd app, or all flycd apps inside a folder
   help        Help about any command
-  install     Install flycd into your fly.io account, listening to webhooks from this cfg repo and your app repos
+  install     Install FlyCD into your fly.io account, listening to webhooks from this cfg repo and your app repos
   monitor     (Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc
+  repos       Traverse the project structure and list all git repos referenced. Useful for finding your dependencies (and setting up webhooks).
 
 Flags:
   -h, --help   help for flycd
