@@ -22,7 +22,7 @@ The illustration below gives an idea of FlyCD enabled configuration:
 ```
 $flycd --help
 
-Starting FlyCD v0.0.26...
+Starting FlyCD v0.0.27...
 Complete documentation is available at https://github.com/gigurra/flycd
 
 Usage:
@@ -42,7 +42,7 @@ Flags:
   -h, --help   help for flycd
 
 Use "flycd [command] --help" for more information about a command.
-FlyCD v0.0.26 exiting normally, bye!
+FlyCD v0.0.27 exiting normally, bye!
 ```
 
 ## Current state
@@ -102,7 +102,7 @@ Consider it proof of concept, and nothing more.
 
 ### Quick setup
 
-1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.26`)
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.27`)
 2. Run `flycd deploy <your projects folder>` to ensure it deploys things the way you expect
 3. Run `flycd install --project-path <your projects folder>` to install flycd into your fly.io environment.
    This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
