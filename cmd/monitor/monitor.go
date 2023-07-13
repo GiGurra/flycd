@@ -18,6 +18,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type flags struct {
@@ -230,13 +231,20 @@ func processWebhook(c echo.Context, path string, webhookService flycd.WebHookSer
 		return c.String(http.StatusBadRequest, "Error deserializing webhook payload")
 	}
 
-	err = webhookService.HandleGithubWebhook(githubWebhookPayload, path)
-	if err != nil {
-		fmt.Printf("ERROR: handling github webhook: %v\n", err)
-		return c.String(http.StatusInternalServerError, "something went wrong - check flycd server logs!")
+	ch := webhookService.HandleGithubWebhook(githubWebhookPayload, path)
+	// TODO: Probably busy processing... Fix later and hand over to persistent queue
+	select {
+	case result := <-ch:
+		if result != nil {
+			fmt.Printf("ERROR: handling github webhook: %v\n", result)
+			return c.String(http.StatusInternalServerError, "something went wrong - check flycd server logs!")
+		} else {
+			return c.String(http.StatusAccepted, "Too fast... something could be wrong")
+		}
+	case <-time.After(1 * time.Second):
+		return c.String(http.StatusAccepted, "This is probably ok ;). ")
 	}
 
-	return c.String(http.StatusAccepted, "Accepted!")
 }
 
 // Handler

@@ -10,7 +10,7 @@ import (
 )
 
 type WebHookService interface {
-	HandleGithubWebhook(payload github.PushWebhookPayload, path string) error
+	HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error
 }
 
 type WebHookServiceImpl struct {
@@ -23,12 +23,16 @@ func NewWebHookService(deployService DeployService) WebHookService {
 	}
 }
 
-func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) error {
+func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
+
+	ch := make(chan error, 1)
 
 	// TODO: Implement some kind of persistence and/or caching here... So we don't have to clone everything every time...
 
 	fmt.Printf("Traversing projects and apps for matching webhook url %s...\n", payload.Repository.Url)
 	go func() {
+
+		defer close(ch)
 
 		matchedProjCount := 0
 		ctx := context.Background()
@@ -74,10 +78,11 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 		})
 		if err != nil {
 			fmt.Printf("error traversing app tree: %v", err)
+			ch <- err
 		}
 	}()
 
-	return nil
+	return ch
 }
 
 func matchesSpec(source model.Source, payload github.PushWebhookPayload) bool {
