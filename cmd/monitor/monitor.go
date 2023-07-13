@@ -101,7 +101,6 @@ func Cmd(
 
 					fmt.Printf("Checking if to store ssh key: %s\n", sshKeyName)
 
-					// Check that we
 					homeDir, err := os.UserHomeDir()
 					if err != nil {
 						fmt.Printf("Error getting user home directory: %v\n", err)
