@@ -53,11 +53,26 @@ func doTraverseDeepAppTree(
 	apps := analysis.Apps()
 	projects := analysis.Projects()
 
+	// Must traverse projects before apps, to ensure desired project wrapping of apps in case of cyclic dependencies
+	for _, project := range projects {
+
+		if seen.Projects[project.ProjectConfig.Project] {
+			// fmt.Printf("Skipping project %s @ %s because it has already been seen\n", project.ProjectConfig.Project, project.Path)
+			continue
+		}
+
+		seen.Projects[project.ProjectConfig.Project] = true
+
+		if err := traverseProject(ctx, seen, opts, project); err != nil {
+			return err
+		}
+	}
+
 	for _, app := range apps {
 		if app.IsValidApp() {
 
 			if seen.Apps[app.AppConfig.App] {
-				fmt.Printf("Skipping app %s @ %s because it has already been seen\n", app.AppConfig.App, app.Path)
+				// fmt.Printf("Skipping app %s @ %s because it has already been seen\n", app.AppConfig.App, app.Path)
 				continue
 			}
 
@@ -76,20 +91,6 @@ func doTraverseDeepAppTree(
 					return fmt.Errorf("error calling function for invalid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 				}
 			}
-		}
-	}
-
-	for _, project := range projects {
-
-		if seen.Projects[project.ProjectConfig.Project] {
-			fmt.Printf("Skipping project %s @ %s because it has already been seen\n", project.ProjectConfig.Project, project.Path)
-			continue
-		}
-
-		seen.Projects[project.ProjectConfig.Project] = true
-
-		if err := traverseProject(ctx, seen, opts, project); err != nil {
-			return err
 		}
 	}
 
@@ -221,9 +222,7 @@ func scanDir(path string) (model.SpecNode, error) {
 				}
 			}
 		}
-	}
-
-	if nodeInfo.HasProjectYaml {
+	} else if nodeInfo.HasProjectYaml {
 
 		workDir := util_work_dir.NewWorkDir(path)
 		projectYaml, err := workDir.ReadFile("project.yaml")
