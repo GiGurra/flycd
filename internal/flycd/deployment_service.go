@@ -205,38 +205,65 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error ensuring docker ignore exists: %w", err)
 	}
 
-	return deployAppToFly(ctx, flyClient, deployCfg, cfgTyped, tempDir, appHash, cfgHash)
+	return deployAppToFly(deployInput{
+		ctx:       ctx,
+		flyClient: flyClient,
+		deployCfg: deployCfg,
+		cfgTyped:  cfgTyped,
+		tempDir:   tempDir,
+		appHash:   appHash,
+		cfgHash:   cfgHash,
+	})
+}
+
+type deployInput struct {
+	ctx       context.Context
+	flyClient fly_client.FlyClient
+	deployCfg model.DeployConfig
+	cfgTyped  model.AppConfig
+	tempDir   util_work_dir.WorkDir
+	appHash   string
+	cfgHash   string
 }
 
 func deployAppToFly(
-	ctx context.Context,
-	flyClient fly_client.FlyClient,
-	deployCfg model.DeployConfig,
-	cfgTyped model.AppConfig,
-	tempDir util_work_dir.WorkDir,
-	appHash string,
-	cfgHash string,
+	input deployInput,
+	intermediateSteps ...func(input deployInput) error,
 ) (model.SingleAppDeploySuccessType, error) {
 
-	fmt.Printf("Checking if the app %s exists\n", cfgTyped.App)
-	appExists, err := flyClient.ExistsApp(ctx, cfgTyped.App)
+	fmt.Printf("Checking if the app %s exists\n", input.cfgTyped.App)
+	appExists, err := input.flyClient.ExistsApp(input.ctx, input.cfgTyped.App)
 	if err != nil {
-		return "", fmt.Errorf("error checking if app %s exists: %w", cfgTyped.App, err)
+		return "", fmt.Errorf("error checking if app %s exists: %w", input.cfgTyped.App, err)
+	}
+
+	runIntermediateSteps := func() error {
+		for _, step := range intermediateSteps {
+			err := step(input)
+			if err != nil {
+				return fmt.Errorf("error running intermediate step: %w", err)
+			}
+		}
+		return nil
 	}
 
 	if appExists {
-		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfgTyped.App)
-		deployedCfg, err := flyClient.GetDeployedAppConfig(ctx, cfgTyped.App)
+		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", input.cfgTyped.App)
+		deployedCfg, err := input.flyClient.GetDeployedAppConfig(input.ctx, input.cfgTyped.App)
 		if err != nil {
 			return "", fmt.Errorf("error getting deployed app config: %w", err)
 		}
 
 		fmt.Printf("Comparing deployed config with current config\n")
-		if deployCfg.Force ||
-			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
-			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
-			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfgTyped.App)
-			err = flyClient.DeployExistingApp(ctx, cfgTyped, tempDir, deployCfg)
+		if input.deployCfg.Force ||
+			deployedCfg.Env["FLYCD_APP_VERSION"] != input.appHash ||
+			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != input.cfgHash {
+			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", input.cfgTyped.App)
+			err = runIntermediateSteps()
+			if err != nil {
+				return "", err
+			}
+			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg)
 			if err != nil {
 				return "", err
 			}
@@ -247,12 +274,16 @@ func deployAppToFly(
 		}
 	} else {
 		fmt.Printf("App not found, creating it\n")
-		err = flyClient.CreateNewApp(ctx, cfgTyped, tempDir, true)
+		err = input.flyClient.CreateNewApp(input.ctx, input.cfgTyped, input.tempDir, true)
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
+		err = runIntermediateSteps()
+		if err != nil {
+			return "", err
+		}
 		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		err = flyClient.DeployExistingApp(ctx, cfgTyped, tempDir, deployCfg)
+		err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg)
 		if err != nil {
 			return "", err
 		}
