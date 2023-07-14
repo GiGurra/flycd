@@ -148,12 +148,12 @@ primary_region: &primary_region arn
 # see examples on how to configure local vs git types, and the use of their path and ref parameters
 source:
   type: git # or local
+  #path: "some/path/within/local/or/repo"
   repo: "git@github.com:my-org/my-app" # only needed for type git
-  #  path: "some/path/within/repo"
-  #  ref:
-  #    commit: "some-commit-hash"
-  #    branch: "some-branch-name"
-  #    tag: "some-tag-name"
+  #ref:
+  #  commit: "some-commit-hash"
+  #  branch: "some-branch-name"
+  #  tag: "some-tag-name"
 
 ######################################
 ## more optional example config below
