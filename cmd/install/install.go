@@ -32,6 +32,7 @@ func (f *Flags) Init(cmd *cobra.Command) {
 
 func Cmd(
 	packagedFs util_packaged.PackagedFileSystem,
+	flyClient fly_client.FlyClient,
 	deployService flycd.DeployService,
 ) *cobra.Command {
 	flags := Flags{}
@@ -101,7 +102,7 @@ func Cmd(
 				ctx := context.Background()
 
 				fmt.Printf("Check if app named '%s' already exists\n", appName)
-				appExists, err := fly_client.ExistsApp(ctx, appName)
+				appExists, err := flyClient.ExistsApp(ctx, appName)
 				if err != nil {
 					fmt.Printf("Error checking if app exists: %v\n", err)
 					os.Exit(1)
@@ -127,7 +128,7 @@ func Cmd(
 					}
 				}
 
-				existsAccessTokenSecret, err := fly_client.ExistsSecret(ctx, fly_client.ExistsSecretCmd{
+				existsAccessTokenSecret, err := flyClient.ExistsSecret(ctx, fly_client.ExistsSecretCmd{
 					AppName:    appName,
 					SecretName: "FLY_ACCESS_TOKEN",
 				})
@@ -139,7 +140,7 @@ func Cmd(
 				if !existsAccessTokenSecret {
 
 					fmt.Printf("App name successfully reserved... creating access token for org '%s'\n", orgSlug)
-					token, err := fly_client.CreateOrgToken(ctx, orgSlug)
+					token, err := flyClient.CreateOrgToken(ctx, orgSlug)
 					if err != nil {
 						fmt.Printf("Error creating org token: %v\n", err)
 						os.Exit(1)
@@ -148,7 +149,7 @@ func Cmd(
 
 					fmt.Printf("Token created.. storing it...\n")
 
-					err = fly_client.StoreSecret(ctx, fly_client.StoreSecretCmd{
+					err = flyClient.StoreSecret(ctx, fly_client.StoreSecretCmd{
 						AppName:     appName,
 						SecretName:  "FLY_ACCESS_TOKEN",
 						SecretValue: token,

@@ -9,6 +9,7 @@ import (
 	"github.com/gigurra/flycd/cmd/install"
 	"github.com/gigurra/flycd/cmd/monitor"
 	"github.com/gigurra/flycd/cmd/repos"
+	"github.com/gigurra/flycd/internal/fly_client"
 	"github.com/gigurra/flycd/internal/flycd"
 	"github.com/spf13/cobra"
 	"os"
@@ -50,14 +51,15 @@ func main() {
 
 	// Create services (sigh, feels like java again :S)
 	appCtx := context.Background() // TODO: make cancellable later on signals
-	deployService := flycd.NewDeployService()
+	flyClient := fly_client.NewFlyClient()
+	deployService := flycd.NewDeployService(flyClient)
 	webhookService := flycd.NewWebHookService(appCtx, deployService)
 
 	// prepare cli
 	rootCmd.AddCommand(
 		deploy.Cmd(deployService),
 		monitor.Cmd(deployService, webhookService),
-		install.Cmd(PackagedFileSystem, deployService),
+		install.Cmd(PackagedFileSystem, flyClient, deployService),
 		convert.Cmd,
 		repos.Cmd,
 	)

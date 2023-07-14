@@ -12,7 +12,42 @@ import (
 	"time"
 )
 
-func CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
+type FlyClient interface {
+	CreateOrgToken(ctx context.Context, orgSlug string) (string, error)
+
+	ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error)
+
+	StoreSecret(ctx context.Context, cmd StoreSecretCmd) error
+
+	ExistsApp(ctx context.Context, name string) (bool, error)
+
+	GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error)
+
+	CreateNewApp(
+		ctx context.Context,
+		cfg model.AppConfig,
+		tempDir util_work_dir.WorkDir,
+		twoStep bool,
+	) error
+
+	DeployExistingApp(
+		ctx context.Context,
+		cfg model.AppConfig,
+		tempDir util_work_dir.WorkDir,
+		deployCfg model.DeployConfig,
+	) error
+}
+
+type FlyClientImpl struct {
+}
+
+func NewFlyClient() FlyClient {
+	return &FlyClientImpl{}
+}
+
+var _ FlyClient = FlyClientImpl{}
+
+func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
 
 	result, err := util_cmd.
 		NewCommandA("fly", "tokens", "create", "org", orgSlug).
@@ -64,7 +99,7 @@ type flySecretListItem struct {
 	CreatedAt time.Time `json:"CreatedAt"`
 }
 
-func ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
+func (c FlyClientImpl) ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
 
 	if cmd.SecretName == "" {
 		return false, fmt.Errorf("secret name cannot be empty")
@@ -101,7 +136,7 @@ func ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error) {
 	}), nil
 }
 
-func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
+func (c FlyClientImpl) StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 
 	if cmd.SecretName == "" {
 		return fmt.Errorf("secret name cannot be empty")
@@ -134,7 +169,7 @@ func StoreSecret(ctx context.Context, cmd StoreSecretCmd) error {
 	return nil
 }
 
-func ExistsApp(ctx context.Context, name string) (bool, error) {
+func (c FlyClientImpl) ExistsApp(ctx context.Context, name string) (bool, error) {
 	res, err := util_cmd.NewCommand("fly", "status", "-a", name).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(5).
@@ -148,7 +183,7 @@ func ExistsApp(ctx context.Context, name string) (bool, error) {
 	return true, nil
 }
 
-func GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error) {
+func (c FlyClientImpl) GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error) {
 
 	// Compare the current deployed appVersion with the new appVersion
 	res, err := util_cmd.NewCommand("fly", "config", "show", "-a", name).
@@ -173,7 +208,7 @@ func GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, er
 	return deployedCfg, nil
 }
 
-func CreateNewApp(
+func (c FlyClientImpl) CreateNewApp(
 	ctx context.Context,
 	cfg model.AppConfig,
 	tempDir util_work_dir.WorkDir,
@@ -196,7 +231,7 @@ func CreateNewApp(
 	return nil
 }
 
-func DeployExistingApp(
+func (c FlyClientImpl) DeployExistingApp(
 	ctx context.Context,
 	cfg model.AppConfig,
 	tempDir util_work_dir.WorkDir,

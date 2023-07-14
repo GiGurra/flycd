@@ -41,28 +41,33 @@ type DeployService interface {
 	) (model.SingleAppDeploySuccessType, error)
 }
 
-type DeployServiceImpl struct{}
+type DeployServiceImpl struct {
+	flyClient fly_client.FlyClient
+}
 
 func (d DeployServiceImpl) DeployAll(ctx context.Context, path string, deployCfg model.DeployConfig) (model.DeployResult, error) {
-	return deployAll(ctx, path, deployCfg)
+	return deployAll(d.flyClient, ctx, path, deployCfg)
 }
 
 func (d DeployServiceImpl) DeployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
-	return deployAppFromInlineConfig(ctx, deployCfg, cfg)
+	return deployAppFromInlineConfig(d.flyClient, ctx, deployCfg, cfg)
 }
 
 func (d DeployServiceImpl) DeployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
-	return deployAppFromFolder(ctx, path, deployCfg)
+	return deployAppFromFolder(d.flyClient, ctx, path, deployCfg)
 }
 
 // prove that DeployServiceImpl implements DeployService
 var _ DeployService = DeployServiceImpl{}
 
-func NewDeployService() DeployService {
-	return DeployServiceImpl{}
+func NewDeployService(flyClient fly_client.FlyClient) DeployService {
+	return DeployServiceImpl{
+		flyClient: flyClient,
+	}
 }
 
 func deployAll(
+	flyClient fly_client.FlyClient,
 	ctx context.Context,
 	path string,
 	deployCfg model.DeployConfig,
@@ -81,7 +86,7 @@ func deployAll(
 				})
 				return nil
 			} else {
-				res, err := deployAppFromFolder(ctx, appNode.Path, deployCfg)
+				res, err := deployAppFromFolder(flyClient, ctx, appNode.Path, deployCfg)
 				if err != nil {
 					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 						Spec:  appNode,
@@ -128,7 +133,12 @@ func deployAll(
 	return result, nil
 }
 
-func deployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig, cfg model.AppConfig) (model.SingleAppDeploySuccessType, error) {
+func deployAppFromInlineConfig(
+	flyClient fly_client.FlyClient,
+	ctx context.Context,
+	deployCfg model.DeployConfig,
+	cfg model.AppConfig,
+) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir, err := util_work_dir.NewTempDir(cfg.App, "")
 	if err != nil {
@@ -146,10 +156,15 @@ func deployAppFromInlineConfig(ctx context.Context, deployCfg model.DeployConfig
 		return "", fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return deployAppFromFolder(ctx, cfgDir.Root(), deployCfg)
+	return deployAppFromFolder(flyClient, ctx, cfgDir.Root(), deployCfg)
 }
 
-func deployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
+func deployAppFromFolder(
+	flyClient fly_client.FlyClient,
+	ctx context.Context,
+	path string,
+	deployCfg model.DeployConfig,
+) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
@@ -320,14 +335,14 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 
 	// Now run fly.io cli and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
-	appExists, err := fly_client.ExistsApp(ctx, cfg.App)
+	appExists, err := flyClient.ExistsApp(ctx, cfg.App)
 	if err != nil {
 		return "", fmt.Errorf("error running fly status in folder %s: %w", path, err)
 	}
 
 	if appExists {
 		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfg.App)
-		deployedCfg, err := fly_client.GetDeployedAppConfig(ctx, cfg.App)
+		deployedCfg, err := flyClient.GetDeployedAppConfig(ctx, cfg.App)
 		if err != nil {
 			return "", fmt.Errorf("error getting deployed app config: %w", err)
 		}
@@ -337,7 +352,7 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
-			err = fly_client.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
+			err = flyClient.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 			if err != nil {
 				return "", err
 			}
@@ -348,12 +363,12 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 		}
 	} else {
 		fmt.Printf("App not found, creating it\n")
-		err = fly_client.CreateNewApp(ctx, cfg, tempDir, true)
+		err = flyClient.CreateNewApp(ctx, cfg, tempDir, true)
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
 		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		err = fly_client.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
+		err = flyClient.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
 		if err != nil {
 			return "", err
 		}
