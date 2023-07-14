@@ -354,7 +354,7 @@ func deployAppToFly(
 			deployedCfg.Env["FLYCD_APP_VERSION"] != input.appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != input.cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", input.cfgTyped.App)
-			err = runIntermediateSteps(input)
+			err = runIntermediateSteps(input) // set up volumes etc
 			if err != nil {
 				return "", err
 			}
@@ -373,7 +373,7 @@ func deployAppToFly(
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
-		err = runIntermediateSteps(input)
+		err = runIntermediateSteps(input) // set up volumes etc
 		if err != nil {
 			return "", err
 		}
