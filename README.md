@@ -141,6 +141,17 @@ http_service:
     - app
 primary_region: &primary_region arn
 
+## source: The most important field for FlyCD. It tells FlyCD where to find the app's git repo.
+# You can also set it to type "local" and point it to a local directory within the config repo/project.
+# see examples on how to configure local vs git types, and the use of their path and ref parameters
+source:
+  type: git
+  repo: "git@github.com:my-org/my-app"
+  #path: "some/path/within/repo"
+  #ref:
+    #commit: "some-commit-hash"
+    #branch: "some-branch-name"
+    #tag: "some-tag-name"
 
 ######################################
 ## more optional example config below
@@ -154,13 +165,6 @@ build:
   builder: paketobuildpacks/builder:base
   buildpacks:
     - gcr.io/paketo-buildpacks/go
-
-## source: The most important field for FlyCD. It tells FlyCD where to find the app's git repo.
-# You can also set it to type "local" and point it to a local directory within the config repo/project.
-# see examples on how to configure local vs git types, and the use of their path and ref parameters
-source:
-  type: git
-  repo: "git@github.com:my-org/my-app"
 
 vm_size: &vm_size "shared-cpu-1x"
 
