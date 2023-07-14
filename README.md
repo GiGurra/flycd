@@ -49,7 +49,7 @@ Use "flycd [command] --help" for more information about a command.
 ## Installation
 
 1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.30`)
-2. Run `flycd deploy <fs path>` to ensure it deploys things the way you expect
+2. Run `flycd deploy <fs path>` to deploy a configuration
 3. Optional: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
    This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
    automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
