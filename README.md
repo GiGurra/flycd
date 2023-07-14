@@ -150,7 +150,7 @@ source:
   type: git # or local
   #path: "some/path/within/local/or/repo"
   repo: "git@github.com:my-org/my-app" # only needed for type git
-  #ref:
+  #ref: # only applies for type git
   #  commit: "some-commit-hash"
   #  branch: "some-branch-name"
   #  tag: "some-tag-name"
