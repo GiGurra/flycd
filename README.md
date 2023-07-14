@@ -129,7 +129,7 @@ These might look something like this:
 ```yaml
 # app.yaml containing the regular fly.io app config + flycd's additional fields
 # NOTE: Most of the below is optional!
-app: &app cloud-x--prod--my-app # Unique dns name at <app>.fly.dev, as is the case with fly.io apps with automatic dns
+app: &app cloud-x--prod--some-backend # Unique dns name at <app>.fly.dev, as is the case with fly.io apps with automatic dns
 
 # Many of these are optional (fly.io dictates which fields are optional)
 http_service:
