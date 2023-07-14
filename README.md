@@ -194,9 +194,9 @@ deploy_params:
 ```
 
 FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io, and will keep all fields you put in
-it (i.e. flycd doesn't have to implement the full fly.io domain model). The main reason flycd doesn't just use
-a `fly.toml` instead of `app.yaml` is because `flycd` uses the fly.io cli (`fly`/`flyctl`) under the hood, and the
-fly.io cli actually modifies the `fly.toml` in place when deploying :S.
+it (i.e. flycd doesn't have to implement the full fly.io domain model). There are several reasons flycd doesn't just use
+a `fly.toml` instead of `app.yaml`. One reason is because `flycd` uses the fly.io cli (`fly`/`flyctl`) under the hood,
+and the fly.io cli actually modifies the `fly.toml` in place when deploying :S.
 
 Check the [examples](examples) directory for more ideas.
 
