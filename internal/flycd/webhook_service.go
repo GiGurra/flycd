@@ -15,62 +15,39 @@ type WebHookService interface {
 }
 
 type WebHookServiceImpl struct {
-	deployService DeployService
+	deployService     DeployService
+	workerCreateMutex *sync.Mutex
+	workerStarted     bool
+	workQueue         chan func()
 }
 
-func NewWebHookService(deployService DeployService) WebHookService {
-	return &WebHookServiceImpl{
-		deployService: deployService,
+func NewWebHookService(ctx context.Context, deployService DeployService) WebHookService {
+	fmt.Printf("Creating webhook service & worker\n")
+
+	result := &WebHookServiceImpl{
+		deployService:     deployService,
+		workerCreateMutex: &sync.Mutex{},
+		workerStarted:     false,
+		workQueue:         make(chan func(), 100),
 	}
-}
 
-var workerCreateMutex = &sync.Mutex{}
-var workerStarted = false
-var workQueue = make(chan func(), 1000)
-
-func Init(ctx context.Context) {
-	// mutex to prevent multiple workers from running at the same time
-	workerCreateMutex.Lock()
-	defer workerCreateMutex.Unlock()
-
-	if !workerStarted {
-		workerStarted = true
-		fmt.Printf("Starting webhook worker\n")
-
-		go func() {
-			for {
-				select {
-				case work, isOpen := <-workQueue:
-					if isOpen {
-						work()
-					} else {
-						fmt.Printf("Work queue closed: Stopping webhook worker\n")
-						Stop()
-						return
-					}
-				case <-ctx.Done():
-					fmt.Printf("Context cancelled: Stopping webhook worker\n")
-					Stop()
+	go func() {
+		for {
+			select {
+			case work, isOpen := <-result.workQueue:
+				if isOpen {
+					work()
+				} else {
+					fmt.Printf("Work queue closed: Stopping webhook worker\n")
 					return
 				}
+			case <-ctx.Done():
+				fmt.Printf("Context cancelled: Stopping webhook worker\n")
+				return
 			}
-		}()
-	} else {
-		fmt.Printf("Webhook worker already started\n")
-	}
-}
-
-func Stop() {
-	workerCreateMutex.Lock()
-	defer workerCreateMutex.Unlock()
-
-	if workerStarted {
-		fmt.Printf("Stopping webhook worker\n")
-		workerStarted = false
-		close(workQueue)
-	} else {
-		fmt.Printf("Webhook worker already stopped\n")
-	}
+		}
+	}()
+	return result
 }
 
 func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
@@ -137,7 +114,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 
 	}
 
-	workQueue <- task
+	w.workQueue <- task
 
 	return ch
 }

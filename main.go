@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"github.com/gigurra/flycd/cmd/convert"
@@ -48,8 +49,9 @@ func main() {
 	}
 
 	// Create services (sigh, feels like java again :S)
+	appCtx := context.Background() // TODO: make cancellable later on signals
 	deployService := flycd.NewDeployService()
-	webhookService := flycd.NewWebHookService(deployService)
+	webhookService := flycd.NewWebHookService(appCtx, deployService)
 
 	// prepare cli
 	rootCmd.AddCommand(

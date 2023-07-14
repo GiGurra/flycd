@@ -61,11 +61,6 @@ var _ DeployService = &fakeDeployServiceT{}
 
 func TestWebHookService(t *testing.T) {
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	defer cancelFunc()
-
-	Init(ctx)
-
 	for _, test := range []struct {
 		name    string
 		path    string
@@ -84,8 +79,11 @@ func TestWebHookService(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 
+			ctx, cancelFunc := context.WithCancel(context.Background())
+			defer cancelFunc()
+
 			fakeDeployService := newFakeDeployService()
-			webhookService := NewWebHookService(fakeDeployService)
+			webhookService := NewWebHookService(ctx, fakeDeployService)
 
 			fmt.Printf("webhookService: %v\n", webhookService)
 
