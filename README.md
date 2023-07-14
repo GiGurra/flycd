@@ -223,6 +223,7 @@ Check the [examples](examples) directory for more ideas.
 
 ### Some more TODOs
 
+* Support for setting env vars, secrets and common values on a project level
 * Support for creating/updating fly.io volumes
 * Support for creation/updating fly.io secrets (not sure how though :S)
 * More practical ways to configure Machine types, ram & cpu modifications
