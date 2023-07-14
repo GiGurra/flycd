@@ -310,22 +310,9 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error writing fly.toml: %w", err)
 	}
 
-	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
-	if !tempDir.ExistsChild(".dockerignore") {
-		// Check if a git ignore file exists
-		if tempDir.ExistsChild(".gitignore") {
-			// Copy the git ignore file to docker ignore
-			err = tempDir.CopyFile(".gitignore", ".dockerignore")
-			if err != nil {
-				return "", fmt.Errorf("error copying .gitignore to .dockerignore: %w", err)
-			}
-		} else {
-			// No git ignore file, so create an empty docker ignore file
-			err = tempDir.WriteFile(".dockerignore", "")
-			if err != nil {
-				return "", fmt.Errorf("error writing .dockerignore: %w", err)
-			}
-		}
+	err = ensureDockerIgnoreExists(tempDir, err)
+	if err != nil {
+		return "", fmt.Errorf("error ensuring docker ignore exists: %w", err)
 	}
 
 	// Now run fly.io cli and check if the app exists
@@ -369,6 +356,27 @@ func deployAppFromFolder(
 		}
 		return model.SingleAppDeployCreated, nil
 	}
+}
+
+func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
+	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
+	if !tempDir.ExistsChild(".dockerignore") {
+		// Check if a git ignore file exists
+		if tempDir.ExistsChild(".gitignore") {
+			// Copy the git ignore file to docker ignore
+			err = tempDir.CopyFile(".gitignore", ".dockerignore")
+			if err != nil {
+				return fmt.Errorf("error copying .gitignore to .dockerignore: %w", err)
+			}
+		} else {
+			// No git ignore file, so create an empty docker ignore file
+			err = tempDir.WriteFile(".dockerignore", "")
+			if err != nil {
+				return fmt.Errorf("error writing .dockerignore: %w", err)
+			}
+		}
+	}
+	return nil
 }
 
 func readAppConfig(path string) (model.AppConfig, error) {
