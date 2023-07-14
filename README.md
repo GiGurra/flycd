@@ -149,7 +149,7 @@ primary_region: &primary_region arn
 env:
   PORT: "8081"
 
-## Optional build config (this is something fly.io can generate for you)
+## Optional build config (this is something fly.io cli can generate for you)
 build:
   builder: paketobuildpacks/builder:base
   buildpacks:
