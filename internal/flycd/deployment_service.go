@@ -168,12 +168,7 @@ func deployAppFromFolder(
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
-	cfg, err := readAppConfig(path)
-	if err != nil {
-		return "", err
-	}
-
-	cfgUntyped, err := readAppConfigUntyped(path)
+	cfgTyped, cfgUntyped, err := readAppConfigs(path)
 	if err != nil {
 		return "", err
 	}
@@ -183,7 +178,7 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
 	}
 
-	tempDir, err := util_work_dir.NewTempDir(cfg.App, "")
+	tempDir, err := util_work_dir.NewTempDir(cfgTyped.App, "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %w", err)
 	}
@@ -194,10 +189,10 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error generating uuid: %w", err)
 	}
 
-	switch cfg.Source.Type {
+	switch cfgTyped.Source.Type {
 	case model.SourceTypeGit:
 
-		cloneResult, err := util_git.CloneShallow(ctx, cfg.Source, tempDir)
+		cloneResult, err := util_git.CloneShallow(ctx, cfgTyped.Source, tempDir)
 		if err != nil {
 			return "", fmt.Errorf("cloning git repo: %w", err)
 		}
@@ -207,20 +202,20 @@ func deployAppFromFolder(
 
 	case model.SourceTypeLocal:
 		srcDir := func() util_work_dir.WorkDir {
-			if filepath.IsAbs(cfg.Source.Path) {
-				return cfgDir.WithRootFsCwd(cfg.Source.Path)
+			if filepath.IsAbs(cfgTyped.Source.Path) {
+				return cfgDir.WithRootFsCwd(cfgTyped.Source.Path)
 			} else {
-				return cfgDir.WithChildCwd(cfg.Source.Path)
+				return cfgDir.WithChildCwd(cfgTyped.Source.Path)
 			}
 		}()
 
 		// check if srcDir exists
 		if !srcDir.Exists() {
 			// Try with it as an absolute path
-			fmt.Printf("Local path '%s' does not exist, trying as absolute path\n", cfg.Source.Path)
-			srcDir = util_work_dir.NewWorkDir(cfg.Source.Path)
+			fmt.Printf("Local path '%s' does not exist, trying as absolute path\n", cfgTyped.Source.Path)
+			srcDir = util_work_dir.NewWorkDir(cfgTyped.Source.Path)
 			if !srcDir.Exists() {
-				return "", fmt.Errorf("local path '%s' does not exist", cfg.Source.Path)
+				return "", fmt.Errorf("local path '%s' does not exist", cfgTyped.Source.Path)
 			}
 		}
 
@@ -235,11 +230,11 @@ func deployAppFromFolder(
 		}
 
 		if err != nil {
-			return "", fmt.Errorf("error copying local folder %s: %w", cfg.Source.Path, err)
+			return "", fmt.Errorf("error copying local folder %s: %w", cfgTyped.Source.Path, err)
 		}
 	case model.SourceTypeInlineDockerFile:
 		// Copy the local folder to the temp tempDir
-		err := tempDir.WriteFile("Dockerfile", cfg.Source.Inline)
+		err := tempDir.WriteFile("Dockerfile", cfgTyped.Source.Inline)
 		if err != nil {
 			return "", fmt.Errorf("error writing Dockerfile: %w", err)
 		}
@@ -257,16 +252,16 @@ func deployAppFromFolder(
 		}
 
 	default:
-		return "", fmt.Errorf("unknown source type %s", cfg.Source.Type)
+		return "", fmt.Errorf("unknown source type %s", cfgTyped.Source.Type)
 	}
 	appHash = strings.TrimSpace(appHash) // Not sure if we need this anymore
 
-	err = mergeCfgAndAppFs(cfg, cfgDir, tempDir)
+	err = mergeCfgAndAppFs(cfgTyped, cfgDir, tempDir)
 	if err != nil {
 		return "", fmt.Errorf("error merging config and app fs: %w", err)
 	}
 
-	updateCfgHashes(&cfg, &cfgUntyped, appHash, cfgHash)
+	updateCfgHashes(&cfgTyped, &cfgUntyped, appHash, cfgHash)
 
 	err = writeOutUpdatedConfigFiles(cfgUntyped, tempDir)
 	if err != nil {
@@ -279,15 +274,15 @@ func deployAppFromFolder(
 	}
 
 	// Now run fly.io cli and check if the app exists
-	fmt.Printf("Checking if the app %s exists\n", cfg.App)
-	appExists, err := flyClient.ExistsApp(ctx, cfg.App)
+	fmt.Printf("Checking if the app %s exists\n", cfgTyped.App)
+	appExists, err := flyClient.ExistsApp(ctx, cfgTyped.App)
 	if err != nil {
-		return "", fmt.Errorf("error checking if app %s exists: %w", cfg.App, err)
+		return "", fmt.Errorf("error checking if app %s exists: %w", cfgTyped.App, err)
 	}
 
 	if appExists {
-		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfg.App)
-		deployedCfg, err := flyClient.GetDeployedAppConfig(ctx, cfg.App)
+		fmt.Printf("App %s exists, grabbing its currently deployed config from fly.io\n", cfgTyped.App)
+		deployedCfg, err := flyClient.GetDeployedAppConfig(ctx, cfgTyped.App)
 		if err != nil {
 			return "", fmt.Errorf("error getting deployed app config: %w", err)
 		}
@@ -296,8 +291,8 @@ func deployAppFromFolder(
 		if deployCfg.Force ||
 			deployedCfg.Env["FLYCD_APP_VERSION"] != appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != cfgHash {
-			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfg.App)
-			err = flyClient.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
+			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", cfgTyped.App)
+			err = flyClient.DeployExistingApp(ctx, cfgTyped, tempDir, deployCfg)
 			if err != nil {
 				return "", err
 			}
@@ -308,12 +303,12 @@ func deployAppFromFolder(
 		}
 	} else {
 		fmt.Printf("App not found, creating it\n")
-		err = flyClient.CreateNewApp(ctx, cfg, tempDir, true)
+		err = flyClient.CreateNewApp(ctx, cfgTyped, tempDir, true)
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
 		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		err = flyClient.DeployExistingApp(ctx, cfg, tempDir, deployCfg)
+		err = flyClient.DeployExistingApp(ctx, cfgTyped, tempDir, deployCfg)
 		if err != nil {
 			return "", err
 		}
@@ -404,7 +399,20 @@ func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
 	return nil
 }
 
-func readAppConfig(path string) (model.AppConfig, error) {
+func readAppConfigs(path string) (model.AppConfig, map[string]any, error) {
+	typed, err := readAppConfigTyped(path)
+	if err != nil {
+		return model.AppConfig{}, nil, err
+	}
+	untyped, err := readAppConfigUntyped(path)
+	if err != nil {
+		return model.AppConfig{}, nil, err
+	}
+
+	return typed, untyped, nil
+}
+
+func readAppConfigTyped(path string) (model.AppConfig, error) {
 	var cfg model.AppConfig
 
 	appYaml, err := os.ReadFile(path + "/app.yaml")
