@@ -32,7 +32,7 @@ func Cmd(deployService flycd.DeployService) *cobra.Command {
 				fmt.Printf("Deploying from: %s\n", path)
 
 				deployCfg := model.
-					NewDeployConfig().
+					NewDefaultDeployConfig().
 					WithRetries(1).
 					WithForce(*flags.force).
 					WithAbortOnFirstError(*flags.abortEarly)

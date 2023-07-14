@@ -2,5 +2,4 @@ app: app1
 primary_region: arn
 org: personal
 source:
-  type: git
-  repo: git@github.com:TestUser/TestRepo.git
+  type: local

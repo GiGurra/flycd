@@ -157,7 +157,7 @@ func Cmd(
 					fmt.Printf("Syncing/Deploying all apps in %s\n", path)
 
 					deployCfg := model.
-						NewDeployConfig().
+						NewDefaultDeployConfig().
 						WithAbortOnFirstError(false)
 
 					_, err := deployService.DeployAll(ctx, path, deployCfg)

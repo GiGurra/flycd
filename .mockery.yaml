@@ -1,0 +1,12 @@
+# see recommended basic mockery config:
+# https://vektra.github.io/mockery/latest/configuration/#recommended-basic-config
+with-expecter: True
+all: True
+filename: "{{.InterfaceName}}.go"
+outpkg: mocks
+dir: mocks
+keeptree: False
+packages:
+  github.com/gigurra/flycd/internal/fly_client: { }
+  github.com/gigurra/flycd/internal/flycd: { }
+

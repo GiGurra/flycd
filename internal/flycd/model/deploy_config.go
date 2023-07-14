@@ -9,7 +9,7 @@ type DeployConfig struct {
 	AbortOnFirstError bool
 }
 
-func NewDeployConfig() DeployConfig {
+func NewDefaultDeployConfig() DeployConfig {
 	return DeployConfig{
 		Force:             false,
 		Retries:           2,

@@ -78,7 +78,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 					}
 
 					deployCfg := model.
-						NewDeployConfig().
+						NewDefaultDeployConfig().
 						WithRetries(1).
 						WithForce(false)
 					_, err := w.deployService.DeployAppFromFolder(ctx, app.Path, deployCfg)
