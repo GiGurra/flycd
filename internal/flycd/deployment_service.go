@@ -266,9 +266,6 @@ func runIntermediateVolumeSteps(input deployInput) error {
 	}
 
 	fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCount, input.cfgTyped.App)
-	for _, wantedVolume := range input.cfgTyped.Volumes {
-		fmt.Printf(" - %d x '%s' \n", minVolumeCount, wantedVolume.Name)
-	}
 
 	numExtendedVolumes := 0
 	numCreatedVolumes := 0
@@ -278,6 +275,8 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		if wantedVolume.Region == "" {
 			wantedVolume.Region = input.cfgTyped.PrimaryRegion
 		}
+
+		fmt.Printf(" - %d x '%s' of %d GB in region %s \n", minVolumeCount, wantedVolume.Name, wantedVolume.SizeGb, wantedVolume.Region)
 
 		deployedVolumes := deployedVolumesByName[wantedVolume.Name]
 
