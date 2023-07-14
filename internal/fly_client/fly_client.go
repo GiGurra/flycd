@@ -38,6 +38,11 @@ type FlyClient interface {
 		name string,
 	) (model.AppConfig, error)
 
+	GetAppVolumes(
+		ctx context.Context,
+		name string,
+	) ([]model.VolumeConfig, error)
+
 	CreateNewApp(
 		ctx context.Context,
 		cfg model.AppConfig,
@@ -197,9 +202,31 @@ func (c FlyClientImpl) ExistsApp(ctx context.Context, name string) (bool, error)
 	return true, nil
 }
 
+func (c FlyClientImpl) GetAppVolumes(
+	ctx context.Context,
+	name string,
+) ([]model.VolumeConfig, error) {
+
+	res, err := util_cmd.NewCommand("fly", "volumes", "list", "-a", name).
+		WithTimeout(20 * time.Second).
+		WithTimeoutRetries(5).
+		Run(ctx)
+
+	if err != nil {
+		return []model.VolumeConfig{}, fmt.Errorf("error running fly volumes list for app %s: %w", name, err)
+	}
+
+	var volumes []model.VolumeConfig
+	err = json.Unmarshal([]byte(res.StdOut), &volumes)
+	if err != nil {
+		return []model.VolumeConfig{}, fmt.Errorf("error parsing fly volumes list for app %s: %w", name, err)
+	}
+
+	return volumes, nil
+}
+
 func (c FlyClientImpl) GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error) {
 
-	// Compare the current deployed appVersion with the new appVersion
 	res, err := util_cmd.NewCommand("fly", "config", "show", "-a", name).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(5).
