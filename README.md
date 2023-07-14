@@ -193,7 +193,7 @@ deploy_params:
   - *vm_size
 ```
 
-Test your config with `flycd deploy .`, before installing it into your fly.io account
+Test deploy your config with `flycd deploy .`, before installing it into your fly.io account
 with `flycd install --project-path .`.
 
 FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io, and will keep all fields you put in
