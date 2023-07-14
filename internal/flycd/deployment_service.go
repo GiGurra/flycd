@@ -295,7 +295,7 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error marshalling app.yaml: %w", err)
 	}
 
-	cfgBytesToml, err := util_toml.Marshal(cfg)
+	cfgBytesToml, err := util_toml.Marshal(cfgUntyped)
 	if err != nil {
 		return "", fmt.Errorf("error marshalling fly.toml: %w", err)
 	}
