@@ -205,7 +205,6 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error ensuring docker ignore exists: %w", err)
 	}
 
-	// Now run fly.io cli and check if the app exists
 	fmt.Printf("Checking if the app %s exists\n", cfgTyped.App)
 	appExists, err := flyClient.ExistsApp(ctx, cfgTyped.App)
 	if err != nil {
