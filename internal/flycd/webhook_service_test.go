@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-// Better start using a proper mock framework later :D
-
 func TestWebHookService(t *testing.T) {
 
 	for _, test := range []struct {
