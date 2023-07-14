@@ -105,7 +105,8 @@ like this
 ```
 
 The project structure doesn't have to look like this (flycd walks it recursively), so the above is just an example. Here
-we have defined a top level of two "clouds" (cloud-x and cloud-y), cloud-x also having two environments (stage and prod).
+we have defined a top level of two "clouds" (cloud-x and cloud-y), cloud-x also having two environments (stage and
+prod).
 
 At the top we have a `project.yaml` file which lets FlyCD know where this is located.
 
@@ -118,11 +119,13 @@ source:
 ```
 
 Further down the tree we have app directories with `app.yaml` files. Easy ways to creat your own app.yaml files:
+
 * Copy and modify an example
 * Or use the `flycd convert` command to convert your existing `fly.toml` files to `app.yaml` files.
 * Or download existing definitions `fly config show [-a <your-app-name>] | yq -P > app.yaml`
 
 These might look something like this:
+
 ```yaml
 # app.yaml containing the regular fly.io app config + flycd's additional fields
 app: &app my-app
@@ -178,6 +181,11 @@ deploy_params:
   - "--vm-size"
   - *vm_size
 ```
+
+FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io, and will keep all fields you put in
+it (i.e. flycd doesn't have to implement the full fly.io domain model). The main reason flycd doesn't just use
+a `fly.toml` instead of `app.yaml` is because `flycd` uses the fly.io cli (`fly`/`flyctl`) under the hood, and the
+fly.io cli actually modifies the `fly.toml` in place when deploying :S.
 
 Check the [examples](examples) directory for more ideas.
 
