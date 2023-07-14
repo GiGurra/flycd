@@ -76,8 +76,7 @@ FlyCD v0.0.30 exiting normally, bye!
     * Currently, there is no support for private image registries. You have to point to a private git repo instead
       containing a Dockerfile.
 * Authentication: It currently only supports authentication via git over ssh.
-    * It would be nice to support other authentication methods, such as https, and other git providers, such as
-      GitLab, BitBucket, etc.
+    * It would be nice to support other authentication methods, such tokens for https.
 
 ## Other concerns
 
