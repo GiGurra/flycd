@@ -221,7 +221,7 @@ Check the [examples](examples) directory for more ideas.
     * It would be nice to support other authentication methods, such tokens for https.
 * Quality: Could probably do with some cleanup and refactoring, and maybe some more automated tests
 
-### Some more TODOs
+### Some immediate TODOs
 
 * Support for setting env vars, secrets and common values on a project level
 * Support for creating/updating fly.io volumes
