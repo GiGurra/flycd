@@ -168,8 +168,6 @@ func deployAppFromFolder(
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
-	// we need to read the conf both typed (comparing state values) and untyped (to not lose any data)
-
 	cfg, err := readAppConfig(path)
 	if err != nil {
 		return "", err
@@ -261,25 +259,14 @@ func deployAppFromFolder(
 	default:
 		return "", fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
-	// Not sure if we need this anymore
-	appHash = strings.TrimSpace(appHash)
+	appHash = strings.TrimSpace(appHash) // Not sure if we need this anymore
 
-	// Check if to copy config contents to tempDir
-	if cfg.MergeCfg.All {
-		err = cfgDir.CopyContentsTo(tempDir)
-		if err != nil {
-			return "", fmt.Errorf("could not copy config dir contents to cloned repo dir for %+v: %w", cfg, err)
-		}
-	} else if len(cfg.MergeCfg.Include) > 0 {
-		for _, exactPath := range cfg.MergeCfg.Include {
-			err = cfgDir.CopyFile(exactPath, tempDir.Cwd()+"/"+exactPath)
-			if err != nil {
-				return "", fmt.Errorf("could not copy config file '%s' to cloned repo dir for %+v: %w", exactPath, cfg, err)
-			}
-		}
+	err = mergeCfgAndAppFs(cfg, cfgDir, tempDir)
+	if err != nil {
+		return "", fmt.Errorf("error merging config and app fs: %w", err)
 	}
 
-	updateConfigs(&cfg, &cfgUntyped, appHash, cfgHash)
+	updateCfgHashes(&cfg, &cfgUntyped, appHash, cfgHash)
 
 	err = writeOutUpdatedConfigFiles(cfgUntyped, tempDir)
 	if err != nil {
@@ -334,7 +321,29 @@ func deployAppFromFolder(
 	}
 }
 
-func updateConfigs(
+func mergeCfgAndAppFs(
+	cfg model.AppConfig,
+	cfgDir util_work_dir.WorkDir,
+	tempDir util_work_dir.WorkDir,
+) error {
+	// Check if to copy config contents to tempDir
+	if cfg.MergeCfg.All {
+		err := cfgDir.CopyContentsTo(tempDir)
+		if err != nil {
+			return fmt.Errorf("could not copy config dir contents to cloned repo dir for %+v: %w", cfg, err)
+		}
+	} else if len(cfg.MergeCfg.Include) > 0 {
+		for _, exactPath := range cfg.MergeCfg.Include {
+			err := cfgDir.CopyFile(exactPath, tempDir.Cwd()+"/"+exactPath)
+			if err != nil {
+				return fmt.Errorf("could not copy config file '%s' to cloned repo dir for %+v: %w", exactPath, cfg, err)
+			}
+		}
+	}
+	return nil
+}
+
+func updateCfgHashes(
 	cfg *model.AppConfig,
 	cfgUntyped *map[string]any,
 	appHash string,
