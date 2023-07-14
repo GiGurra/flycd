@@ -21,7 +21,7 @@ The illustration below gives an idea of FlyCD enabled configuration:
 
 ### Installation
 
-1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.31`)
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.32`)
 2. Run `flycd deploy <fs path>` to deploy a configuration (single app or folder structure, you decide)
 3. Optional: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
    This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
@@ -41,7 +41,7 @@ The best is probably to check the `--help` output:
 ```
 $flycd --help
 
-Starting FlyCD v0.0.31...
+Starting FlyCD v0.0.32...
 Complete documentation is available at https://github.com/gigurra/flycd
 
 Usage:
