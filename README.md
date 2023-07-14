@@ -61,8 +61,10 @@ FlyCD v0.0.30 exiting normally, bye!
 
 ### Where it needs improvement
 
-* Performance: It needs some persistence of incoming webhooks. Right now they are just executed one at a time (they are
-  queued to a single worker to avoid races)..
+* Performance: It needs some way of determining if webhooks interfere with each other. Right now they are just executed
+  one at a time (they are queued to a single worker to avoid races)..
+* Consistency: It needs some persistence of incoming webhooks. Right now if FlyCD goes down during a deployment, the
+  deployment will be lost.
 * Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably
   can't add webhooks.
 * Security: It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are
