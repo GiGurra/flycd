@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 type GitRef struct {
 	Branch string `yaml:"branch,omitempty" toml:"branch" json:"branch,omitempty"`
@@ -10,6 +13,11 @@ type GitRef struct {
 
 func (g *GitRef) IsEmpty() bool {
 	return g.Branch == "" && g.Tag == "" && g.Commit == ""
+}
+
+type MergeCfg struct {
+	All   bool     `yaml:"all,omitempty" toml:"all" json:"all,omitempty"`
+	Exact []string `yaml:"exact,omitempty" toml:"exact" json:"exact,omitempty"`
 }
 
 type Source struct {
@@ -45,7 +53,7 @@ const (
 
 func (s *Source) Validate() error {
 
-	if s == nil || *s == (Source{}) {
+	if s == nil || reflect.DeepEqual(*s, Source{}) {
 		return fmt.Errorf(".source is required")
 	}
 

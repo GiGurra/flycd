@@ -1,0 +1,6 @@
+app: app2
+primary_region: arn
+org: personal
+source:
+  type: git
+  repo: git@github.com:TestUser/OtherTestRepo.git

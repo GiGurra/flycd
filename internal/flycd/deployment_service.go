@@ -189,6 +189,20 @@ func deployAppFromFolder(ctx context.Context, path string, deployCfg model.Deplo
 			return "", fmt.Errorf("cloning git repo: %w", err)
 		}
 
+		if cfg.MergeCfg.All {
+			err = cfgDir.CopyContentsTo(cloneResult.Dir)
+			if err != nil {
+				return "", fmt.Errorf("could not copy config dir contents to cloned repo dir for %+v: %w", cfg, err)
+			}
+		} else if len(cfg.MergeCfg.Exact) > 0 {
+			for _, exactPath := range cfg.MergeCfg.Exact {
+				err = cfgDir.CopyFile(exactPath, cloneResult.Dir.Cwd()+"/"+exactPath)
+				if err != nil {
+					return "", fmt.Errorf("could not copy config file '%s' to cloned repo dir for %+v: %w", exactPath, cfg, err)
+				}
+			}
+		}
+
 		tempDir = cloneResult.Dir
 		appHash = cloneResult.Hash
 

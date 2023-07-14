@@ -49,6 +49,7 @@ type AppConfig struct {
 	Org           string            `yaml:"org" toml:"org,omitempty"`
 	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
 	Source        Source            `yaml:"source,omitempty" toml:"source"`
+	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
 	Services      []Service         `yaml:"services" toml:"services,omitempty"`
 	HttpService   HttpService       `yaml:"http_service" toml:"http_service,omitempty"` // deprecated
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
@@ -109,6 +110,10 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 
 	if a.Mounts == nil {
 		a.Mounts = []Mount{}
+	}
+
+	if a.MergeCfg.Exact == nil {
+		a.MergeCfg.Exact = []string{}
 	}
 
 	// only permit apps that are valid dns names
