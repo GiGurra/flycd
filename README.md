@@ -4,13 +4,10 @@
 
 FlyCD adds ArgoCD/Flux style git-ops support for Fly.io:
 
-* Extending the standard fly.io fly.toml to eliminate the need for manual execution of fly.io CLI commands.
-    * FlyCD uses yaml by default - both formats are interchangeable. In the future, FlyCD may adopt toml if the authors
-      reconsider their stance on toml.
+* Extending the [fly.io configuration file structure](https://fly.io/docs/reference/configuration/) to eliminate the
+  need for manual execution of fly.io CLI commands.
 
 * Keeping app repos separate from your environment configuration repos.
-    * It allows you to maintain numerous fly.io environments that utilize the app in varying versions and
-      configurations, eliminating the necessity of embedding environment-specific configurations into your app.
 
 * FlyCD operates like any other fly.io app within the fly.io environment in which it's installed. It listens to webhooks
   from git pushes, fetches the most recent (or specific) versions of your apps from git, and deploys them to fly.io.
@@ -45,19 +42,19 @@ Use "flycd [command] --help" for more information about a command.
 FlyCD v0.0.30 exiting normally, bye!
 ```
 
-## Current state
+## So what does it do?
 
+* It can operate as a manual CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
+    * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
+    * the target organisation to deploy to
+    * figures out if a deployment is actually warranted on a per-app basis, by configuration folder and app folder
+      checksum/app git hash with hashes saved to fly.io env for the app (using app env vars for this)
+    * Deploy many apps with one command. Point it to a directory containing multiple app.yaml and/or project.yaml files,
+      and flycd will traverse the tree structure, clone each app's/project's source repo and deploy each app in the
+      tree.
 * It can install itself to an existing fly.io environment and point to a config repo
     * It listens and acts on both config repo and app repo webhooks
     * Config repos can point to app repos, or to other config repos, or a mix of both
-* It can also operate as a manual CLI tool for deploying fly.io apps with a superset of fly.toml, such as:
-    * specifying a source git repo (+optional branch/tag/commit) to deploy the app from
-    * the target organisation to deploy to
-    * figures out if a deployment is actually warranted, by configuration folder and app folder checksum/app git hash
-      with hashes saved to fly.io env for the app (using app env vars for this)
-* It can deploy many apps with one command. Point FlyCD to a directory structure/hierarchy containing multiple
-  app.yaml and/or project.yaml files, and flycd will traverse the tree structure, clone each app's/project's
-  source repo and deploy each app in the tree.
 
 ### Where it needs improvement
 
