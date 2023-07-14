@@ -246,3 +246,11 @@ Check the [examples](examples) directory for more ideas.
 * [Git-Ops](https://www.redhat.com/en/topics/devops/what-is-gitops#:~:text=GitOps%20uses%20Git%20repositories%20as,set%20for%20the%20application%20framework.)
 * [Argo-CD](https://argoproj.github.io/cd/)
 * [GitHub webhooks](https://docs.github.com/en/webhooks-and-events/webhooks/about-webhooks)
+
+## License
+
+MIT
+
+## Contributing
+
+Contact @gigurra if you want to contribute, or just create a PR.
