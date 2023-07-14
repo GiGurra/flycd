@@ -111,11 +111,12 @@ func TestDeployFromFolder_appMergingConfig(t *testing.T) {
 func TestDeployFromFolder_withVolumes(t *testing.T) {
 
 	for _, test := range []struct {
-		name              string
-		deployCfg         model.DeployConfig
-		deployedAppScale  int
-		numResizedVolumes int
-		numCreatedVolumes int
+		name               string
+		deployCfg          model.DeployConfig
+		numDeployedVolumes int
+		deployedAppScale   int
+		numExtendedVolumes int
+		numCreatedVolumes  int
 	}{
 		{
 			name: "create volumes - current app scale decides",
@@ -123,9 +124,10 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				NewDefaultDeployConfig().
 				WithAbortOnFirstError(true).
 				WithRetries(0),
-			deployedAppScale:  4,
-			numResizedVolumes: 0,
-			numCreatedVolumes: 4,
+			numDeployedVolumes: 0,
+			deployedAppScale:   4,
+			numExtendedVolumes: 0,
+			numCreatedVolumes:  4,
 		},
 		{
 			name: "create volumes - minimum services count decides",
@@ -133,9 +135,21 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				NewDefaultDeployConfig().
 				WithAbortOnFirstError(true).
 				WithRetries(0),
-			deployedAppScale:  0,
-			numResizedVolumes: 0,
-			numCreatedVolumes: 3,
+			numDeployedVolumes: 0,
+			deployedAppScale:   0,
+			numExtendedVolumes: 0,
+			numCreatedVolumes:  3,
+		},
+		{
+			name: "resize and create volumes",
+			deployCfg: model.
+				NewDefaultDeployConfig().
+				WithAbortOnFirstError(true).
+				WithRetries(0),
+			numDeployedVolumes: 2,
+			deployedAppScale:   0,
+			numExtendedVolumes: 2,
+			numCreatedVolumes:  1,
 		},
 	} {
 
@@ -157,10 +171,18 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				GetDeployedAppConfig(mock.Anything, mock.Anything).
 				Return(model.AppConfig{}, nil)
 
+			alreadyDeployedVolumes := []model.VolumeState{}
+			for i := 0; i < test.numDeployedVolumes; i++ {
+				alreadyDeployedVolumes = append(alreadyDeployedVolumes, model.VolumeState{
+					ID:     fmt.Sprintf("volume-%d", i),
+					Name:   "data",
+					SizeGb: 9,
+				})
+			}
 			flyClient.
 				EXPECT().
 				GetAppVolumes(mock.Anything, mock.Anything).
-				Return([]model.VolumeState{}, nil)
+				Return(alreadyDeployedVolumes, nil)
 
 			flyClient.
 				EXPECT().
@@ -172,15 +194,25 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 					},
 				}, nil)
 
-			flyClient.
-				EXPECT().
-				CreateVolume(mock.Anything, "nginx-with-volumes-test", model.VolumeConfig{
-					Name:   "data",
-					SizeGb: 10,
-					Region: "arn",
-				}).
-				Return(model.VolumeState{}, nil).
-				Times(test.numCreatedVolumes)
+			if test.numCreatedVolumes > 0 {
+				flyClient.
+					EXPECT().
+					CreateVolume(mock.Anything, "nginx-with-volumes-test", model.VolumeConfig{
+						Name:   "data",
+						SizeGb: 10,
+						Region: "arn",
+					}).
+					Return(model.VolumeState{}, nil).
+					Times(test.numCreatedVolumes)
+			}
+
+			if test.numExtendedVolumes > 0 {
+				flyClient.
+					EXPECT().
+					ExtendVolume(mock.Anything, "nginx-with-volumes-test", mock.Anything, 10).
+					Return(nil).
+					Times(test.numExtendedVolumes)
+			}
 
 			flyClient.
 				EXPECT().
