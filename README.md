@@ -65,7 +65,116 @@ Use "flycd [command] --help" for more information about a command.
 
 ### Configuration examples
 
-Check the [examples](examples) directory for some ideas.
+Suppose you have a GitHub repo called `my-cloud` in `my-org` (https://github.com/my-org/my-cloud), looking something
+like this
+
+```
+.
+├── cloud-x
+│   └── stage
+│   |   ├── some-backend
+│   |   │   └── app.yaml
+│   |   ├── some-frontend
+│   |   │   └── app.yaml
+│   |   └── some-db
+│   |       ├── app.yaml
+│   |       ├── Dockerfile
+│   |       ├── settings.json
+│   |       └── start-script.sh
+│   └── prod
+│       ├── some-backend
+│       │   └── app.yaml
+│       ├── some-frontend
+│       │   └── app.yaml
+│       └── some-db
+│           ├── app.yaml
+│           ├── Dockerfile
+│           ├── settings.json
+│           └── start-script.sh
+├── cloud-y
+│   ├── auth-proxy
+│   │   ├── app.yaml
+│   │   ├── Dockerfile
+│   │   ├── nginx.conf
+│   │   └── start_proxy.bash
+│   └── some-backend
+│       ├── app.yaml
+│       └── Dockerfile
+├── install.bash
+└── project.yaml
+```
+
+The project structure doesn't have to look like this (flycd walks it recursively), so the above is just an example. Here
+we have defined a top level of two "clouds" (cloud-x and cloud-y), cloud-x also having two environments (stage and prod).
+
+At the top we have a `project.yaml` file which lets FlyCD know where this is located.
+
+```yaml
+# project.yaml
+project: "my-org-cloud"
+source:
+  type: git
+  repo: "git@github.com:my-org/my-cloud"
+```
+
+Further down the tree we have app directories with `app.yaml` files. These might look something like this:
+```yaml
+# app.yaml containing the regular fly.io app config + flycd's additional fields
+app: &app my-app
+build:
+  builder: paketobuildpacks/builder:base
+  buildpacks:
+    - gcr.io/paketo-buildpacks/go
+env:
+  PORT: "8081"
+http_service:
+  auto_start_machines: true
+  auto_stop_machines: true
+  force_https: true
+  internal_port: 8081
+  min_machines_running: 0
+  processes:
+    - app
+primary_region: &primary_region arn
+
+## source: The most important field for FlyCD. It tells FlyCD where to find the app's git repo.
+# You can also set it to type "local" and point it to a local directory within the config repo/project.
+# see examples on how to configure local vs git types, and the use of their path and ref parameters
+source:
+  type: git
+  repo: "git@github.com:my-org/my-app"
+
+vm_size: &vm_size "shared-cpu-1x"
+
+org: &org personal
+
+# Modify to your needs. By default, we will create a new fly.io
+# app without any user interaction/confirmation.
+# For the most simple apps, you probably don't need to modify these at all
+launch_params:
+  - "--ha=false"
+  - "--auto-confirm"
+  - "--now"
+  - "--copy-config"
+  - "--name"
+  - *app
+  - "--region"
+  - *primary_region
+  - "--org"
+  - *org
+  - "--vm-size"
+  - *vm_size
+
+# Modify to your needs. By default, we will deploy the fly.io
+# app without any user interaction/confirmation.
+# For the most simple apps, you probably don't need to modify these at all
+deploy_params:
+  - "--ha=false"
+  - "--vm-size"
+  - *vm_size
+```
+
+Check the [examples](examples) directory for more ideas.
 
 ## Where it needs improvement
 
