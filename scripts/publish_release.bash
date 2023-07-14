@@ -2,6 +2,9 @@
 
 set -e
 
+# First publish a new latest image
+./publish_latest_img.bash
+
 # check that the build works
 go clean ./...
 go build ./...
