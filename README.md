@@ -151,9 +151,9 @@ source:
   repo: "git@github.com:my-org/my-app" # only needed for type git
     #path: "some/path/within/repo"
     #ref:
-    #commit: "some-commit-hash"
-    #branch: "some-branch-name"
-    #tag: "some-tag-name"
+      #commit: "some-commit-hash"
+      #branch: "some-branch-name"
+      #tag: "some-tag-name"
 
 ######################################
 ## more optional example config below
