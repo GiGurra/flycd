@@ -316,15 +316,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 func getMinimumVolumeCount(input deployInput) (int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
-	minSvcReq :=
-		util_math.Max(
-			input.cfgTyped.HttpService.MinMachinesRunning,
-			lo.Reduce(
-				input.cfgTyped.Services,
-				func(agg int, item model.Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
-				1,
-			),
-		)
+	minSvcReq := input.cfgTyped.MinMachinesRunning()
 
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
@@ -574,12 +566,6 @@ func readAppConfigs(path string) (model.AppConfig, map[string]any, error) {
 	untyped, err := readAppConfigUntyped(path)
 	if err != nil {
 		return model.AppConfig{}, nil, err
-	}
-
-	// Remove http_service from untyped config if it is zero in the typed config
-	// Otherwise fly.io thinks we want to listen on port 0 :S
-	if typed.HttpService.IsEmpty() {
-		delete(untyped, "http_service")
 	}
 
 	return typed, untyped, nil

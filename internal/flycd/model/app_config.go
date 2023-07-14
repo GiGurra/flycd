@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_math"
+	"github.com/samber/lo"
 	"regexp"
 )
 
@@ -61,13 +63,30 @@ type AppConfig struct {
 	Source        Source            `yaml:"source,omitempty" toml:"source"`
 	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
 	Services      []Service         `yaml:"services" toml:"services,omitempty"`
-	HttpService   HttpService       `yaml:"http_service" toml:"http_service,omitempty"`
+	HttpService   *HttpService      `yaml:"http_service" toml:"http_service,omitempty"`
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
 	Build         map[string]any    `yaml:"build" toml:"build,omitempty"`
 	Mounts        []Mount           `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 	Volumes       []VolumeConfig    `yaml:"volumes" toml:"volumes,omitempty"`
+}
+
+func (a *AppConfig) MinMachinesRunning() int {
+	return util_math.Max(
+		func() int {
+			if a.HttpService != nil {
+				return a.HttpService.MinMachinesRunning
+			} else {
+				return 0
+			}
+		}(),
+		lo.Reduce(
+			a.Services,
+			func(agg int, item Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
+			1,
+		),
+	)
 }
 
 type ValidateAppConfigOptions struct {
