@@ -205,6 +205,19 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error ensuring docker ignore exists: %w", err)
 	}
 
+	return deployAppToFly(ctx, flyClient, deployCfg, cfgTyped, tempDir, appHash, cfgHash)
+}
+
+func deployAppToFly(
+	ctx context.Context,
+	flyClient fly_client.FlyClient,
+	deployCfg model.DeployConfig,
+	cfgTyped model.AppConfig,
+	tempDir util_work_dir.WorkDir,
+	appHash string,
+	cfgHash string,
+) (model.SingleAppDeploySuccessType, error) {
+
 	fmt.Printf("Checking if the app %s exists\n", cfgTyped.App)
 	appExists, err := flyClient.ExistsApp(ctx, cfgTyped.App)
 	if err != nil {
