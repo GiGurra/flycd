@@ -55,7 +55,7 @@ Use "flycd [command] --help" for more information about a command.
    flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
    verify that it works.
     * To make it able to clone private git repos, create a fly.io secret called `FLY_SSH_PRIVATE_KEY`
-4. Optional: Add a webhook to your git repo, pointing to your flycd app's url,
+4. Optional: Add a webhook to your GitHub repo(s), pointing to your flycd app's url,
    e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports GitHub push
    webhooks.
 
