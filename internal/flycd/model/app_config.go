@@ -39,6 +39,16 @@ type HttpService struct {
 	Processes          []string    `yaml:"processes" toml:"processes,omitempty"`
 }
 
+func (s HttpService) IsEmpty() bool {
+	return s.InternalPort == 0 &&
+		s.ForceHttps == false &&
+		s.AutoStopMachines == false &&
+		s.AutoStartMachines == false &&
+		s.MinMachinesRunning == 0 &&
+		s.Concurrency == Concurrency{} &&
+		len(s.Processes) == 0
+}
+
 type Mount struct {
 	Source      string `yaml:"source" toml:"source"`
 	Destination string `yaml:"destination" toml:"destination"`

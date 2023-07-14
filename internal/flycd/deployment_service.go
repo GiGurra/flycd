@@ -576,6 +576,12 @@ func readAppConfigs(path string) (model.AppConfig, map[string]any, error) {
 		return model.AppConfig{}, nil, err
 	}
 
+	// Remove http_service from untyped config if it is zero in the typed config
+	// Otherwise fly.io thinks we want to listen on port 0 :S
+	if typed.HttpService.IsEmpty() {
+		delete(untyped, "http_service")
+	}
+
 	return typed, untyped, nil
 }
 
