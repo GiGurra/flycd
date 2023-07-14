@@ -7,7 +7,6 @@ import (
 	"github.com/gigurra/flycd/internal/github"
 	"github.com/samber/lo"
 	"strings"
-	"sync"
 )
 
 type WebHookService interface {
@@ -15,18 +14,16 @@ type WebHookService interface {
 }
 
 type WebHookServiceImpl struct {
-	deployService     DeployService
-	workerCreateMutex *sync.Mutex
-	workQueue         chan func()
+	deployService DeployService
+	workQueue     chan func()
 }
 
 func NewWebHookService(ctx context.Context, deployService DeployService) WebHookService {
 	fmt.Printf("Creating webhook service & worker\n")
 
 	result := &WebHookServiceImpl{
-		deployService:     deployService,
-		workerCreateMutex: &sync.Mutex{},
-		workQueue:         make(chan func(), 100),
+		deployService: deployService,
+		workQueue:     make(chan func(), 100),
 	}
 
 	go func() {
