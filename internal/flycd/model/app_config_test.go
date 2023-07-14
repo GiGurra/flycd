@@ -222,3 +222,31 @@ port = 443
 	}
 
 }
+
+func TestZeroValue(t *testing.T) {
+
+	cfg := AppConfig{}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatalf("Souuld have failed source validation!")
+	}
+
+	cfg = AppConfig{
+		App: "example-project1-local-app-foobar12341",
+	}
+
+	err = cfg.Validate()
+	if err == nil {
+		t.Fatalf("Souuld have failed source validation!")
+	}
+
+	// Zero value for map and slice fields are not nil
+	if cfg.Env == nil {
+		t.Fatalf("Env should not be nil!")
+	}
+
+	if cfg.Services == nil {
+		t.Fatalf("Services should not be nil!")
+	}
+}
