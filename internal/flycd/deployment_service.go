@@ -265,18 +265,6 @@ func deployAppFromFolder(
 	// Check if to copy config contents to tempDir
 	if cfg.MergeCfg.All {
 		err = cfgDir.CopyContentsTo(tempDir)
-		// list files in clone dir
-		/*		filesInCloneDir := []string{}
-				err = filepath.Walk(tempDir.Cwd(), func(path string, info os.FileInfo, err error) error {
-					if !info.IsDir() {
-						filesInCloneDir = append(filesInCloneDir, strings.TrimPrefix(path, tempDir.Cwd()+"/"))
-					}
-					return nil
-				})
-				fmt.Printf("files in clone dir:\n")
-				for _, file := range filesInCloneDir {
-					fmt.Printf("file: %s\n", file)
-				}*/
 		if err != nil {
 			return "", fmt.Errorf("could not copy config dir contents to cloned repo dir for %+v: %w", cfg, err)
 		}
