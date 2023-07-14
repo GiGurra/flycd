@@ -16,8 +16,10 @@ func (g *GitRef) IsEmpty() bool {
 }
 
 type MergeCfg struct {
-	All   bool     `yaml:"all,omitempty" toml:"all" json:"all,omitempty"`
-	Exact []string `yaml:"exact,omitempty" toml:"exact" json:"exact,omitempty"`
+	All     bool     `yaml:"all,omitempty" toml:"all" json:"all,omitempty"`
+	Include []string `yaml:"include,omitempty" toml:"include,omitempty" json:"include,omitempty"`
+	// TODO: Implement
+	//Exclude []string `yaml:"exclude,omitempty" toml:"exclude,omitempty" json:"exclude,omitempty"`
 }
 
 type Source struct {

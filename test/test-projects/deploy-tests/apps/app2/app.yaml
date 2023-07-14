@@ -2,5 +2,7 @@ app: app2
 primary_region: arn
 org: personal
 source:
-  type: git
-  repo: git@github.com:TestUser/OtherTestRepo.git
+  type: local
+  path: "../app1"
+merge_cfg:
+  all: true

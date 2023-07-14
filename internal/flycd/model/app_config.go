@@ -112,8 +112,8 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 		a.Mounts = []Mount{}
 	}
 
-	if a.MergeCfg.Exact == nil {
-		a.MergeCfg.Exact = []string{}
+	if a.MergeCfg.Include == nil {
+		a.MergeCfg.Include = []string{}
 	}
 
 	// only permit apps that are valid dns names
