@@ -16,6 +16,20 @@ func TestModel_deserialize_large_github_blob1(t *testing.T) {
 		t.Fatalf("Expected payload.Repository.Name to be 'some-repo', got '%s'", payload.Repository.Name)
 	}
 
+	// payload.Repository.CreatedAt.Underlying time.Time should always be from year 2023
+	if payload.Repository.CreatedAt.Underlying.Year() != 2023 {
+		t.Fatalf("Expected payload.Repository.CreatedAt.Underlying.Year() to be 2023, got '%d'", payload.Repository.CreatedAt.Underlying.Year())
+	}
+
+	// payload.Repository.UpdatedAt.Underlying time.Time should always be from year 2023
+	if payload.Repository.UpdatedAt.Underlying.Year() != 2023 {
+		t.Fatalf("Expected payload.Repository.UpdatedAt.Underlying.Year() to be 2023, got '%d'", payload.Repository.UpdatedAt.Underlying.Year())
+	}
+
+	// payload.Repository.PushedAt.Underlying time.Time should always be from year 2023
+	if payload.Repository.PushedAt.Underlying.Year() != 2023 {
+		t.Fatalf("Expected payload.Repository.PushedAt.Underlying.Year() to be 2023, got '%d'", payload.Repository.PushedAt.Underlying.Year())
+	}
 }
 
 func TestModel_deserialize_large_github_blob2(t *testing.T) {
@@ -29,6 +43,20 @@ func TestModel_deserialize_large_github_blob2(t *testing.T) {
 		t.Fatalf("Expected payload.Repository.Name to be 'some-repo', got '%s'", payload.Repository.Name)
 	}
 
+	// payload.Repository.CreatedAt.Underlying time.Time should always be from year 2023
+	if payload.Repository.CreatedAt.Underlying.Year() != 2023 {
+		t.Fatalf("Expected payload.Repository.CreatedAt.Underlying.Year() to be 2023, got '%d'", payload.Repository.CreatedAt.Underlying.Year())
+	}
+
+	// payload.Repository.UpdatedAt.Underlying time.Time should always be from year 2023
+	if payload.Repository.UpdatedAt.Underlying.Year() != 2023 {
+		t.Fatalf("Expected payload.Repository.UpdatedAt.Underlying.Year() to be 2023, got '%d'", payload.Repository.UpdatedAt.Underlying.Year())
+	}
+
+	// payload.Repository.PushedAt.Underlying time.Time should always be from year 2023
+	if payload.Repository.PushedAt.Underlying.Year() != 2023 {
+		t.Fatalf("Expected payload.Repository.PushedAt.Underlying.Year() to be 2023, got '%d'", payload.Repository.PushedAt.Underlying.Year())
+	}
 }
 
 var largeBlob1 = `{
