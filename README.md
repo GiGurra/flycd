@@ -197,7 +197,7 @@ FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io,
 it (i.e. flycd doesn't have to implement the full fly.io domain model). There are several reasons flycd doesn't just use
 a `fly.toml` instead of `app.yaml`. One reason is because `flycd` uses the fly.io cli (`fly`/`flyctl`) under the hood,
 and the fly.io cli actually modifies the `fly.toml` in place when deploying :S. Another is that we want to re-use data
-within the config repo, and `fly.toml` is not a very good format for that.
+within the config repo, and `.toml` is not a very good format for that.
 
 Check the [examples](examples) directory for more ideas.
 
