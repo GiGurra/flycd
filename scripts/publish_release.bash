@@ -72,5 +72,5 @@ git push --tags origin master
 # Push the image to docker hub
 docker push "$IMAGE_NAME"
 
-
+./bump_version.bash
 
