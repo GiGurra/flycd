@@ -55,44 +55,40 @@ FlyCD v0.0.30 exiting normally, bye!
     * the target organisation to deploy to
     * figures out if a deployment is actually warranted, by configuration folder and app folder checksum/app git hash
       with hashes saved to fly.io env for the app (using app env vars for this)
-* It can deploy many apps at the same time. Simply point it to a directory structure/hierarchy containing multiple
-  app.yaml files, and flycd will traverse the structure recursively, clone each app's source repo and deploy each app
+* It can deploy many apps with one command. Point FlyCD to a directory structure/hierarchy containing multiple
+  app.yaml and/or project.yaml files, and flycd will traverse the tree structure, clone each app's/project's
+  source repo and deploy each app in the tree.
 
 ### Where it needs improvement
 
-* It needs some persistence and queueing of incoming webhook commands to no run into data races, or lose data if flycd
-  crashes or is re-deployed :S. Currently, it just spins up a new go-routine for each webhook request.
-* It needs a better way to scan existing available apps than re-read all of their specs from disk on every webhook
-  event.
-* It needs regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably can't add
-  webhooks.
-* It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are trivial to
-  create :S.
-* It currently only supports git repos and file system directories as app sources. It might be useful to also support
-  regular docker images (right now to deploy from an image, you have to create a proxy Dockerfile)
-
-**I have no idea if I will have time or interest in continuing this project until it reaches a useful state :D.**
-Consider it proof of concept, and nothing more.
+* Performance: It needs some persistence of incoming webhooks. Right now they are just executed one at a time (they are
+  queued to a single worker to avoid races)..
+* Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably
+  can't add webhooks.
+* Security: It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are
+  trivial to create :S.
+* Non-Github: It currently only supports git repos at GitHub.
+* Non-Git: It might be useful to also support regular docker images and different docker registries (right now to deploy
+  from an image, you have to create a proxy Dockerfile, Or create a single line inline Dockerfile in your app.yaml,
+  which is a bit ugly).
+    * Currently, there is no support for private image registries. You have to point to a private git repo instead
+      containing a Dockerfile.
+* Authentication: It currently only supports authentication via git over ssh.
+    * It would be nice to support other authentication methods, such as https, and other git providers, such as
+      GitLab, BitBucket, etc.
 
 ## Other concerns
 
-* Pretty hacky code right now, without many automated tests, just a 1-week hack so far with a lot of work delegated
-  to shell commands instead of proper go libraries :D
-    * Refactoring needed!
+* Could probably do with some cleanup and refactoring, and maybe some more automated tests
 * This functionality might already exist/I might be reinventing the wheel here - we will see what is written in the
   discussion thread over at fly.io community forums.
     * https://community.fly.io/t/simple-self-contained-argocd-style-git-ops-with-fly-io-what-are-the-options-poc-flycd-app/14032
-* Only supports GitHub webhooks
-* The current handling of private repos is hacky (currently you have to manually save a fly.io secret with a private key
-  for git over ssh)
+* Only supports GitHub webhooks. You can keep your code elsewhere, but webhook triggered deployments won't work.
 
-## Current incomplete TODO list
+## Some more TODOs
 
-* Fix current issues above ☝️☝️☝️
 * better error handling :S
 * better logging
-* some status views or status APIs maybe
-    * if someone ever has time to build a UI :D
 * Volumes & mounts
 * Secrets
 * Machine types, ram & cpu modifications
@@ -103,8 +99,8 @@ Consider it proof of concept, and nothing more.
 ### Quick setup
 
 1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.30`)
-2. Run `flycd deploy <your projects folder>` to ensure it deploys things the way you expect
-3. Run `flycd install --project-path <your projects folder>` to install flycd into your fly.io environment.
+2. Run `flycd deploy <fs path>` to ensure it deploys things the way you expect
+3. Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
    This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
    automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
    flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
