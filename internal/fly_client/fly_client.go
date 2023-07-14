@@ -53,8 +53,7 @@ type FlyClient interface {
 	) error
 }
 
-type FlyClientImpl struct {
-}
+type FlyClientImpl struct{}
 
 func NewFlyClient() FlyClient {
 	return &FlyClientImpl{}
