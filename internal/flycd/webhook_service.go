@@ -17,7 +17,6 @@ type WebHookService interface {
 type WebHookServiceImpl struct {
 	deployService     DeployService
 	workerCreateMutex *sync.Mutex
-	workerStarted     bool
 	workQueue         chan func()
 }
 
@@ -27,7 +26,6 @@ func NewWebHookService(ctx context.Context, deployService DeployService) WebHook
 	result := &WebHookServiceImpl{
 		deployService:     deployService,
 		workerCreateMutex: &sync.Mutex{},
-		workerStarted:     false,
 		workQueue:         make(chan func(), 100),
 	}
 
