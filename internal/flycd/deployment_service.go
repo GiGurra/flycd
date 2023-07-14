@@ -6,6 +6,7 @@ import (
 	"github.com/gigurra/flycd/internal/fly_client"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
+	"github.com/gigurra/flycd/internal/flycd/util/util_math"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/samber/lo"
@@ -241,12 +242,18 @@ func getIntermediateSteps(input deployInput) ([]func(input deployInput) error, e
 		return nil, fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	if input.cfgTyped.HttpService.MinMachinesRunning > 1 ||
-		lo.ContainsBy(input.cfgTyped.Services, func(service model.Service) bool {
-			return service.MinMachinesRunning > 1
-		}) {
-		fmt.Printf("configuration requires more than 1 machine running, but this is not supported yet with volumes\n")
-	}
+	minSvcReq := util_math.Max(
+		input.cfgTyped.HttpService.MinMachinesRunning,
+		lo.Reduce(
+			input.cfgTyped.Services,
+			func(agg int, item model.Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
+			1,
+		),
+	)
+
+	// First bring all volumes that exist up to our required size
+
+	// Then create new volumes if needed
 
 	// check if we need to add volumes
 	for _, volumeCfg := range input.cfgTyped.Volumes {

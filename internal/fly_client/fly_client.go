@@ -61,7 +61,7 @@ type FlyClient interface {
 		ctx context.Context,
 		app string,
 		cfg model.VolumeConfig,
-	) error
+	) (model.VolumeState, error)
 }
 
 type FlyClientImpl struct{}
@@ -77,7 +77,7 @@ func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (stri
 	result, err := util_cmd.
 		NewCommandA("fly", "tokens", "create", "org", orgSlug).
 		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(5).
+		WithTimeoutRetries(1).
 		Run(ctx)
 
 	if err != nil {
@@ -111,10 +111,25 @@ func (c FlyClientImpl) CreateVolume(
 	ctx context.Context,
 	app string,
 	cfg model.VolumeConfig,
-) error {
+) (model.VolumeState, error) {
 
-	//TODO implement me
-	panic("implement me")
+	result, err := util_cmd.
+		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", cfg.Region, "--app", app, "-y").
+		WithTimeout(60 * time.Second).
+		WithTimeoutRetries(0).
+		Run(ctx)
+
+	if err != nil {
+		return model.VolumeState{}, fmt.Errorf("error running 'fly volumes create' for app %s: %w", app, err)
+	}
+
+	var volumeState model.VolumeState
+	err = json.Unmarshal([]byte(result.StdOut), &volumeState)
+	if err != nil {
+		return model.VolumeState{}, fmt.Errorf("error parsing fly volumes create output for app %s: %w", app, err)
+	}
+
+	return volumeState, nil
 }
 
 type StoreSecretCmd struct {
