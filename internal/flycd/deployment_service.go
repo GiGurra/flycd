@@ -8,6 +8,7 @@ import (
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
+	"github.com/samber/lo"
 	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -205,7 +206,7 @@ func deployAppFromFolder(
 		return "", fmt.Errorf("error ensuring docker ignore exists: %w", err)
 	}
 
-	return deployAppToFly(deployInput{
+	input := deployInput{
 		ctx:       ctx,
 		flyClient: flyClient,
 		deployCfg: deployCfg,
@@ -213,7 +214,11 @@ func deployAppFromFolder(
 		tempDir:   tempDir,
 		appHash:   appHash,
 		cfgHash:   cfgHash,
-	})
+	}
+
+	intermediateSteps, err := getIntermediateSteps(input)
+
+	return deployAppToFly(input, intermediateSteps...)
 }
 
 type deployInput struct {
@@ -224,6 +229,50 @@ type deployInput struct {
 	tempDir   util_work_dir.WorkDir
 	appHash   string
 	cfgHash   string
+}
+
+func getIntermediateSteps(input deployInput) ([]func(input deployInput) error, error) {
+
+	var intermediateSteps []func(input deployInput) error
+
+	// deployed volumes
+	deployedVolumes, err := input.flyClient.GetAppVolumes(input.ctx, input.cfgTyped.App)
+	if err != nil {
+		return nil, fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
+	}
+
+	if input.cfgTyped.HttpService.MinMachinesRunning > 1 ||
+		lo.ContainsBy(input.cfgTyped.Services, func(service model.Service) bool {
+			return service.MinMachinesRunning > 1
+		}) {
+		fmt.Printf("configuration requires more than 1 machine running, but this is not supported yet with volumes\n")
+	}
+
+	// check if we need to add volumes
+	for _, volumeCfg := range input.cfgTyped.Volumes {
+		volumeStates := lo.Filter(deployedVolumes, func(volume model.VolumeState, _ int) bool {
+			return volume.Name == volumeCfg.Name
+		})
+		if len(volumeStates) == 0 {
+			// volume does not exist, create it
+			intermediateSteps = append(intermediateSteps, func(input deployInput) error {
+				return input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, volumeCfg)
+			})
+		} else {
+			for _, volumeState := range volumeStates {
+				if volumeState.SizeGb != volumeCfg.SizeGb {
+					// volume exists but size is different, resize it
+					intermediateSteps = append(intermediateSteps, func(input deployInput) error {
+						return input.flyClient.ResizeVolume(input.ctx, input.cfgTyped.App, volumeCfg)
+					})
+				}
+			}
+		}
+	}
+
+	// add more steps here...
+
+	return intermediateSteps, nil
 }
 
 func deployAppToFly(

@@ -57,6 +57,7 @@ type AppConfig struct {
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
 	Build         map[string]any    `yaml:"build" toml:"build,omitempty"`
 	Mounts        []Mount           `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
+	Volumes       []VolumeConfig    `yaml:"volumes" toml:"volumes,omitempty"`
 }
 
 type ValidateAppConfigOptions struct {

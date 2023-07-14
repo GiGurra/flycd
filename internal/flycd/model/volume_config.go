@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type VolumeConfig struct {
+type VolumeState struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"Name"`
 	SizeGb    int       `json:"SizeGb"`
@@ -10,6 +10,27 @@ type VolumeConfig struct {
 	Region    string    `json:"Region"`
 	Encrypted bool      `json:"Encrypted"`
 	CreatedAt time.Time `json:"CreatedAt"`
+
+	// TODO: later:
+	//  App               App          `json:"App"`
+	//  Snapshots         Snapshots    `json:"Snapshots"`
+	//  AttachedAllocation interface{} `json:"AttachedAllocation"`
+	//  AttachedMachine    Machine     `json:"AttachedMachine"`
+	//  Host               Host        `json:"Host"`
+}
+
+func (v VolumeState) ToConfig() VolumeConfig {
+	return VolumeConfig{
+		Name:   v.Name,
+		SizeGb: v.SizeGb,
+		Region: v.Region,
+	}
+}
+
+type VolumeConfig struct {
+	Name   string `json:"name"`
+	SizeGb int    `json:"size_gb"`
+	Region string `json:"region"`
 
 	// TODO: later:
 	//  App               App          `json:"App"`

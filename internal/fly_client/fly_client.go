@@ -41,7 +41,7 @@ type FlyClient interface {
 	GetAppVolumes(
 		ctx context.Context,
 		name string,
-	) ([]model.VolumeConfig, error)
+	) ([]model.VolumeState, error)
 
 	CreateNewApp(
 		ctx context.Context,
@@ -55,6 +55,12 @@ type FlyClient interface {
 		cfg model.AppConfig,
 		tempDir util_work_dir.WorkDir,
 		deployCfg model.DeployConfig,
+	) error
+
+	CreateVolume(
+		ctx context.Context,
+		app string,
+		cfg model.VolumeConfig,
 	) error
 }
 
@@ -99,6 +105,16 @@ func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (stri
 	}
 
 	return strings.TrimSpace(lines[iLineToken]), nil
+}
+
+func (c FlyClientImpl) CreateVolume(
+	ctx context.Context,
+	app string,
+	cfg model.VolumeConfig,
+) error {
+
+	//TODO implement me
+	panic("implement me")
 }
 
 type StoreSecretCmd struct {
@@ -205,7 +221,7 @@ func (c FlyClientImpl) ExistsApp(ctx context.Context, name string) (bool, error)
 func (c FlyClientImpl) GetAppVolumes(
 	ctx context.Context,
 	name string,
-) ([]model.VolumeConfig, error) {
+) ([]model.VolumeState, error) {
 
 	res, err := util_cmd.NewCommand("fly", "volumes", "list", "-a", name).
 		WithTimeout(20 * time.Second).
@@ -213,13 +229,13 @@ func (c FlyClientImpl) GetAppVolumes(
 		Run(ctx)
 
 	if err != nil {
-		return []model.VolumeConfig{}, fmt.Errorf("error running fly volumes list for app %s: %w", name, err)
+		return []model.VolumeState{}, fmt.Errorf("error running fly volumes list for app %s: %w", name, err)
 	}
 
-	var volumes []model.VolumeConfig
+	var volumes []model.VolumeState
 	err = json.Unmarshal([]byte(res.StdOut), &volumes)
 	if err != nil {
-		return []model.VolumeConfig{}, fmt.Errorf("error parsing fly volumes list for app %s: %w", name, err)
+		return []model.VolumeState{}, fmt.Errorf("error parsing fly volumes list for app %s: %w", name, err)
 	}
 
 	return volumes, nil
