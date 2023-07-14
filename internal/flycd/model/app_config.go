@@ -146,6 +146,10 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 		a.MergeCfg.Include = []string{}
 	}
 
+	if a.Volumes == nil {
+		a.Volumes = []VolumeConfig{}
+	}
+
 	// only permit apps that are valid dns names
 	const subdomainPrefixRegExp = `^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$`
 
