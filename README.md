@@ -87,14 +87,16 @@ Check the [examples](examples) directory for some ideas.
 
 ### Some more TODOs
 
+* Creation/updating of volumes
+* Creation/updating of secrets (not sure how :S)
+* More practical ways to configure Machine types, ram & cpu modifications
+    * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
 * better error handling :S
 * better logging
-* Volumes & mounts
-* Secrets
-* Machine types, ram & cpu modifications
 * fly.io native postgres, redis, etc...
 
 ## Links/References
- * [Git-Ops](https://www.redhat.com/en/topics/devops/what-is-gitops#:~:text=GitOps%20uses%20Git%20repositories%20as,set%20for%20the%20application%20framework.)
- * [Argo-CD](https://argoproj.github.io/cd/)
- * [GitHub webhooks](https://docs.github.com/en/webhooks-and-events/webhooks/about-webhooks)
+
+* [Git-Ops](https://www.redhat.com/en/topics/devops/what-is-gitops#:~:text=GitOps%20uses%20Git%20repositories%20as,set%20for%20the%20application%20framework.)
+* [Argo-CD](https://argoproj.github.io/cd/)
+* [GitHub webhooks](https://docs.github.com/en/webhooks-and-events/webhooks/about-webhooks)
