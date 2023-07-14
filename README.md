@@ -215,8 +215,7 @@ Check the [examples](examples) directory for more ideas.
   one at a time (they are queued to a single worker to avoid races)..
 * Consistency: It needs some persistence of incoming webhooks. Right now if FlyCD goes down during a deployment, the
   deployment will be lost.
-* Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like 3rd party tools where we probably
-  can't add webhooks.
+* Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like's ArgoCD's 3-minute polling.
 * Security: It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are
   trivial to create :S.
 * Non-Github: It currently only supports webhooks from git repos at GitHub.
