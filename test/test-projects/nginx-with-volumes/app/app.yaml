@@ -1,10 +1,10 @@
 app: &app nginx-with-volumes-test
-mounts:
-  - destination: /mnt/data
-    source: data
 volumes:
   - name: data
     size_gb: 10
+mounts:
+  - destination: /mnt/data
+    source: data
 primary_region: &primary_region arn
 services:
   - auto_start_machines: true
