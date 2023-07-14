@@ -120,6 +120,7 @@ source:
 Further down the tree we have app directories with `app.yaml` files.
 
 Tip: Easy ways to create your own app.yaml files:
+
 * Copy and modify an example
 * Or use the `flycd convert` command to convert your existing `fly.toml` files to `app.yaml` files.
 * Or download existing definitions `fly config show [-a <your-app-name>] | yq -P > app.yaml`
@@ -147,11 +148,11 @@ primary_region: &primary_region arn
 source:
   type: git # or local
   repo: "git@github.com:my-org/my-app" # only needed for type git
-  #path: "some/path/within/repo"
-  #ref:
+    #path: "some/path/within/repo"
+    #ref:
     #commit: "some-commit-hash"
-    #branch: "some-branch-name"
-    #tag: "some-tag-name"
+  #branch: "some-branch-name"
+  #tag: "some-tag-name"
 
 ######################################
 ## more optional example config below
@@ -203,7 +204,8 @@ FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io,
 it (i.e. flycd doesn't have to implement the full fly.io domain model). There are several reasons flycd doesn't just use
 a `fly.toml` instead of `app.yaml`. One reason is because `flycd` uses the fly.io cli (`fly`/`flyctl`) under the hood,
 and the fly.io cli actually modifies the `fly.toml` in place when deploying :S. Another is that we want to re-use data
-within the config repo, and `.toml` is not a very good format for that.
+within the config repo, and `.toml` is not a very good format for that. There are probably more reasons, some
+subjective, like the author of FlyCD just likes yaml more than toml :D.
 
 Check the [examples](examples) directory for more ideas.
 
