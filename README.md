@@ -70,9 +70,9 @@ FlyCD v0.0.30 exiting normally, bye!
 * Security: It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are
   trivial to create :S.
 * Non-Github: It currently only supports webhooks from git repos at GitHub.
-* Non-Git sources: It might be useful to also support regular docker images and different docker registries (right now to deploy
-  from an image, you have to create a proxy Dockerfile, Or create a single line inline Dockerfile in your app.yaml,
-  which is a bit ugly).
+* Non-Git sources: It might be useful to also support regular docker images and different docker registries (right now
+  to deploy from an image, you have to create a proxy Dockerfile, Or create a single line inline Dockerfile in your
+  app.yaml, which is a bit ugly).
     * Currently, there is no support for private image registries. You have to point to a private git repo instead
       containing a Dockerfile.
 * Authentication: It currently only supports authentication via git over ssh.
