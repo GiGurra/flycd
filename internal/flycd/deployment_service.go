@@ -8,7 +8,6 @@ import (
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
-	"github.com/google/uuid"
 	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -184,77 +183,10 @@ func deployAppFromFolder(
 	}
 	defer tempDir.RemoveAll()
 
-	appHash, err := newUUIDString()
+	appHash, err := fetchAppFs(ctx, cfgTyped, cfgDir, &tempDir)
 	if err != nil {
-		return "", fmt.Errorf("error generating uuid: %w", err)
+		return "", fmt.Errorf("error preparing fs to deploy: %w", err)
 	}
-
-	switch cfgTyped.Source.Type {
-	case model.SourceTypeGit:
-
-		cloneResult, err := util_git.CloneShallow(ctx, cfgTyped.Source, tempDir)
-		if err != nil {
-			return "", fmt.Errorf("cloning git repo: %w", err)
-		}
-
-		tempDir = cloneResult.Dir
-		appHash = cloneResult.Hash
-
-	case model.SourceTypeLocal:
-		srcDir := func() util_work_dir.WorkDir {
-			if filepath.IsAbs(cfgTyped.Source.Path) {
-				return cfgDir.WithRootFsCwd(cfgTyped.Source.Path)
-			} else {
-				return cfgDir.WithChildCwd(cfgTyped.Source.Path)
-			}
-		}()
-
-		// check if srcDir exists
-		if !srcDir.Exists() {
-			// Try with it as an absolute path
-			fmt.Printf("Local path '%s' does not exist, trying as absolute path\n", cfgTyped.Source.Path)
-			srcDir = util_work_dir.NewWorkDir(cfgTyped.Source.Path)
-			if !srcDir.Exists() {
-				return "", fmt.Errorf("local path '%s' does not exist", cfgTyped.Source.Path)
-			}
-		}
-
-		err = srcDir.CopyContentsTo(tempDir)
-		if err != nil {
-			return "", fmt.Errorf("error copying local folder %s: %w", srcDir.Cwd(), err)
-		}
-
-		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
-		if err != nil {
-			return "", fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
-		}
-
-		if err != nil {
-			return "", fmt.Errorf("error copying local folder %s: %w", cfgTyped.Source.Path, err)
-		}
-	case model.SourceTypeInlineDockerFile:
-		// Copy the local folder to the temp tempDir
-		err := tempDir.WriteFile("Dockerfile", cfgTyped.Source.Inline)
-		if err != nil {
-			return "", fmt.Errorf("error writing Dockerfile: %w", err)
-		}
-		err = tempDir.WriteFile(".dockerignore", "")
-		if err != nil {
-			return "", fmt.Errorf("error writing .dockerignore: %w", err)
-		}
-
-		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
-		if err != nil {
-			return "", fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
-		}
-		if err != nil {
-			return "", fmt.Errorf("error getting local dir hash for '%s': %w", path, err)
-		}
-
-	default:
-		return "", fmt.Errorf("unknown source type %s", cfgTyped.Source.Type)
-	}
-	appHash = strings.TrimSpace(appHash) // Not sure if we need this anymore
 
 	err = mergeCfgAndAppFs(cfgTyped, cfgDir, tempDir)
 	if err != nil {
@@ -314,6 +246,84 @@ func deployAppFromFolder(
 		}
 		return model.SingleAppDeployCreated, nil
 	}
+}
+
+func fetchAppFs(
+	ctx context.Context,
+	cfgTyped model.AppConfig,
+	cfgDir util_work_dir.WorkDir,
+	tempDir *util_work_dir.WorkDir,
+) ( /* appHash */ string, error) {
+	appHash := ""
+
+	switch cfgTyped.Source.Type {
+	case model.SourceTypeGit:
+
+		cloneResult, err := util_git.CloneShallow(ctx, cfgTyped.Source, *tempDir)
+		if err != nil {
+			return "", fmt.Errorf("cloning git repo: %w", err)
+		}
+
+		*tempDir = tempDir.WithRootFsCwd(cloneResult.Dir.Cwd())
+		appHash = cloneResult.Hash
+
+	case model.SourceTypeLocal:
+		srcDir := func() util_work_dir.WorkDir {
+			if filepath.IsAbs(cfgTyped.Source.Path) {
+				return cfgDir.WithRootFsCwd(cfgTyped.Source.Path)
+			} else {
+				return cfgDir.WithChildCwd(cfgTyped.Source.Path)
+			}
+		}()
+
+		// check if srcDir exists
+		if !srcDir.Exists() {
+			// Try with it as an absolute path
+			fmt.Printf("Local path '%s' does not exist, trying as absolute path\n", cfgTyped.Source.Path)
+			srcDir = util_work_dir.NewWorkDir(cfgTyped.Source.Path)
+			if !srcDir.Exists() {
+				return "", fmt.Errorf("local path '%s' does not exist", cfgTyped.Source.Path)
+			}
+		}
+
+		err := srcDir.CopyContentsTo(*tempDir)
+		if err != nil {
+			return "", fmt.Errorf("error copying local folder %s: %w", srcDir.Cwd(), err)
+		}
+
+		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
+		if err != nil {
+			return "", fmt.Errorf("error getting local dir hash for '%s': %w", tempDir.Cwd(), err)
+		}
+
+		if err != nil {
+			return "", fmt.Errorf("error copying local folder %s: %w", cfgTyped.Source.Path, err)
+		}
+	case model.SourceTypeInlineDockerFile:
+		// Copy the local folder to the temp tempDir
+		err := tempDir.WriteFile("Dockerfile", cfgTyped.Source.Inline)
+		if err != nil {
+			return "", fmt.Errorf("error writing Dockerfile: %w", err)
+		}
+		err = tempDir.WriteFile(".dockerignore", "")
+		if err != nil {
+			return "", fmt.Errorf("error writing .dockerignore: %w", err)
+		}
+
+		appHash, err = dirhash.HashDir(tempDir.Cwd(), "", dirhash.DefaultHash)
+		if err != nil {
+			return "", fmt.Errorf("error getting local dir hash for '%s': %w", tempDir.Cwd(), err)
+		}
+		if err != nil {
+			return "", fmt.Errorf("error getting local dir hash for '%s': %w", tempDir.Cwd(), err)
+		}
+
+	default:
+		return "", fmt.Errorf("unknown source type %s", cfgTyped.Source.Type)
+	}
+	appHash = strings.TrimSpace(appHash) // Not sure if we need this anymore
+
+	return appHash, nil
 }
 
 func mergeCfgAndAppFs(
@@ -447,12 +457,4 @@ func readAppConfigUntyped(path string) (map[string]any, error) {
 	}
 
 	return cfg, nil
-}
-
-func newUUIDString() (string, error) {
-	result, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-	return result.String(), nil
 }
