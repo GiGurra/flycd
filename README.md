@@ -161,15 +161,18 @@ source:
 ## Optional env vars
 env:
   PORT: "8081"
-  
-## Optional volumes and mounts (at this moment fly.io only supports one mount per machine, but the syntax supports more)
+
+## Optional volumes and mounts. It has some limitations:
+# - Currently, fly.io only supports 1 mount / machine, but flycd supports more, should fly.io change this in the future
+# - The number of volumes will be created to match the number of app instances (machines). 
+#   This is the max between current existing instances/machines and the min_machines_running field.  
 volumes:
   - name: my-volume
     size_gb: 10
 mounts:
   - destination: /mnt/my-volume-goes-here
     source: my-volume
-    
+
 ## Optional build config (this is something fly.io cli can generate for you)
 build:
   builder: paketobuildpacks/builder:base
