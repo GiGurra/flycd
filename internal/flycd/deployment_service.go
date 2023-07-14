@@ -217,9 +217,7 @@ func deployAppFromFolder(
 		cfgHash:   cfgHash,
 	}
 
-	intermediateSteps, err := getIntermediateSteps(input)
-
-	return deployAppToFly(input, intermediateSteps...)
+	return deployAppToFly(input)
 }
 
 type deployInput struct {
@@ -232,56 +230,69 @@ type deployInput struct {
 	cfgHash   string
 }
 
-func getIntermediateSteps(input deployInput) ([]func(input deployInput) error, error) {
+func runIntermediateSteps(input deployInput) error {
 
-	var intermediateSteps []func(input deployInput) error
-
-	// deployed volumes
-	deployedVolumes, err := input.flyClient.GetAppVolumes(input.ctx, input.cfgTyped.App)
+	err := runIntermediateVolumeSteps(input)
 	if err != nil {
-		return nil, fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
+		return fmt.Errorf("error running intermediate volume steps: %w", err)
 	}
 
-	deployedVolumesByName := lo.GroupBy(deployedVolumes, func(volume model.VolumeState) string {
+	// add intermediate steps here
+
+	return nil
+}
+
+func runIntermediateVolumeSteps(input deployInput) error {
+
+	if len(input.cfgTyped.Volumes) == 0 {
+		return nil // no volumes for this app
+	}
+
+	// Here we analyse the current state of volumes for this app vs the desired state
+	// and bring the current state to the desired state
+
+	allExistingVolumes, err := input.flyClient.GetAppVolumes(input.ctx, input.cfgTyped.App)
+	if err != nil {
+		return fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
+	}
+
+	existingVolumesByName := lo.GroupBy(allExistingVolumes, func(volume model.VolumeState) string {
 		return volume.Name
 	})
 
 	minVolumeCount, err := getMinimumVolumeCount(input)
 	if err != nil {
-		return intermediateSteps, fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
+		return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
 	}
 
 	fmt.Printf("We need %d volumes for app %s \n", minVolumeCount, input.cfgTyped.App)
 
 	for _, wantedVolume := range input.cfgTyped.Volumes {
-		matchingDeployedVolumes := deployedVolumesByName[wantedVolume.Name]
+		existingVolumes := existingVolumesByName[wantedVolume.Name]
 
 		// First bring all volumes that exist up to our required size
-		for _, deployedVolume := range matchingDeployedVolumes {
-			if deployedVolume.SizeGb < wantedVolume.SizeGb {
-				fmt.Printf("Adding task for resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, deployedVolume.Name, deployedVolume.SizeGb, wantedVolume.SizeGb)
-				intermediateSteps = append(intermediateSteps, func(input deployInput) error {
-					fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, deployedVolume.Name, deployedVolume.SizeGb, wantedVolume.SizeGb)
-					return input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, deployedVolume.ID, wantedVolume.SizeGb)
-				})
+		for _, currentVolume := range existingVolumes {
+			if currentVolume.SizeGb < wantedVolume.SizeGb {
+				fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, currentVolume.Name, currentVolume.SizeGb, wantedVolume.SizeGb)
+				err := input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, currentVolume.ID, wantedVolume.SizeGb)
+				if err != nil {
+					return fmt.Errorf("error resizing volume %s for app %s: %w", currentVolume.ID, input.cfgTyped.App, err)
+				}
 			}
 		}
 
 		// Create new needed volumes
-		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(matchingDeployedVolumes))
+		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(existingVolumes))
 		for i := 0; i < newVolumesNeeded; i++ {
-			fmt.Printf("Adding task for creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
-			intermediateSteps = append(intermediateSteps, func(input deployInput) error {
-				fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
-				_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)
-				return err
-			})
+			fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
+			_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)
+			if err != nil {
+				return fmt.Errorf("error creating volume %s for app %s: %w", wantedVolume.Name, input.cfgTyped.App, err)
+			}
 		}
 	}
 
-	// add more steps here...
-
-	return intermediateSteps, nil
+	return nil
 }
 
 func getMinimumVolumeCount(input deployInput) (int, error) {
@@ -323,23 +334,12 @@ func getMinimumVolumeCount(input deployInput) (int, error) {
 
 func deployAppToFly(
 	input deployInput,
-	intermediateSteps ...func(input deployInput) error,
 ) (model.SingleAppDeploySuccessType, error) {
 
 	fmt.Printf("Checking if the app %s exists\n", input.cfgTyped.App)
 	appExists, err := input.flyClient.ExistsApp(input.ctx, input.cfgTyped.App)
 	if err != nil {
 		return "", fmt.Errorf("error checking if app %s exists: %w", input.cfgTyped.App, err)
-	}
-
-	runIntermediateSteps := func() error {
-		for _, step := range intermediateSteps {
-			err := step(input)
-			if err != nil {
-				return fmt.Errorf("error running intermediate step: %w", err)
-			}
-		}
-		return nil
 	}
 
 	if appExists {
@@ -354,7 +354,7 @@ func deployAppToFly(
 			deployedCfg.Env["FLYCD_APP_VERSION"] != input.appHash ||
 			deployedCfg.Env["FLYCD_CONFIG_VERSION"] != input.cfgHash {
 			fmt.Printf("App %s needs to be re-deployed, doing it now!\n", input.cfgTyped.App)
-			err = runIntermediateSteps()
+			err = runIntermediateSteps(input)
 			if err != nil {
 				return "", err
 			}
@@ -373,7 +373,7 @@ func deployAppToFly(
 		if err != nil {
 			return "", fmt.Errorf("error creating new app: %w", err)
 		}
-		err = runIntermediateSteps()
+		err = runIntermediateSteps(input)
 		if err != nil {
 			return "", err
 		}
