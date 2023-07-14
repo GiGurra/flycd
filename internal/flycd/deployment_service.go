@@ -265,8 +265,13 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	fmt.Printf("We need %d volumes for app %s \n", minVolumeCount, input.cfgTyped.App)
-	os.Exit(1)
+	fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCount, input.cfgTyped.App)
+	for _, wantedVolume := range input.cfgTyped.Volumes {
+		fmt.Printf(" - %d x '%s' \n", minVolumeCount, wantedVolume.Name)
+	}
+
+	numExtendedVolumes := 0
+	numCreatedVolumes := 0
 
 	for _, wantedVolume := range input.cfgTyped.Volumes {
 
@@ -284,6 +289,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 				if err != nil {
 					return fmt.Errorf("error resizing volume %s for app %s: %w", currentVolume.ID, input.cfgTyped.App, err)
 				}
+				numExtendedVolumes++
 			}
 		}
 
@@ -295,7 +301,14 @@ func runIntermediateVolumeSteps(input deployInput) error {
 			if err != nil {
 				return fmt.Errorf("error creating volume %s for app %s: %w", wantedVolume.Name, input.cfgTyped.App, err)
 			}
+			numCreatedVolumes++
 		}
+	}
+
+	if numExtendedVolumes > 0 || numCreatedVolumes > 0 {
+		fmt.Printf("Extended %d volumes and created %d new volumes for app %s \n", numExtendedVolumes, numCreatedVolumes, input.cfgTyped.App)
+	} else {
+		fmt.Printf("No change of volumes needed for app %s \n", input.cfgTyped.App)
 	}
 
 	return nil
