@@ -17,7 +17,23 @@ The illustration below gives an idea of FlyCD enabled configuration:
 
 ![alt text](https://raw.githubusercontent.com/GiGurra/flycd/master/concept.svg)
 
-## So how do I use it?
+## How to use it
+
+### Installation
+
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.30`)
+2. Run `flycd deploy <fs path>` to deploy a configuration (single app or folder structure, you decide)
+3. Optional: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
+   This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
+   automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
+   flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
+   verify that it works.
+    * To make it able to clone private git repos, create a fly.io secret called `FLY_SSH_PRIVATE_KEY`
+4. Optional: Add a webhook to your GitHub repo(s), pointing to your flycd app's url,
+   e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports GitHub push
+   webhooks.
+
+### Using the flycd CLI
 
 The best is probably to check the `--help` output:
 
@@ -46,21 +62,7 @@ Flags:
 Use "flycd [command] --help" for more information about a command.
 ```
 
-## Installation
-
-1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.30`)
-2. Run `flycd deploy <fs path>` to deploy a configuration (single app or folder structure, you decide)
-3. Optional: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
-   This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
-   automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
-   flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
-   verify that it works.
-    * To make it able to clone private git repos, create a fly.io secret called `FLY_SSH_PRIVATE_KEY`
-4. Optional: Add a webhook to your GitHub repo(s), pointing to your flycd app's url,
-   e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports GitHub push
-   webhooks.
-
-## Configuration examples
+### Configuration examples
 
 Check the [examples](examples) directory for some ideas.
 
