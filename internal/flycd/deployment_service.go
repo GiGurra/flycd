@@ -289,25 +289,9 @@ func deployAppFromFolder(
 
 	cfgUntyped["env"] = cfg.Env
 
-	// Write a new app.yaml file with the appHash
-	cfgBytesYaml, err := yaml.Marshal(cfgUntyped)
+	err = writeOutUpdatedConfigFiles(cfgUntyped, tempDir)
 	if err != nil {
-		return "", fmt.Errorf("error marshalling app.yaml: %w", err)
-	}
-
-	cfgBytesToml, err := util_toml.Marshal(cfgUntyped)
-	if err != nil {
-		return "", fmt.Errorf("error marshalling fly.toml: %w", err)
-	}
-
-	err = tempDir.WriteFile("app.yaml", string(cfgBytesYaml))
-	if err != nil {
-		return "", fmt.Errorf("error writing app.yaml: %w", err)
-	}
-
-	err = tempDir.WriteFile("fly.toml", cfgBytesToml)
-	if err != nil {
-		return "", fmt.Errorf("error writing fly.toml: %w", err)
+		return "", fmt.Errorf("error writing out updated config files: %w", err)
 	}
 
 	err = ensureDockerIgnoreExists(tempDir, err)
@@ -356,6 +340,29 @@ func deployAppFromFolder(
 		}
 		return model.SingleAppDeployCreated, nil
 	}
+}
+
+func writeOutUpdatedConfigFiles(cfgUntyped map[string]any, tempDir util_work_dir.WorkDir) error {
+	cfgBytesYaml, err := yaml.Marshal(cfgUntyped)
+	if err != nil {
+		return fmt.Errorf("error marshalling app.yaml: %w", err)
+	}
+
+	cfgBytesToml, err := util_toml.Marshal(cfgUntyped)
+	if err != nil {
+		return fmt.Errorf("error marshalling fly.toml: %w", err)
+	}
+
+	err = tempDir.WriteFile("app.yaml", string(cfgBytesYaml))
+	if err != nil {
+		return fmt.Errorf("error writing app.yaml: %w", err)
+	}
+
+	err = tempDir.WriteFile("fly.toml", cfgBytesToml)
+	if err != nil {
+		return fmt.Errorf("error writing fly.toml: %w", err)
+	}
+	return nil
 }
 
 func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
