@@ -55,6 +55,7 @@ RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 COPY ./projects /flycd/projects
 
 # Run the app
+EXPOSE 80
 ENTRYPOINT ["flycd"]
 CMD ["monitor", "projects"]
 
