@@ -145,8 +145,8 @@ primary_region: &primary_region arn
 # You can also set it to type "local" and point it to a local directory within the config repo/project.
 # see examples on how to configure local vs git types, and the use of their path and ref parameters
 source:
-  type: git
-  repo: "git@github.com:my-org/my-app"
+  type: git # or local
+  repo: "git@github.com:my-org/my-app" # only needed for type git
   #path: "some/path/within/repo"
   #ref:
     #commit: "some-commit-hash"
