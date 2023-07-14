@@ -35,7 +35,7 @@ func TestDeployFromFolder_newApp(t *testing.T) {
 		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/merge-cfg/regular/app1", deployCfg)
+	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg)
 	if err != nil {
 		t.Fatalf("DeployAppFromFolder failed: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestDeployFromFolder_existingApp(t *testing.T) {
 		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/merge-cfg/regular/app1", deployCfg)
+	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg)
 	if err != nil {
 		t.Fatalf("DeployAppFromFolder failed: %v", err)
 	}
