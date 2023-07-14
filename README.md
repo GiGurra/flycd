@@ -149,11 +149,11 @@ primary_region: &primary_region arn
 source:
   type: git # or local
   repo: "git@github.com:my-org/my-app" # only needed for type git
-    #path: "some/path/within/repo"
-    #ref:
-      #commit: "some-commit-hash"
-      #branch: "some-branch-name"
-      #tag: "some-tag-name"
+  #  path: "some/path/within/repo"
+  #  ref:
+  #    commit: "some-commit-hash"
+  #    branch: "some-branch-name"
+  #    tag: "some-tag-name"
 
 ######################################
 ## more optional example config below
