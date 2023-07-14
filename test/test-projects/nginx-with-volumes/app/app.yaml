@@ -10,7 +10,7 @@ services:
   - auto_start_machines: true
     auto_stop_machines: true
     internal_port: 80
-    min_machines_running: 0
+    min_machines_running: 3
     protocol: tcp
 source:
   type: local
