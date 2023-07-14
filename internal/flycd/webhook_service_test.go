@@ -5,59 +5,14 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/github"
+	"github.com/gigurra/flycd/mocks"
+	"github.com/stretchr/testify/mock"
 	"path/filepath"
 	"testing"
 	"time"
 )
 
 // Better start using a proper mock framework later :D
-
-type DeployAppFromFolderInput struct {
-	Path      string
-	DeployCfg model.DeployConfig
-}
-
-type fakeDeployServiceT struct {
-	deployAppFromFolderInputs []DeployAppFromFolderInput
-}
-
-func newFakeDeployService() *fakeDeployServiceT {
-	return &fakeDeployServiceT{
-		deployAppFromFolderInputs: make([]DeployAppFromFolderInput, 0),
-	}
-}
-
-func (f *fakeDeployServiceT) DeployAll(
-	_ context.Context,
-	_ string,
-	_ model.DeployConfig,
-) (model.DeployResult, error) {
-	// Not used by webhook service
-	panic("won't be used")
-}
-
-func (f *fakeDeployServiceT) DeployAppFromInlineConfig(
-	_ context.Context,
-	_ model.DeployConfig,
-	_ model.AppConfig,
-) (model.SingleAppDeploySuccessType, error) {
-	// Not used by webhook service
-	panic("won't be used")
-}
-
-func (f *fakeDeployServiceT) DeployAppFromFolder(
-	_ context.Context,
-	path string,
-	deployCfg model.DeployConfig,
-) (model.SingleAppDeploySuccessType, error) {
-	f.deployAppFromFolderInputs = append(f.deployAppFromFolderInputs, DeployAppFromFolderInput{
-		Path:      path,
-		DeployCfg: deployCfg,
-	})
-	return model.SingleAppDeployCreated, nil
-}
-
-var _ DeployService = &fakeDeployServiceT{}
 
 func TestWebHookService(t *testing.T) {
 
@@ -82,12 +37,22 @@ func TestWebHookService(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			fakeDeployService := newFakeDeployService()
+			fakeDeployService := mocks.NewMockDeployService(t)
 			webhookService := NewWebHookService(ctx, fakeDeployService)
 
 			fmt.Printf("webhookService: %v\n", webhookService)
 
 			payload := test.payload
+
+			expPath, err := filepath.Abs("../../test/test-projects/webhooks/regular/app1")
+			if err != nil {
+				t.Fatalf("Failed to get abs path: %v", err)
+			}
+
+			fakeDeployService.
+				EXPECT().
+				DeployAppFromFolder(mock.Anything, expPath, mock.Anything).
+				Return(model.SingleAppDeployCreated, nil)
 
 			ch := webhookService.HandleGithubWebhook(payload, "../../test/test-projects/webhooks/regular")
 
@@ -101,19 +66,6 @@ func TestWebHookService(t *testing.T) {
 				}
 			case <-time.After(5 * time.Second):
 				t.Fatalf("Timed out waiting for webhook to be handled")
-			}
-
-			if len(fakeDeployService.deployAppFromFolderInputs) != 1 {
-				t.Fatalf("Expected 1 deployAppFromFolder call, got %d", len(fakeDeployService.deployAppFromFolderInputs))
-			}
-
-			input := fakeDeployService.deployAppFromFolderInputs[0]
-			expPath, err := filepath.Abs("../../test/test-projects/webhooks/regular/app1")
-			if err != nil {
-				t.Fatalf("Failed to get abs path: %v", err)
-			}
-			if input.Path != expPath {
-				t.Fatalf("Expected path to be '%s', got '%s'", expPath, input.Path)
 			}
 		})
 	}
