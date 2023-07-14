@@ -2,8 +2,11 @@
 
 set -e
 
+# Get the directory of this script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 # First publish a new latest image
-./publish_latest_img.bash
+"$SCRIPT_DIR"/publish_latest_img.bash
 
 # check that the build works
 go clean ./...
@@ -75,5 +78,5 @@ git push --tags origin master
 # Push the image to docker hub
 docker push "$IMAGE_NAME"
 
-./bump_version.bash
+"$SCRIPT_DIR"/bump_version.bash
 
