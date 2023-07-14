@@ -1,4 +1,4 @@
-app: &app freeledger-prod-ravendb
+app: &app nginx-with-volumes-test
 mounts:
   - destination: /mnt/data
     source: data
