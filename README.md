@@ -196,8 +196,8 @@ deploy_params:
   - *vm_size
 ```
 
-Test deploy your config with `flycd deploy .`, before installing it into your fly.io account
-with `flycd install --project-path .`.
+* Test deploy your config with `flycd deploy .`
+* Before installing it into your fly.io account with `flycd install --project-path .`
 
 FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io, and will keep all fields you put in
 it (i.e. flycd doesn't have to implement the full fly.io domain model). There are several reasons flycd doesn't just use
