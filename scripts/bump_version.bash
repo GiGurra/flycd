@@ -50,7 +50,7 @@ if git rev-parse "$CUR_TAG" >/dev/null 2>&1
 then
   echo "PREV_TAG: $PREV_TAG"
   echo "CUR_TAG: $CUR_TAG"
-  echo "NEXT_TAG: $CUR_TAG"
+  echo "NEXT_TAG: $NEXT_TAG"
 else
   echo "There does not seem to be any commit with the current tag(main.go.Version: $CUR_TAG). Can't advance"
   exit 1
