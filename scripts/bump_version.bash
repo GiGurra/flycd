@@ -74,3 +74,5 @@ git add main.go README.md
 # commit the changes
 git commit -m "Bump version from $CUR_TAG to $NEXT_TAG"
 
+git push
+
