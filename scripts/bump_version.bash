@@ -27,21 +27,9 @@ if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
   exit 1
 fi
 
-# Ensure that git tag exists for the current commit
-if [[ -z $(git tag --points-at HEAD) ]]; then
-  echo "Tag the current commit first"
-  exit 1
-fi
-
 # Parse the tag from main.go
 # shellcheck disable=SC2002
 CUR_TAG=$(cat main.go | grep 'Version = ' | cut -d '"' -f 2)
-
-# Ensure that this matches the current commit's tag in git
-if [[ $CUR_TAG != $(git tag --points-at HEAD) ]]; then
-  echo "The main.go version does not match the current commit's tag"
-  exit 1
-fi
 
 # Check that the tag follows semver
 if [[ ! $CUR_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -53,19 +41,30 @@ fi
 # shellcheck disable=SC2002
 NEXT_TAG=$(echo "$CUR_TAG" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
 
-# Check that the tag does not already exist on origin
-if [[ $(git ls-remote --tags origin "NEXT_TAG") ]]; then
-  echo "New tag already exists on origin"
-  exit 1
-fi
-
-# Update the tag in main.go
-sed -i "s/$CUR_TAG/$NEXT_TAG/g" main.go
-
 # calculate the tag that the previous version should have
 # shellcheck disable=SC2002
 PREV_TAG=$(echo "$CUR_TAG" | awk -F. '{$NF = $NF - 1;} 1' | sed 's/ /./g')
 
+# Ensure that the current tag exists in git, it could be any previous commit that has this tag
+if git rev-parse "$CUR_TAG" >/dev/null 2>&1
+then
+  echo "PREV_TAG: $PREV_TAG"
+  echo "CUR_TAG: $CUR_TAG"
+  echo "NEXT_TAG: $CUR_TAG"
+else
+  echo "There does not seem to be any commit with the current tag(main.go.Version: $CUR_TAG). Can't advance"
+  exit 1
+fi
+
+# Check that the tag does not already exist on origin
+if [[ $(git ls-remote --tags origin "NEXT_TAG") ]]; then
+  echo "$NEXT_TAG tag already exists on origin"
+  exit 1
+fi
+
+# Update the tag in main.go
+#sed -i "s/$CUR_TAG/$NEXT_TAG/g" main.go
+
 # Update the tag in the README
-sed -i "s/$PREV_TAG/$CUR_TAG/g" README.md
+#sed -i "s/$PREV_TAG/$CUR_TAG/g" README.md
 
