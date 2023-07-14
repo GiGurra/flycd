@@ -146,7 +146,11 @@ func TestDeployFromFolder_nginxWithVolumes(t *testing.T) {
 
 	flyClient.
 		EXPECT().
-		CreateVolume(mock.Anything, mock.Anything, mock.Anything).
+		CreateVolume(mock.Anything, "nginx-with-volumes-test", model.VolumeConfig{
+			Name:   "data",
+			SizeGb: 10,
+			Region: "arn",
+		}).
 		Return(model.VolumeState{}, nil)
 
 	flyClient.
