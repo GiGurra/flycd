@@ -19,6 +19,7 @@ type WebHookServiceImpl struct {
 	workQueue     chan func()
 }
 
+// Close An alternative to cancelling the context itself
 func (w WebHookServiceImpl) Close() {
 	fmt.Printf("Closing webhook service\n")
 	close(w.workQueue)
