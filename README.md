@@ -100,7 +100,6 @@ like this
 │   └── some-backend
 │       ├── app.yaml
 │       └── Dockerfile
-├── install.bash
 └── project.yaml
 ```
 
