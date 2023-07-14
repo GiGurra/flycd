@@ -28,9 +28,9 @@ func (v VolumeState) ToConfig() VolumeConfig {
 }
 
 type VolumeConfig struct {
-	Name   string `json:"name"`
-	SizeGb int    `json:"size_gb"`
-	Region string `json:"region"`
+	Name   string `json:"name" yaml:"name"`
+	SizeGb int    `json:"size_gb" yaml:"size_gb"`
+	Region string `json:"region" yaml:"region"`
 
 	// TODO: later:
 	//  App               App          `json:"App"`
