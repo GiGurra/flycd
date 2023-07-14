@@ -10,6 +10,7 @@ require (
 	github.com/otiai10/copy v1.12.0
 	github.com/samber/lo v1.38.1
 	github.com/spf13/cobra v1.7.0
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/mod v0.12.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -24,7 +25,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
