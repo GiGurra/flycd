@@ -165,7 +165,7 @@ env:
 ## Optional volumes and mounts. It has some limitations:
 # - Currently, fly.io only supports 1 mount point and volume per machine.
 #   In principle, flycd supports arbitrary numbers of both, should fly.io change this in the future.
-# - The number of volumes will be created to match the number of app instances (machines). 
+# - The number of volume instances will be created to match the number of app instances (machines). 
 #   This is the max between current existing instances/machines and the min_machines_running field.  
 volumes:
   - name: my-volume
