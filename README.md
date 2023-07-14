@@ -58,7 +58,7 @@ Use "flycd [command] --help" for more information about a command.
    webhooks.
 5. Watch the magic happen!
 
-## Examples
+## Configuration examples
 
 Check the [examples](examples) directory for some ideas.
 
