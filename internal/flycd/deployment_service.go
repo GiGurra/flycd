@@ -242,44 +242,83 @@ func getIntermediateSteps(input deployInput) ([]func(input deployInput) error, e
 		return nil, fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	minSvcReq := util_math.Max(
-		input.cfgTyped.HttpService.MinMachinesRunning,
-		lo.Reduce(
-			input.cfgTyped.Services,
-			func(agg int, item model.Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
-			1,
-		),
-	)
+	deployedVolumesByName := lo.GroupBy(deployedVolumes, func(volume model.VolumeState) string {
+		return volume.Name
+	})
 
-	// First bring all volumes that exist up to our required size
+	minVolumeCount, err := getMinimumVolumeCount(input)
+	if err != nil {
+		return intermediateSteps, fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
+	}
 
-	// Then create new volumes if needed
+	fmt.Printf("We need %d volumes for app %s \n", minVolumeCount, input.cfgTyped.App)
 
-	// check if we need to add volumes
-	for _, volumeCfg := range input.cfgTyped.Volumes {
-		volumeStates := lo.Filter(deployedVolumes, func(volume model.VolumeState, _ int) bool {
-			return volume.Name == volumeCfg.Name
-		})
-		if len(volumeStates) == 0 {
-			// volume does not exist, create it
-			intermediateSteps = append(intermediateSteps, func(input deployInput) error {
-				return input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, volumeCfg)
-			})
-		} else {
-			for _, volumeState := range volumeStates {
-				if volumeState.SizeGb != volumeCfg.SizeGb {
-					// volume exists but size is different, resize it
-					intermediateSteps = append(intermediateSteps, func(input deployInput) error {
-						return input.flyClient.ResizeVolume(input.ctx, input.cfgTyped.App, volumeCfg)
-					})
-				}
+	for _, wantedVolume := range input.cfgTyped.Volumes {
+		matchingDeployedVolumes := deployedVolumesByName[wantedVolume.Name]
+
+		// First bring all volumes that exist up to our required size
+		for _, deployedVolume := range matchingDeployedVolumes {
+			if deployedVolume.SizeGb < wantedVolume.SizeGb {
+				fmt.Printf("Adding task for resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, deployedVolume.Name, deployedVolume.SizeGb, wantedVolume.SizeGb)
+				intermediateSteps = append(intermediateSteps, func(input deployInput) error {
+					fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, deployedVolume.Name, deployedVolume.SizeGb, wantedVolume.SizeGb)
+					return input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, deployedVolume.ID, wantedVolume.SizeGb)
+				})
 			}
+		}
+
+		// Create new needed volumes
+		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(matchingDeployedVolumes))
+		for i := 0; i < newVolumesNeeded; i++ {
+			fmt.Printf("Adding task for creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
+			intermediateSteps = append(intermediateSteps, func(input deployInput) error {
+				fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
+				_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)
+				return err
+			})
 		}
 	}
 
 	// add more steps here...
 
 	return intermediateSteps, nil
+}
+
+func getMinimumVolumeCount(input deployInput) (int, error) {
+	// We need at least as many volumes as the minimum number of app instances.
+	// In the fly.io configuration, this is given by the `min_instances` field.
+	minSvcReq :=
+		util_math.Max(
+			input.cfgTyped.HttpService.MinMachinesRunning,
+			lo.Reduce(
+				input.cfgTyped.Services,
+				func(agg int, item model.Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
+				1,
+			),
+		)
+
+	// We should also consider the actual number of app instances that are currently running.
+	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
+	if err != nil {
+		return 0, fmt.Errorf("error getting app scales for app %s: %w", input.cfgTyped.App, err)
+	}
+
+	// count app processes
+	appProcessScales := lo.Map(scales, func(scale model.ScaleState, _ int) int {
+		if scale.Process == "app" {
+			return scale.Count
+		} else {
+			return 0
+		}
+	})
+	appProcessCount := lo.Reduce(appProcessScales, func(agg int, item int, _ int) int {
+		return agg + item
+	}, 0)
+	if appProcessCount > minSvcReq {
+		minSvcReq = appProcessCount
+	}
+
+	return minSvcReq, nil
 }
 
 func deployAppToFly(

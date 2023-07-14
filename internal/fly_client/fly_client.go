@@ -8,6 +8,7 @@ import (
 	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
 	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
 	"github.com/samber/lo"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -62,6 +63,18 @@ type FlyClient interface {
 		app string,
 		cfg model.VolumeConfig,
 	) (model.VolumeState, error)
+
+	GetAppScale(
+		ctx context.Context,
+		app string,
+	) ([]model.ScaleState, error)
+
+	ExtendVolume(
+		ctx context.Context,
+		appName string,
+		volumeId string,
+		gb int,
+	) error
 }
 
 type FlyClientImpl struct{}
@@ -105,6 +118,50 @@ func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (stri
 	}
 
 	return strings.TrimSpace(lines[iLineToken]), nil
+}
+
+func (c FlyClientImpl) GetAppScale(
+	ctx context.Context,
+	app string,
+) ([]model.ScaleState, error) {
+
+	result, err := util_cmd.
+		NewCommandA("fly", "scale", "show", "-a", app, "--json").
+		WithTimeout(20 * time.Second).
+		WithTimeoutRetries(2).
+		Run(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("error running 'fly scale show -a %s --json': %w", app, err)
+	}
+
+	var scaleStates []model.ScaleState
+	err = json.Unmarshal([]byte(result.StdOut), &scaleStates)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing fly scale show output for app %s: %w", app, err)
+	}
+
+	return scaleStates, nil
+}
+
+func (c FlyClientImpl) ExtendVolume(
+	ctx context.Context,
+	appName string,
+	volumeId string,
+	gb int,
+) error {
+
+	_, err := util_cmd.
+		NewCommandA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
+		WithTimeout(60 * time.Second).
+		WithTimeoutRetries(2).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error running 'fly volume extend %s -a %s': %w", volumeId, appName, err)
+	}
+
+	return nil
 }
 
 func (c FlyClientImpl) CreateVolume(

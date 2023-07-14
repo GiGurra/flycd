@@ -51,7 +51,7 @@ type AppConfig struct {
 	Source        Source            `yaml:"source,omitempty" toml:"source"`
 	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
 	Services      []Service         `yaml:"services" toml:"services,omitempty"`
-	HttpService   HttpService       `yaml:"http_service" toml:"http_service,omitempty"` // deprecated
+	HttpService   HttpService       `yaml:"http_service" toml:"http_service,omitempty"`
 	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
 	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
 	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
