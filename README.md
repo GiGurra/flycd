@@ -117,7 +117,8 @@ source:
   repo: "git@github.com:my-org/my-cloud"
 ```
 
-Further down the tree we have app directories with `app.yaml` files.
+Further down the tree we have app directories with `app.yaml` files (or more `project.yaml` files if you want to have
+recursive projects/projects-in-projects :P).
 
 Tip: Easy ways to create your own app.yaml files:
 
@@ -150,7 +151,7 @@ source:
   repo: "git@github.com:my-org/my-app" # only needed for type git
     #path: "some/path/within/repo"
     #ref:
-    #commit: "some-commit-hash"
+  #commit: "some-commit-hash"
   #branch: "some-branch-name"
   #tag: "some-tag-name"
 
