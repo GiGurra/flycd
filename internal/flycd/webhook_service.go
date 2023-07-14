@@ -7,6 +7,7 @@ import (
 	"github.com/gigurra/flycd/internal/github"
 	"github.com/samber/lo"
 	"strings"
+	"sync"
 )
 
 type WebHookService interface {
@@ -23,13 +24,62 @@ func NewWebHookService(deployService DeployService) WebHookService {
 	}
 }
 
+var workerCreateMutex = &sync.Mutex{}
+var workerStarted = false
+var workQueue = make(chan func(), 1000)
+
+func Init(ctx context.Context) {
+	// mutex to prevent multiple workers from running at the same time
+	workerCreateMutex.Lock()
+	defer workerCreateMutex.Unlock()
+
+	if !workerStarted {
+		workerStarted = true
+		fmt.Printf("Starting webhook worker\n")
+
+		go func() {
+			for {
+				select {
+				case work, isOpen := <-workQueue:
+					if isOpen {
+						work()
+					} else {
+						fmt.Printf("Work queue closed: Stopping webhook worker\n")
+						Stop()
+						return
+					}
+				case <-ctx.Done():
+					fmt.Printf("Context cancelled: Stopping webhook worker\n")
+					Stop()
+					return
+				}
+			}
+		}()
+	} else {
+		fmt.Printf("Webhook worker already started\n")
+	}
+}
+
+func Stop() {
+	workerCreateMutex.Lock()
+	defer workerCreateMutex.Unlock()
+
+	if workerStarted {
+		fmt.Printf("Stopping webhook worker\n")
+		workerStarted = false
+		close(workQueue)
+	} else {
+		fmt.Printf("Webhook worker already stopped\n")
+	}
+}
+
 func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
 
 	ch := make(chan error, 1)
 
 	// TODO: Implement some kind of persistence and/or caching here... So we don't have to clone everything every time...
 
-	go func() {
+	task := func() {
 
 		fmt.Printf("Start processing webhook %d for %s...\n", payload.HookId, payload.Repository.Url)
 
@@ -85,7 +135,9 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 
 		fmt.Printf("Done processing webhook %d for %s...\n", payload.HookId, payload.Repository.Url)
 
-	}()
+	}
+
+	workQueue <- task
 
 	return ch
 }

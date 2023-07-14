@@ -7,6 +7,7 @@ import (
 	"github.com/gigurra/flycd/internal/github"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 // Better start using a proper mock framework later :D
@@ -60,6 +61,11 @@ var _ DeployService = &fakeDeployServiceT{}
 
 func TestWebHookService(t *testing.T) {
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	Init(ctx)
+
 	for _, test := range []struct {
 		name    string
 		path    string
@@ -95,6 +101,8 @@ func TestWebHookService(t *testing.T) {
 				if open {
 					t.Fatalf("Expected channel to be closed")
 				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("Timed out waiting for webhook to be handled")
 			}
 
 			if len(fakeDeployService.deployAppFromFolderInputs) != 1 {
