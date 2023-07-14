@@ -128,13 +128,10 @@ These might look something like this:
 
 ```yaml
 # app.yaml containing the regular fly.io app config + flycd's additional fields
+# NOTE: Most of the below is optional!
 app: &app my-app
-build:
-  builder: paketobuildpacks/builder:base
-  buildpacks:
-    - gcr.io/paketo-buildpacks/go
-env:
-  PORT: "8081"
+
+# Many of these are optional (fly.io dictates which fields are optional)
 http_service:
   auto_start_machines: true
   auto_stop_machines: true
@@ -144,6 +141,20 @@ http_service:
   processes:
     - app
 primary_region: &primary_region arn
+
+
+######################################
+## more optional example config below
+
+## Optional env vars
+env:
+  PORT: "8081"
+
+## Optional build config (this is something fly.io can generate for you)
+build:
+  builder: paketobuildpacks/builder:base
+  buildpacks:
+    - gcr.io/paketo-buildpacks/go
 
 ## source: The most important field for FlyCD. It tells FlyCD where to find the app's git repo.
 # You can also set it to type "local" and point it to a local directory within the config repo/project.
