@@ -117,8 +117,9 @@ source:
   repo: "git@github.com:my-org/my-cloud"
 ```
 
-Further down the tree we have app directories with `app.yaml` files. Easy ways to creat your own app.yaml files:
+Further down the tree we have app directories with `app.yaml` files.
 
+Tip: Easy ways to create your own app.yaml files:
 * Copy and modify an example
 * Or use the `flycd convert` command to convert your existing `fly.toml` files to `app.yaml` files.
 * Or download existing definitions `fly config show [-a <your-app-name>] | yq -P > app.yaml`
