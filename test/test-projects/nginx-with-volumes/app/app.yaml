@@ -1,0 +1,45 @@
+app: &app freeledger-prod-ravendb
+mounts:
+  - destination: /mnt/data
+    source: data
+volumes:
+  - name: data
+    size_gb: 10
+primary_region: &primary_region arn
+services:
+  - auto_start_machines: true
+    auto_stop_machines: true
+    internal_port: 80
+    min_machines_running: 0
+    protocol: tcp
+source:
+  type: local
+
+vm_size: &vm_size "shared-cpu-1x"
+
+org: &org personal
+
+# Modify to your needs. By default, we will create a new fly.io
+# app without any user interaction/confirmation.
+# For the most simple apps, you probably don't need to modify these at all
+launch_params:
+  - "--ha=false"
+  - "--auto-confirm"
+  - "--now"
+  - "--copy-config"
+  - "--name"
+  - *app
+  - "--region"
+  - *primary_region
+  - "--org"
+  - *org
+  - "--vm-size"
+  - *vm_size
+
+# Modify to your needs. By default, we will deploy the fly.io
+# app without any user interaction/confirmation.
+# For the most simple apps, you probably don't need to modify these at all
+deploy_params:
+  - "--ha=false"
+  - "--vm-size"
+  - *vm_size
