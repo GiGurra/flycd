@@ -11,11 +11,17 @@ import (
 
 type WebHookService interface {
 	HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error
+	Close()
 }
 
 type WebHookServiceImpl struct {
 	deployService DeployService
 	workQueue     chan func()
+}
+
+func (w WebHookServiceImpl) Close() {
+	fmt.Printf("Closing webhook service\n")
+	close(w.workQueue)
 }
 
 func NewWebHookService(ctx context.Context, deployService DeployService) WebHookService {
