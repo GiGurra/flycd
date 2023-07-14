@@ -253,4 +253,4 @@ MIT
 
 ## Contributing
 
-Contact @gigurra if you want to contribute, or just create a PR.
+Contact [@gigurra](https://github.com/GiGurra) if you want to contribute, or just create a PR.
