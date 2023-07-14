@@ -546,6 +546,7 @@ func writeOutUpdatedConfigFiles(cfgUntyped map[string]any, tempDir util_work_dir
 
 func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
 	// Create a docker ignore file matching git ignore, if a docker ignore file doesn't already exist
+	// If we don't do this, fly.io cli will get stuck waiting or user input
 	if !tempDir.ExistsChild(".dockerignore") {
 		// Check if a git ignore file exists
 		if tempDir.ExistsChild(".gitignore") {
