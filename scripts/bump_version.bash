@@ -68,3 +68,9 @@ sed -i "s/$CUR_TAG/$NEXT_TAG/g" main.go
 # Update the tag in the README
 sed -i "s/$PREV_TAG/$CUR_TAG/g" README.md
 
+# add the changes to git
+git add main.go README.md
+
+# commit the changes
+git commit -m "Bump version from $CUR_TAG to $NEXT_TAG"
+
