@@ -161,7 +161,15 @@ source:
 ## Optional env vars
 env:
   PORT: "8081"
-
+  
+## Optional volumes and mounts (at this moment fly.io only supports one mount per machine, but the syntax supports more)
+volumes:
+  - name: my-volume
+    size_gb: 10
+mounts:
+  - destination: /mnt/my-volume-goes-here
+    source: my-volume
+    
 ## Optional build config (this is something fly.io cli can generate for you)
 build:
   builder: paketobuildpacks/builder:base
@@ -232,7 +240,6 @@ Check the [examples](examples) directory for more ideas.
 
 ### Some immediate TODOs
 
-* Support for creating/updating fly.io volumes
 * Support for creation/updating fly.io secrets (not sure how though :S)
 * Support for setting env vars, secrets and common values on a project level
 * More practical ways to configure Machine types, ram & cpu modifications
