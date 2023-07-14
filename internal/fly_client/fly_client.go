@@ -13,15 +13,30 @@ import (
 )
 
 type FlyClient interface {
-	CreateOrgToken(ctx context.Context, orgSlug string) (string, error)
+	CreateOrgToken(
+		ctx context.Context,
+		orgSlug string,
+	) (string, error)
 
-	ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (bool, error)
+	ExistsSecret(
+		ctx context.Context,
+		cmd ExistsSecretCmd,
+	) (bool, error)
 
-	StoreSecret(ctx context.Context, cmd StoreSecretCmd) error
+	StoreSecret(
+		ctx context.Context,
+		cmd StoreSecretCmd,
+	) error
 
-	ExistsApp(ctx context.Context, name string) (bool, error)
+	ExistsApp(
+		ctx context.Context,
+		name string,
+	) (bool, error)
 
-	GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error)
+	GetDeployedAppConfig(
+		ctx context.Context,
+		name string,
+	) (model.AppConfig, error)
 
 	CreateNewApp(
 		ctx context.Context,
