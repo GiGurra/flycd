@@ -261,6 +261,8 @@ func deployAppFromFolder(
 	default:
 		return "", fmt.Errorf("unknown source type %s", cfg.Source.Type)
 	}
+	// Not sure if we need this anymore
+	appHash = strings.TrimSpace(appHash)
 
 	// Check if to copy config contents to tempDir
 	if cfg.MergeCfg.All {
@@ -277,17 +279,7 @@ func deployAppFromFolder(
 		}
 	}
 
-	appHash = strings.TrimSpace(appHash)
-	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgHash
-	cfg.Env["FLYCD_APP_VERSION"] = appHash
-	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
-	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
-	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
-	cfg.Env["FLYCD_APP_SOURCE_REF_BRANCH"] = cfg.Source.Ref.Branch
-	cfg.Env["FLYCD_APP_SOURCE_REF_COMMIT"] = cfg.Source.Ref.Commit
-	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
-
-	cfgUntyped["env"] = cfg.Env
+	updateConfigs(&cfg, &cfgUntyped, appHash, cfgHash)
 
 	err = writeOutUpdatedConfigFiles(cfgUntyped, tempDir)
 	if err != nil {
@@ -340,6 +332,23 @@ func deployAppFromFolder(
 		}
 		return model.SingleAppDeployCreated, nil
 	}
+}
+
+func updateConfigs(
+	cfg *model.AppConfig,
+	cfgUntyped *map[string]any,
+	appHash string,
+	cfgHash string,
+) {
+	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgHash
+	cfg.Env["FLYCD_APP_VERSION"] = appHash
+	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
+	cfg.Env["FLYCD_APP_SOURCE_PATH"] = cfg.Source.Path
+	cfg.Env["FLYCD_APP_SOURCE_REPO"] = cfg.Source.Repo
+	cfg.Env["FLYCD_APP_SOURCE_REF_BRANCH"] = cfg.Source.Ref.Branch
+	cfg.Env["FLYCD_APP_SOURCE_REF_COMMIT"] = cfg.Source.Ref.Commit
+	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
+	(*cfgUntyped)["env"] = cfg.Env
 }
 
 func writeOutUpdatedConfigFiles(cfgUntyped map[string]any, tempDir util_work_dir.WorkDir) error {
