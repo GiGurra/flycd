@@ -93,3 +93,8 @@ Check the [examples](examples) directory for some ideas.
 * Secrets
 * Machine types, ram & cpu modifications
 * fly.io native postgres, redis, etc...
+
+## Links/References
+ * [Git-Ops](https://www.redhat.com/en/topics/devops/what-is-gitops#:~:text=GitOps%20uses%20Git%20repositories%20as,set%20for%20the%20application%20framework.)
+ * [Argo-CD](https://argoproj.github.io/cd/)
+ * [GitHub webhooks](https://docs.github.com/en/webhooks-and-events/webhooks/about-webhooks)
