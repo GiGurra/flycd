@@ -319,7 +319,7 @@ func deployAppFromFolder(
 	fmt.Printf("Checking if the app %s exists\n", cfg.App)
 	appExists, err := flyClient.ExistsApp(ctx, cfg.App)
 	if err != nil {
-		return "", fmt.Errorf("error running fly status in folder %s: %w", path, err)
+		return "", fmt.Errorf("error checking if app %s exists: %w", cfg.App, err)
 	}
 
 	if appExists {
