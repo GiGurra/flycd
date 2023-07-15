@@ -82,12 +82,12 @@ type AppConfig struct {
 	Volumes            []VolumeConfig            `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
 }
 
-func (a *AppConfig) CalcScaleByServices() AppScaleConfig {
+func (a *AppConfig) calcScaleByServices() AppScaleConfig {
 	result := AppScaleConfig{
-		Min:             a.CalcMinMachinesRunningByServices(),
+		Min:             a.calcMinMachinesRunningByServices(),
 		GivenByServices: true,
 	}
-	if !a.CanAutoScaleUpByServices() {
+	if !a.canAutoScaleUpByServices() {
 		// have at least one instance if it cannot scale
 		*result.Fixed = util_math.Max(1, result.Min)
 	}
@@ -108,8 +108,8 @@ func (a *AppConfig) Regions() []string {
 	return lo.Uniq(result)
 }
 
-func (a *AppConfig) CalcScalePerRegion() map[string]AppScaleConfig {
-	result := map[string]AppScaleConfig{}
+func (a *AppConfig) CalcScalePerRegion() map[Region]AppScaleConfig {
+	result := map[Region]AppScaleConfig{}
 	for _, region := range a.Regions() {
 		if region == a.PrimaryRegion {
 			if a.PrimaryRegionScale != nil {
@@ -119,7 +119,7 @@ func (a *AppConfig) CalcScalePerRegion() map[string]AppScaleConfig {
 			} else if a.DefaultScale != nil {
 				result[region] = *a.DefaultScale
 			} else {
-				result[region] = a.CalcScaleByServices()
+				result[region] = a.calcScaleByServices()
 			}
 		} else {
 			if regionScale, ok := a.OtherRegionScales[region]; ok {
@@ -127,14 +127,69 @@ func (a *AppConfig) CalcScalePerRegion() map[string]AppScaleConfig {
 			} else if a.DefaultScale != nil {
 				result[region] = *a.DefaultScale
 			} else {
-				result[region] = a.CalcScaleByServices()
+				result[region] = a.calcScaleByServices()
 			}
 		}
 	}
 	return result
 }
 
-func (a *AppConfig) CanAutoScaleUpByServices() bool {
+type VolumeScale struct {
+	FixedCount int
+	SizeGB     string
+}
+
+type Region = string
+type VolumeName = string
+
+func (a *AppConfig) defaultVolumeScaleByVolumeName() map[VolumeName]VolumeScale {
+	result := 0
+	for _, service := range a.Services {
+		if service.AutoStartMachines {
+			result += service.MinMachinesRunning
+		}
+	}
+	return result
+}
+
+func (a *AppConfig) CalcVolumeScalePerRegion() map[VolumeName]map[Region]VolumeScale {
+	var appScale map[Region]AppScaleConfig = a.CalcScalePerRegion()
+	var volumeConfigsByName map[VolumeName][]VolumeConfig = lo.GroupBy(a.Volumes, func(item VolumeConfig) VolumeName {
+		return item.Name
+	})
+
+	var result map[VolumeName]map[Region]VolumeScale = map[VolumeName]map[Region]VolumeScale{}
+	for volumeName, volumeConfigs := range volumeConfigsByName {
+
+		// By default, the volume count per region is the same as the app count per region
+		// If the region lacks a volume config, then use the default volume config
+		// If there is no explicit default volume config, then use the largest volume config
+
+		byRegion := map[Region]VolumeScale{}
+		result[volumeName] = byRegion
+
+		for _, volumeConfig := range volumeConfigs {
+
+		}
+		result[volumeName] = map[Region]VolumeScale{}
+		for region, appScaleConfig := range appScale {
+			result[volumeName][region] = VolumeScale{
+				FixedCount: appScaleConfig.Min,
+				SizeGB:     volumeConfigs[0].SizeGB,
+			}
+		}
+	}
+
+	if a.PrimaryRegionScale != nil {
+		return *a.PrimaryRegionScale
+	} else if a.DefaultScale != nil {
+		return *a.DefaultScale
+	} else {
+		return a.calcScaleByServices()
+	}
+}
+
+func (a *AppConfig) canAutoScaleUpByServices() bool {
 
 	if a.HttpService != nil && a.HttpService.AutoStartMachines {
 		return true
@@ -147,7 +202,7 @@ func (a *AppConfig) CanAutoScaleUpByServices() bool {
 	return false
 }
 
-func (a *AppConfig) CalcMinMachinesRunningByServices() int {
+func (a *AppConfig) calcMinMachinesRunningByServices() int {
 	return util_math.Max(
 		func() int {
 			if a.HttpService != nil {

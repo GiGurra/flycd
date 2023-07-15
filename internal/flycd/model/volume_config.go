@@ -28,9 +28,10 @@ func (v VolumeState) ToConfig() VolumeConfig {
 }
 
 type VolumeConfig struct {
-	Name   string `json:"name" yaml:"name"`
-	SizeGb int    `json:"size_gb" yaml:"size_gb"`
-	Region string `json:"region" yaml:"region"`
+	Name           string `json:"name" yaml:"name"`
+	SizeGb         int    `json:"size_gb" yaml:"size_gb"`
+	Region         string `json:"region" yaml:"region"`                   // Empty = default for all regions
+	ExtraInstances int    `json:"extra_instances" yaml:"extra_instances"` // if more than min app count
 
 	// TODO: later:
 	//  App               App          `json:"App"`

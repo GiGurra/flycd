@@ -344,7 +344,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 func getMinimumVolumeCount(input deployInput) (int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
-	minSvcReq := util_math.Max(1, input.cfgTyped.CalcMinMachinesRunningByServices())
+	minSvcReq := util_math.Max(1, input.cfgTyped.calcMinMachinesRunningByServices())
 
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
