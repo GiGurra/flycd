@@ -5,25 +5,39 @@ import (
 	"github.com/gigurra/flycd/pkg/flycd/util/util_cfg_merge"
 	"github.com/gigurra/flycd/pkg/flycd/util/util_cvt"
 	"gopkg.in/yaml.v3"
+	"regexp"
 )
 
 type CommonAppConfig struct {
-	AppDefaults map[string]any `yaml:"app_defaults" toml:"app_defaults"` // default yaml tree for all apps
-	//AppSubstitutions map[string]any `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
-	AppOverrides map[string]any `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
+	AppDefaults      map[string]any `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
+	AppSubstitutions map[string]any `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
+	AppOverrides     map[string]any `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
 }
 
 func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	return CommonAppConfig{
-		AppDefaults: util_cfg_merge.Merge(c.AppDefaults, other.AppDefaults),
-		//AppSubstitutions: util_cfg_merge.Merge(c.AppSubstitutions, other.AppSubstitutions),
-		AppOverrides: util_cfg_merge.Merge(c.AppOverrides, other.AppOverrides),
+		AppDefaults:      util_cfg_merge.Merge(c.AppDefaults, other.AppDefaults),
+		AppSubstitutions: util_cfg_merge.Merge(c.AppSubstitutions, other.AppSubstitutions),
+		AppOverrides:     util_cfg_merge.Merge(c.AppOverrides, other.AppOverrides),
 	}
 }
 
 func (c CommonAppConfig) MakeAppConfig(appYaml []byte) (AppConfig, map[string]any, error) {
 
 	untypedLocal := make(map[string]any)
+
+	// Copy the bytes to a new slice to avoid problems when doing regex matching
+	appYaml = append([]byte{}, appYaml...)
+
+	// Run all substitutions
+	for from, to := range c.AppSubstitutions {
+		regex, err := regexp.Compile(from)
+		if err != nil {
+			return AppConfig{}, untypedLocal, fmt.Errorf("error compiling common substitution regex '%s': %w", from, err)
+		}
+		stringTo := fmt.Sprintf("%v", to)
+		appYaml = regex.ReplaceAll(appYaml, []byte(stringTo))
+	}
 
 	err := yaml.Unmarshal(appYaml, &untypedLocal)
 	if err != nil {
