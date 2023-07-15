@@ -269,7 +269,7 @@ Check the [examples](examples) directory for more ideas.
 #### Prerequisites
 
 * Go 1.20
-* Mockery (if running tests, for generating mocks)
+* [Mockery](https://github.com/vektra/mockery) (if running tests, for generating mocks)
 * Docker (if building the standalone docker image)
 
 #### To build the application:
