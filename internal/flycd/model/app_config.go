@@ -60,7 +60,7 @@ type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
 	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
-	Regions       []string          `yaml:"regions,omitempty" toml:"regions,omitempty"`
+	ExtraRegions  []string          `yaml:"ExtraRegions,omitempty" toml:"ExtraRegions,omitempty"`
 	Source        Source            `yaml:"source,omitempty" toml:"source"`
 	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
 	Services      []Service         `yaml:"services,omitempty" toml:"services,omitempty"`
@@ -71,6 +71,15 @@ type AppConfig struct {
 	Build         map[string]any    `yaml:"build,omitempty" toml:"build,omitempty"`
 	Mounts        []Mount           `yaml:"mounts,omitempty" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
+}
+
+func (a *AppConfig) Regions() []string {
+	result := []string{}
+	if a.PrimaryRegion != "" {
+		result = append(result, a.PrimaryRegion)
+	}
+	result = append(result, a.ExtraRegions...)
+	return lo.Uniq(result)
 }
 
 func (a *AppConfig) MinMachinesRunning() int {
@@ -151,12 +160,12 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 		a.Volumes = []VolumeConfig{}
 	}
 
-	if a.Regions == nil {
-		a.Regions = []string{}
+	if a.ExtraRegions == nil {
+		a.ExtraRegions = []string{}
 	}
 
-	if !lo.Contains(a.Regions, a.PrimaryRegion) {
-		a.Regions = append(a.Regions, a.PrimaryRegion)
+	if !lo.Contains(a.ExtraRegions, a.PrimaryRegion) {
+		a.ExtraRegions = append(a.ExtraRegions, a.PrimaryRegion)
 	}
 
 	// only permit apps that are valid dns names

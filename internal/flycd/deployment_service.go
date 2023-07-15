@@ -270,7 +270,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 	numExtendedVolumes := 0
 	numCreatedVolumes := 0
 
-	for _, region := range input.cfgTyped.Regions {
+	for _, region := range input.cfgTyped.Regions() {
 
 		for _, wantedVolume := range input.cfgTyped.Volumes {
 
@@ -369,7 +369,7 @@ func deployAppToFly(
 			if err != nil {
 				return "", err
 			}
-			for _, region := range input.cfgTyped.Regions {
+			for _, region := range input.cfgTyped.Regions() {
 				fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
 				err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
 				if err != nil {
@@ -392,7 +392,7 @@ func deployAppToFly(
 			return "", err
 		}
 		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		for _, region := range input.cfgTyped.Regions {
+		for _, region := range input.cfgTyped.Regions() {
 			fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
 			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
 		}
