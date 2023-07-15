@@ -35,7 +35,7 @@ func TestDeployFromFolder_newApp(t *testing.T) {
 		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 		Return(nil)
 
-	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg)
+	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg, nil)
 	if err != nil {
 		t.Fatalf("DeployAppFromFolder failed: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestDeployFromFolder_existingApp(t *testing.T) {
 		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 		Return(nil)
 
-	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg)
+	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg, nil)
 	if err != nil {
 		t.Fatalf("DeployAppFromFolder failed: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestDeployFromFolder_appMergingConfig(t *testing.T) {
 		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 		Return(nil)
 
-	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app2", deployCfg)
+	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app2", deployCfg, nil)
 	if err != nil {
 		t.Fatalf("DeployAppFromFolder failed: %v", err)
 	}
@@ -236,7 +236,7 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 				Return(nil)
 
-			_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/nginx-with-volumes/app", test.deployCfg)
+			_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/nginx-with-volumes/app", test.deployCfg, nil)
 			if err != nil {
 				t.Fatalf("DeployAppFromFolder failed: %v", err)
 			}

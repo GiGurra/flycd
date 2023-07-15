@@ -49,7 +49,7 @@ func TestWebHookService(t *testing.T) {
 
 			fakeDeployService.
 				EXPECT().
-				DeployAppFromFolder(mock.Anything, expPath, mock.Anything).
+				DeployAppFromFolder(mock.Anything, expPath, mock.Anything, mock.Anything).
 				Return(model.SingleAppDeployCreated, nil)
 
 			ch := webhookService.HandleGithubWebhook(payload, "../../test/test-projects/webhooks/regular")

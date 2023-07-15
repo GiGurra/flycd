@@ -39,6 +39,7 @@ type DeployService interface {
 		ctx context.Context,
 		path string,
 		deployCfg model.DeployConfig,
+		preCalculatedAppConfig *PreCalculatedAppConfig,
 	) (model.SingleAppDeploySuccessType, error)
 }
 
@@ -54,8 +55,13 @@ func (d DeployServiceImpl) DeployAppFromInlineConfig(ctx context.Context, deploy
 	return deployAppFromInlineConfig(d.flyClient, ctx, deployCfg, cfg)
 }
 
-func (d DeployServiceImpl) DeployAppFromFolder(ctx context.Context, path string, deployCfg model.DeployConfig) (model.SingleAppDeploySuccessType, error) {
-	return deployAppFromFolder(d.flyClient, ctx, path, deployCfg)
+func (d DeployServiceImpl) DeployAppFromFolder(
+	ctx context.Context,
+	path string,
+	deployCfg model.DeployConfig,
+	preCalculatedAppConfig *PreCalculatedAppConfig,
+) (model.SingleAppDeploySuccessType, error) {
+	return deployAppFromFolder(d.flyClient, ctx, path, deployCfg, preCalculatedAppConfig)
 }
 
 // prove that DeployServiceImpl implements DeployService
@@ -88,8 +94,10 @@ func deployAll(
 				})
 				return nil
 			} else {
-				deployCfg.CommonAppCfg = ctx.CommonAppCfg
-				res, err := deployAppFromFolder(flyClient, ctx, appNode.Path, deployCfg)
+				res, err := deployAppFromFolder(flyClient, ctx, appNode.Path, deployCfg, &PreCalculatedAppConfig{
+					Typed:   appNode.AppConfig,
+					UnTyped: appNode.AppConfigUntyped,
+				})
 				if err != nil {
 					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 						Spec:  appNode,
@@ -154,12 +162,26 @@ func deployAppFromInlineConfig(
 		return "", fmt.Errorf("error marshalling app config: %w", err)
 	}
 
+	untypedCfg := map[string]any{}
+	err = yaml.Unmarshal(yamlBytes, &untypedCfg)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling app config: %w", err)
+	}
+
 	err = cfgDir.WriteFile("app.yaml", string(yamlBytes))
 	if err != nil {
 		return "", fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return deployAppFromFolder(flyClient, ctx, cfgDir.Root(), deployCfg)
+	return deployAppFromFolder(flyClient, ctx, cfgDir.Cwd(), deployCfg, &PreCalculatedAppConfig{
+		Typed:   cfg,
+		UnTyped: untypedCfg,
+	})
+}
+
+type PreCalculatedAppConfig struct {
+	Typed   model.AppConfig
+	UnTyped map[string]any
 }
 
 func deployAppFromFolder(
@@ -167,11 +189,18 @@ func deployAppFromFolder(
 	ctx context.Context,
 	path string,
 	deployCfg model.DeployConfig,
+	preCalculatedAppCfg *PreCalculatedAppConfig,
 ) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
-	cfgTyped, cfgUntyped, err := readAppConfigs(deployCfg.CommonAppCfg, path)
+	cfgTyped, cfgUntyped, err := func() (model.AppConfig, map[string]any, error) {
+		if preCalculatedAppCfg != nil {
+			return preCalculatedAppCfg.Typed, preCalculatedAppCfg.UnTyped, nil
+		} else {
+			return readAppConfigs(path)
+		}
+	}()
 	if err != nil {
 		return "", err
 	}
@@ -573,7 +602,6 @@ func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
 }
 
 func readAppConfigs(
-	common model.CommonAppConfig,
 	path string,
 ) (model.AppConfig, map[string]any, error) {
 
@@ -582,7 +610,7 @@ func readAppConfigs(
 		return model.AppConfig{}, map[string]any{}, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
 	}
 
-	typed, untyped, err := common.MakeAppConfig(appYaml)
+	typed, untyped, err := model.CommonAppConfig{}.MakeAppConfig(appYaml)
 	if err != nil {
 		return model.AppConfig{}, untyped, fmt.Errorf("error making app config from folder %s: %w", path, err)
 	}

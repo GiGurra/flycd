@@ -9,7 +9,6 @@ type DeployConfig struct {
 	Retries           int
 	AttemptTimeout    time.Duration
 	AbortOnFirstError bool
-	CommonAppCfg      CommonAppConfig
 }
 
 func NewDefaultDeployConfig() DeployConfig {
