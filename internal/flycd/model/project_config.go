@@ -5,21 +5,12 @@ import (
 	"regexp"
 )
 
-type CommonValues struct {
-	Project map[string]any `yaml:"project" toml:"project"`
-	App     map[string]any `yaml:"app" toml:"app"`
-}
-
 type ProjectConfig struct {
-	// Name Required. Name of the project
-	Project string `yaml:"project" toml:"project"`
-	// Source Required. Where the app configs of the project are located
-	Source   Source       `yaml:"source" toml:"source"`
-	Defaults CommonValues `yaml:"defaults" toml:"defaults"`
-	// Regex substitutions to be applied to all app configs, and child projects (everything recursively) in this project
-	// These override the values in the child apps and child projects, if the regex matches
-	Substitutions map[string]string `yaml:"substitutions" toml:"substitutions"`
-	Overrides     CommonValues      `yaml:"overrides" toml:"overrides"`
+	Project          string            `yaml:"project" toml:"project"`             // Name Required. Unique name of the project
+	Source           Source            `yaml:"source" toml:"source"`               // Source Required. Where the app configs of the project are located
+	AppDefaults      map[string]any    `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
+	AppSubstitutions map[string]string `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
+	AppOverrides     map[string]any    `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
 }
 
 func (cfg *ProjectConfig) Validate() error {
