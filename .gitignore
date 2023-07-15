@@ -18,3 +18,5 @@ id_dsa
 #vscode
 .vscode/
 mocks/
+
+mock_*.go

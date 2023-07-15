@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/flycd/model"
 	"github.com/gigurra/flycd/internal/github"
-	"github.com/gigurra/flycd/mocks"
 	"github.com/stretchr/testify/mock"
 	"path/filepath"
 	"testing"
@@ -35,7 +34,7 @@ func TestWebHookService(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			fakeDeployService := mocks.NewMockDeployService(t)
+			fakeDeployService := NewMockDeployService(t)
 			webhookService := NewWebHookService(ctx, fakeDeployService)
 
 			fmt.Printf("webhookService: %v\n", webhookService)

@@ -3,15 +3,15 @@ package flycd
 import (
 	"context"
 	"fmt"
+	"github.com/gigurra/flycd/internal/fly_client"
 	"github.com/gigurra/flycd/internal/flycd/model"
-	"github.com/gigurra/flycd/mocks"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
 func TestDeployFromFolder_newApp(t *testing.T) {
 	ctx := context.Background()
-	flyClient := mocks.NewMockFlyClient(t)
+	flyClient := fly_client.NewMockFlyClient(t)
 	deployService := NewDeployService(flyClient)
 	deployCfg := model.
 		NewDefaultDeployConfig().
@@ -44,7 +44,7 @@ func TestDeployFromFolder_newApp(t *testing.T) {
 
 func TestDeployFromFolder_existingApp(t *testing.T) {
 	ctx := context.Background()
-	flyClient := mocks.NewMockFlyClient(t)
+	flyClient := fly_client.NewMockFlyClient(t)
 	deployService := NewDeployService(flyClient)
 	deployCfg := model.
 		NewDefaultDeployConfig().
@@ -77,7 +77,7 @@ func TestDeployFromFolder_existingApp(t *testing.T) {
 
 func TestDeployFromFolder_appMergingConfig(t *testing.T) {
 	ctx := context.Background()
-	flyClient := mocks.NewMockFlyClient(t)
+	flyClient := fly_client.NewMockFlyClient(t)
 	deployService := NewDeployService(flyClient)
 	deployCfg := model.
 		NewDefaultDeployConfig().
@@ -172,7 +172,7 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 
 			ctx := context.Background()
-			flyClient := mocks.NewMockFlyClient(t)
+			flyClient := fly_client.NewMockFlyClient(t)
 			deployService := NewDeployService(flyClient)
 
 			fmt.Printf("flyClient: %+v\n", flyClient)
