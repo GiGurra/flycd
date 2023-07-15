@@ -59,7 +59,8 @@ type Mount struct {
 type AppScaleConfig struct {
 	Min int `yaml:"min" toml:"min"` // defaulting to 0 is ok. This is the standard fly.io behavior
 	// fly.io doesn't support a Max value, so we don't either
-	Fixed *int `yaml:"fixed" toml:"fixed"` // If set, this will override all fly.io service scale up/down logic using VERY high concurrency limits
+	Fixed           *int `yaml:"fixed" toml:"fixed"` // If set, this will override all fly.io service scale up/down logic using VERY high concurrency limits
+	GivenByServices bool // so we know if to override service config
 }
 
 type AppConfig struct {
@@ -82,8 +83,10 @@ type AppConfig struct {
 }
 
 func (a *AppConfig) CalcScaleByServices() AppScaleConfig {
-	result := AppScaleConfig{}
-	result.Min = a.CalcMinMachinesRunningByServices()
+	result := AppScaleConfig{
+		Min:             a.CalcMinMachinesRunningByServices(),
+		GivenByServices: true,
+	}
 	if !a.CanAutoScaleUpByServices() {
 		// have at least one instance if it cannot scale
 		*result.Fixed = util_math.Max(1, result.Min)
