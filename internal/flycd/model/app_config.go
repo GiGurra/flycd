@@ -75,9 +75,7 @@ type AppConfig struct {
 
 func (a *AppConfig) Regions() []string {
 	result := []string{}
-	if a.PrimaryRegion != "" {
-		result = append(result, a.PrimaryRegion)
-	}
+	result = append(result, a.PrimaryRegion)
 	result = append(result, a.ExtraRegions...)
 	return lo.Uniq(result)
 }
