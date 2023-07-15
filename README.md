@@ -158,6 +158,11 @@ source:
 ######################################
 ## more optional example config below
 
+# extra regions besides the primary region where this app will run
+# note: All volumes and mounts will be created in all regions (primary + extra regions).  
+extra_regions:
+  - ams
+
 ## Optional env vars
 env:
   PORT: "8081"
@@ -171,6 +176,7 @@ env:
 volumes:
   - name: my-volume
     size_gb: 10
+    count: 3 # should be enough to cover the number of app instances. flycd will automatically use actual app instance count if it's higher than this.
 mounts:
   - destination: /mnt/my-volume-goes-here
     source: my-volume
