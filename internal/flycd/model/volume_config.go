@@ -19,25 +19,10 @@ type VolumeState struct {
 	//  Host               Host        `json:"Host"`
 }
 
-func (v VolumeState) ToConfig() VolumeConfig {
-	return VolumeConfig{
-		Name:   v.Name,
-		SizeGb: v.SizeGb,
-		Region: v.Region,
-	}
-}
-
-type VolumeScaleConfig struct {
-	Min   int `json:"min" yaml:"min"`
-	Max   int `json:"max" yaml:"max"`
-	Fixed int `json:"fixed" yaml:"fixed"`
-}
-
 type VolumeConfig struct {
-	Name   string             `json:"name" yaml:"name"`
-	SizeGb int                `json:"size_gb" yaml:"size_gb"`
-	Region string             `json:"region" yaml:"region"`
-	Scale  *VolumeScaleConfig `json:"scale" yaml:"scale"`
+	Name   string `json:"name" yaml:"name"`
+	SizeGb int    `json:"size_gb" yaml:"size_gb"`
+	Count  int    `json:"count" yaml:"count"`
 
 	// TODO: later:
 	//  App               App          `json:"App"`

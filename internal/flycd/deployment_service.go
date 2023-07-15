@@ -260,47 +260,48 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		return volume.Name + volume.Region
 	})
 
-	minVolumeCount, err := getMinimumVolumeCount(input)
+	minVolumeCountByServices, err := getMinimumVolumeCount(input)
 	if err != nil {
 		return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCount, input.cfgTyped.App)
+	fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCountByServices, input.cfgTyped.App)
 
 	numExtendedVolumes := 0
 	numCreatedVolumes := 0
 
-	for _, wantedVolume := range input.cfgTyped.Volumes {
+	for _, region := range input.cfgTyped.Regions {
 
-		if wantedVolume.Region == "" {
-			wantedVolume.Region = input.cfgTyped.PrimaryRegion
-		}
+		for _, wantedVolume := range input.cfgTyped.Volumes {
 
-		fmt.Printf(" - %d x '%s' of %d GB in region %s \n", minVolumeCount, wantedVolume.Name, wantedVolume.SizeGb, wantedVolume.Region)
+			wantedCount := util_math.Max(wantedVolume.Count, minVolumeCountByServices)
 
-		deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+wantedVolume.Region]
+			fmt.Printf(" - %d x '%s' of %d GB in region %s \n", wantedCount, wantedVolume.Name, wantedVolume.SizeGb, region)
 
-		// First bring all deployed volumes up to our required size
-		for _, currentVolume := range deployedVolumesThisRegion {
-			if currentVolume.SizeGb < wantedVolume.SizeGb {
-				fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, currentVolume.Name, currentVolume.SizeGb, wantedVolume.SizeGb)
-				err := input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, currentVolume.ID, wantedVolume.SizeGb)
-				if err != nil {
-					return fmt.Errorf("error resizing volume %s for app %s: %w", currentVolume.ID, input.cfgTyped.App, err)
+			deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+region]
+
+			// First bring all deployed volumes up to our required size
+			for _, currentVolume := range deployedVolumesThisRegion {
+				if currentVolume.SizeGb < wantedVolume.SizeGb {
+					fmt.Printf("Resizing app %s's volume %s from %d to %d in region %s\n", input.cfgTyped.App, currentVolume.Name, currentVolume.SizeGb, wantedVolume.SizeGb, region)
+					err := input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, currentVolume.ID, wantedVolume.SizeGb)
+					if err != nil {
+						return fmt.Errorf("error resizing volume %s for app %s in region %s: %w", currentVolume.ID, input.cfgTyped.App, region, err)
+					}
+					numExtendedVolumes++
 				}
-				numExtendedVolumes++
 			}
-		}
 
-		// Create new needed volumes
-		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(deployedVolumesThisRegion))
-		for i := 0; i < newVolumesNeeded; i++ {
-			fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
-			_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)
-			if err != nil {
-				return fmt.Errorf("error creating volume %s for app %s: %w", wantedVolume.Name, input.cfgTyped.App, err)
+			// Create new needed volumes
+			newVolumesNeeded := util_math.Max(0, wantedCount-len(deployedVolumesThisRegion))
+			for i := 0; i < newVolumesNeeded; i++ {
+				fmt.Printf("Creating new %s volume for app %s in region %s \n", wantedVolume.Name, input.cfgTyped.App, region)
+				_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume, region)
+				if err != nil {
+					return fmt.Errorf("error creating volume %s for app %s in region %s: %w", wantedVolume.Name, input.cfgTyped.App, region, err)
+				}
+				numCreatedVolumes++
 			}
-			numCreatedVolumes++
 		}
 	}
 

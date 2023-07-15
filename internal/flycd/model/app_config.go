@@ -60,16 +60,17 @@ type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
 	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
+	Regions       []string          `yaml:"regions,omitempty" toml:"regions,omitempty"`
 	Source        Source            `yaml:"source,omitempty" toml:"source"`
 	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
-	Services      []Service         `yaml:"services" toml:"services,omitempty"`
-	HttpService   *HttpService      `yaml:"http_service" toml:"http_service,omitempty"`
-	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
-	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
-	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
-	Build         map[string]any    `yaml:"build" toml:"build,omitempty"`
-	Mounts        []Mount           `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
-	Volumes       []VolumeConfig    `yaml:"volumes" toml:"volumes,omitempty"`
+	Services      []Service         `yaml:"services,omitempty" toml:"services,omitempty"`
+	HttpService   *HttpService      `yaml:"http_service,omitempty" toml:"http_service,omitempty"`
+	LaunchParams  []string          `yaml:"launch_params,omitempty" toml:"launch_params,omitempty"`
+	DeployParams  []string          `yaml:"deploy_params,omitempty" toml:"deploy_params"`
+	Env           map[string]string `yaml:"env,omitempty" toml:"env,omitempty"`
+	Build         map[string]any    `yaml:"build,omitempty" toml:"build,omitempty"`
+	Mounts        []Mount           `yaml:"mounts,omitempty" toml:"mounts,omitempty"` // fly.io only supports one mount :S
+	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
 }
 
 func (a *AppConfig) MinMachinesRunning() int {
@@ -148,6 +149,14 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 
 	if a.Volumes == nil {
 		a.Volumes = []VolumeConfig{}
+	}
+
+	if a.Regions == nil {
+		a.Regions = []string{}
+	}
+
+	if !lo.Contains(a.Regions, a.PrimaryRegion) {
+		a.Regions = append(a.Regions, a.PrimaryRegion)
 	}
 
 	// only permit apps that are valid dns names

@@ -217,8 +217,7 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 					CreateVolume(mock.Anything, "nginx-with-volumes-test", model.VolumeConfig{
 						Name:   "data",
 						SizeGb: 10,
-						Region: "arn",
-					}).
+					}, "arn").
 					Return(model.VolumeState{}, nil).
 					Times(test.numCreatedVolumes)
 			}

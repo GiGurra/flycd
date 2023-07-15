@@ -62,6 +62,7 @@ type FlyClient interface {
 		ctx context.Context,
 		app string,
 		cfg model.VolumeConfig,
+		region string,
 	) (model.VolumeState, error)
 
 	GetAppScale(
@@ -168,10 +169,11 @@ func (c FlyClientImpl) CreateVolume(
 	ctx context.Context,
 	app string,
 	cfg model.VolumeConfig,
+	region string,
 ) (model.VolumeState, error) {
 
 	result, err := util_cmd.
-		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", cfg.Region, "--app", app, "-y", "--json").
+		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "--app", app, "-y", "--json").
 		WithTimeout(60 * time.Second).
 		WithTimeoutRetries(0).
 		Run(ctx)
