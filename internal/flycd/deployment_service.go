@@ -39,7 +39,7 @@ type DeployService interface {
 		ctx context.Context,
 		path string,
 		deployCfg model.DeployConfig,
-		preCalculatedAppConfig *PreCalculatedAppConfig,
+		preCalculatedAppConfig *model.PreCalculatedAppConfig,
 	) (model.SingleAppDeploySuccessType, error)
 }
 
@@ -59,7 +59,7 @@ func (d DeployServiceImpl) DeployAppFromFolder(
 	ctx context.Context,
 	path string,
 	deployCfg model.DeployConfig,
-	preCalculatedAppConfig *PreCalculatedAppConfig,
+	preCalculatedAppConfig *model.PreCalculatedAppConfig,
 ) (model.SingleAppDeploySuccessType, error) {
 	return deployAppFromFolder(d.flyClient, ctx, path, deployCfg, preCalculatedAppConfig)
 }
@@ -94,10 +94,7 @@ func deployAll(
 				})
 				return nil
 			} else {
-				res, err := deployAppFromFolder(flyClient, ctx, appNode.Path, deployCfg, &PreCalculatedAppConfig{
-					Typed:   appNode.AppConfig,
-					UnTyped: appNode.AppConfigUntyped,
-				})
+				res, err := deployAppFromFolder(flyClient, ctx, appNode.Path, deployCfg, appNode.ToPreCalculatedApoConf())
 				if err != nil {
 					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 						Spec:  appNode,
@@ -173,15 +170,10 @@ func deployAppFromInlineConfig(
 		return "", fmt.Errorf("error writing app.yaml: %w", err)
 	}
 
-	return deployAppFromFolder(flyClient, ctx, cfgDir.Cwd(), deployCfg, &PreCalculatedAppConfig{
+	return deployAppFromFolder(flyClient, ctx, cfgDir.Cwd(), deployCfg, &model.PreCalculatedAppConfig{
 		Typed:   cfg,
 		UnTyped: untypedCfg,
 	})
-}
-
-type PreCalculatedAppConfig struct {
-	Typed   model.AppConfig
-	UnTyped map[string]any
 }
 
 func deployAppFromFolder(
@@ -189,7 +181,7 @@ func deployAppFromFolder(
 	ctx context.Context,
 	path string,
 	deployCfg model.DeployConfig,
-	preCalculatedAppCfg *PreCalculatedAppConfig,
+	preCalculatedAppCfg *model.PreCalculatedAppConfig,
 ) (model.SingleAppDeploySuccessType, error) {
 
 	cfgDir := util_work_dir.NewWorkDir(path)

@@ -81,10 +81,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 						NewDefaultDeployConfig().
 						WithRetries(1).
 						WithForce(false)
-					_, err := w.deployService.DeployAppFromFolder(ctx, app.Path, deployCfg, &PreCalculatedAppConfig{
-						Typed:   app.AppConfig,
-						UnTyped: app.AppConfigUntyped,
-					})
+					_, err := w.deployService.DeployAppFromFolder(ctx, app.Path, deployCfg, app.ToPreCalculatedApoConf())
 					if err != nil {
 						fmt.Printf("Error deploying app %s: %v\n", app.AppConfig.App, err)
 					}

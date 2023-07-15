@@ -56,6 +56,11 @@ type Mount struct {
 	Destination string `yaml:"destination" toml:"destination"`
 }
 
+type PreCalculatedAppConfig struct {
+	Typed   AppConfig
+	UnTyped map[string]any
+}
+
 type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`

@@ -51,6 +51,13 @@ type AppNode struct {
 	AppConfigErr     error
 }
 
+func (s AppNode) ToPreCalculatedApoConf() *PreCalculatedAppConfig {
+	return &PreCalculatedAppConfig{
+		Typed:   s.AppConfig,
+		UnTyped: s.AppConfigUntyped,
+	}
+}
+
 func (s AppNode) ErrCause() error {
 	if s.AppConfigErr != nil {
 		return s.AppConfigErr
