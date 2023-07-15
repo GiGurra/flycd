@@ -181,7 +181,7 @@ volumes:
     # flycd will automatically use actual app instance count if it's higher than this.
     # However, if fly.io wants to scale higher than this, it won't be able to until you increase the count.
     # For most applications you probably won't use fly.io auto-scaling in combination with volumes :S 
-    count: 3 
+    count: 3
 mounts:
   - destination: /mnt/my-volume-goes-here
     source: my-volume
@@ -238,6 +238,9 @@ Check the [examples](examples) directory for more ideas.
 
 * Performance: It needs some way of determining if webhooks interfere with each other. Right now they are just executed
   one at a time (they are queued to a single worker to avoid races)..
+* Performance: It needs some way of determining what parts of the config tree have changed, and only traverse and
+  evaluate those parts. Right now it traverses the whole config tree every time when receiving a webhook and looks for
+  potential modifications.
 * Consistency: It needs some persistence of incoming webhooks. Right now if FlyCD goes down during a deployment, the
   deployment will be lost.
 * Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like's ArgoCD's 3-minute polling.
@@ -273,32 +276,35 @@ Check the [examples](examples) directory for more ideas.
 * Docker (if building the standalone docker image)
 
 #### To build the application:
+
 ```
 go build ./...
 ```
 
 #### To install `flycd` from source:
+
 ```
 go install .
 ```
 
 #### To run the application from source without installing:
+
 ```
 go run .
 ```
 
 #### To run tests
+
 ```
 mockery # generates mocks
 go test ./...
 ```
 
 #### To build the standalone docker image:
+
 ```
 docker build -t yourName/flycd:latest .
 ```
-
-
 
 ## Links/References
 
