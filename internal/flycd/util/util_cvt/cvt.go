@@ -5,20 +5,29 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func MapToStruct[T any](m map[string]any) (T, error) {
+func MapYamlToStruct[T any](m map[string]any) (T, error) {
 	var result T
-	err := mapstructure.Decode(m, &result)
+	err := structDecode(m, &result)
 	if err != nil {
 		return result, fmt.Errorf("failed to decode map to struct: %w", err)
 	}
 	return result, nil
 }
 
-func StructToMap[T any](s T) (map[string]any, error) {
-	var result map[string]any
-	err := mapstructure.Decode(s, &result)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode struct to map: %w", err)
+// Decode takes an input structure and uses reflection to translate it to
+// the output structure. output must be a pointer to a map or struct.
+func structDecode(mp interface{}, strct interface{}) error {
+	config := &mapstructure.DecoderConfig{
+		Metadata:         nil,
+		Result:           strct,
+		WeaklyTypedInput: true,
+		TagName:          "yaml",
 	}
-	return result, nil
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(mp)
 }

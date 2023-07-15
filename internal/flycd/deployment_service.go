@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/fly_client"
 	"github.com/gigurra/flycd/internal/flycd/model"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cvt"
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_math"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
@@ -572,13 +573,20 @@ func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
 }
 
 func readAppConfigs(path string) (model.AppConfig, map[string]any, error) {
-	typed, err := readAppConfigTyped(path)
-	if err != nil {
-		return model.AppConfig{}, nil, err
-	}
+
 	untyped, err := readAppConfigUntyped(path)
 	if err != nil {
-		return model.AppConfig{}, nil, err
+		return model.AppConfig{}, untyped, err
+	}
+
+	typed, err := util_cvt.MapYamlToStruct[model.AppConfig](untyped)
+	if err != nil {
+		return model.AppConfig{}, untyped, fmt.Errorf("error converting untyped app.yaml to typed for app @ %s: %w", path, err)
+	}
+
+	err = typed.Validate()
+	if err != nil {
+		return typed, untyped, fmt.Errorf("error validating app.yaml from folder %s: %w", path, err)
 	}
 
 	return typed, untyped, nil
