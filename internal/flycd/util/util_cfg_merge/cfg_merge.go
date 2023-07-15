@@ -30,6 +30,10 @@ var (
 
 func doMerge(src, dst interface{}) (interface{}, error) {
 
+	if src == nil {
+		return dst, nil
+	}
+
 	if dst == nil {
 		return src, nil
 	}
