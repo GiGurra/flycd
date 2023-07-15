@@ -106,6 +106,11 @@ func traverseProject(
 		}
 	}
 
+	ctx.Parents = append(ctx.Parents, project.ProjectConfig)
+	defer func() {
+		ctx.Parents = ctx.Parents[:len(ctx.Parents)-1]
+	}()
+
 	defer func() {
 		if ctx.EndProjectCb != nil {
 			err := ctx.EndProjectCb(ctx, project)
