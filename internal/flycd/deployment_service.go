@@ -256,8 +256,8 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		return fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	deployedVolumesByName := lo.GroupBy(allDeployedVolumes, func(volume model.VolumeState) string {
-		return volume.Name
+	deployedVolumesByNameAndRegion := lo.GroupBy(allDeployedVolumes, func(volume model.VolumeState) string {
+		return volume.Name + volume.Region
 	})
 
 	minVolumeCount, err := getMinimumVolumeCount(input)
@@ -278,10 +278,10 @@ func runIntermediateVolumeSteps(input deployInput) error {
 
 		fmt.Printf(" - %d x '%s' of %d GB in region %s \n", minVolumeCount, wantedVolume.Name, wantedVolume.SizeGb, wantedVolume.Region)
 
-		deployedVolumes := deployedVolumesByName[wantedVolume.Name]
+		deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+wantedVolume.Region]
 
 		// First bring all deployed volumes up to our required size
-		for _, currentVolume := range deployedVolumes {
+		for _, currentVolume := range deployedVolumesThisRegion {
 			if currentVolume.SizeGb < wantedVolume.SizeGb {
 				fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, currentVolume.Name, currentVolume.SizeGb, wantedVolume.SizeGb)
 				err := input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, currentVolume.ID, wantedVolume.SizeGb)
@@ -293,7 +293,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		}
 
 		// Create new needed volumes
-		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(deployedVolumes))
+		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(deployedVolumesThisRegion))
 		for i := 0; i < newVolumesNeeded; i++ {
 			fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
 			_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)

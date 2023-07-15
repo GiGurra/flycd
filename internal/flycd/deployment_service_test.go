@@ -111,12 +111,13 @@ func TestDeployFromFolder_appMergingConfig(t *testing.T) {
 func TestDeployFromFolder_withVolumes(t *testing.T) {
 
 	for _, test := range []struct {
-		name               string
-		deployCfg          model.DeployConfig
-		numDeployedVolumes int
-		deployedAppScale   int
-		numExtendedVolumes int
-		numCreatedVolumes  int
+		name                  string
+		deployCfg             model.DeployConfig
+		numDeployedVolumes    int
+		deployedVolumesRegion string
+		deployedAppScale      int
+		numExtendedVolumes    int
+		numCreatedVolumes     int
 	}{
 		{
 			name: "create volumes - current app scale decides",
@@ -124,10 +125,11 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				NewDefaultDeployConfig().
 				WithAbortOnFirstError(true).
 				WithRetries(0),
-			numDeployedVolumes: 0,
-			deployedAppScale:   4,
-			numExtendedVolumes: 0,
-			numCreatedVolumes:  4,
+			numDeployedVolumes:    0,
+			deployedAppScale:      4,
+			numExtendedVolumes:    0,
+			numCreatedVolumes:     4,
+			deployedVolumesRegion: "arn",
 		},
 		{
 			name: "create volumes - minimum services count decides",
@@ -135,10 +137,11 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				NewDefaultDeployConfig().
 				WithAbortOnFirstError(true).
 				WithRetries(0),
-			numDeployedVolumes: 0,
-			deployedAppScale:   0,
-			numExtendedVolumes: 0,
-			numCreatedVolumes:  3,
+			numDeployedVolumes:    0,
+			deployedAppScale:      0,
+			numExtendedVolumes:    0,
+			numCreatedVolumes:     3,
+			deployedVolumesRegion: "arn",
 		},
 		{
 			name: "resize and create volumes",
@@ -146,10 +149,23 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 				NewDefaultDeployConfig().
 				WithAbortOnFirstError(true).
 				WithRetries(0),
-			numDeployedVolumes: 2,
-			deployedAppScale:   0,
-			numExtendedVolumes: 2,
-			numCreatedVolumes:  1,
+			numDeployedVolumes:    2,
+			deployedAppScale:      0,
+			numExtendedVolumes:    2,
+			numCreatedVolumes:     1,
+			deployedVolumesRegion: "arn",
+		},
+		{
+			name: "create volumes when existing ones are in the wrong region",
+			deployCfg: model.
+				NewDefaultDeployConfig().
+				WithAbortOnFirstError(true).
+				WithRetries(0),
+			numDeployedVolumes:    2,
+			deployedAppScale:      0,
+			numExtendedVolumes:    2,
+			numCreatedVolumes:     1,
+			deployedVolumesRegion: "arn",
 		},
 	} {
 
@@ -177,6 +193,7 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 					ID:     fmt.Sprintf("volume-%d", i),
 					Name:   "data",
 					SizeGb: 9,
+					Region: test.deployedVolumesRegion,
 				})
 			}
 			flyClient.
