@@ -264,6 +264,42 @@ Check the [examples](examples) directory for more ideas.
 * better logging
 * fly.io native postgres, redis, etc...
 
+## Building from source
+
+#### Prerequisites
+
+* Go 1.20
+* Mockery (if running tests, for generating mocks)
+* Docker (if building the standalone docker image)
+
+#### To build the application:
+```
+go build ./...
+```
+
+#### To install `flycd` from source:
+```
+go install .
+```
+
+#### To run the application from source without installing:
+```
+go run .
+```
+
+#### To run tests
+```
+mockery # generates mocks
+go test ./...
+```
+
+#### To build the standalone docker image:
+```
+docker build -t yourName/flycd:latest .
+```
+
+
+
 ## Links/References
 
 * [Git-Ops](https://www.redhat.com/en/topics/devops/what-is-gitops#:~:text=GitOps%20uses%20Git%20repositories%20as,set%20for%20the%20application%20framework.)
