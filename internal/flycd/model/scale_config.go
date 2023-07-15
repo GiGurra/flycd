@@ -6,5 +6,14 @@ type ScaleState struct {
 	CPUKind  string         `json:"CPUKind"`
 	CPUs     int            `json:"CPUs"`
 	MemoryMB int            `json:"Memory"`
-	Regions  map[string]int `json:"RegionsWPrimaryLast"`
+	Regions  map[string]int `json:"Regions"`
+}
+
+func (s ScaleState) IncludesRegion(region string) bool {
+	_, ok := s.Regions[region]
+	return ok
+}
+
+func (s ScaleState) CountInRegion(region string) int {
+	return s.Regions[region]
 }

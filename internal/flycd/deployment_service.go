@@ -260,7 +260,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		return volume.Name + volume.Region
 	})
 
-	minVolumeCountByServices, err := getMinimumVolumeCount(input)
+	minVolumeCountByServicesPerRegion, err := getMinimumVolumeCountPerRegion(input)
 	if err != nil {
 		return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
 	}
@@ -272,7 +272,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 
 		for _, wantedVolume := range input.cfgTyped.Volumes {
 
-			wantedCount := util_math.Max(wantedVolume.Count, minVolumeCountByServices)
+			wantedCount := util_math.Max(wantedVolume.Count, minVolumeCountByServicesPerRegion[region])
 
 			fmt.Printf("Volumes '%s': We need %d x %d GB in region %s \n", wantedVolume.Name, wantedCount, wantedVolume.SizeGb, region)
 
@@ -312,33 +312,40 @@ func runIntermediateVolumeSteps(input deployInput) error {
 	return nil
 }
 
-func getMinimumVolumeCount(input deployInput) (int, error) {
+func getMinimumVolumeCountPerRegion(input deployInput) (map[string]int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
 	minSvcReq := input.cfgTyped.MinMachinesRunning()
 
+	result := map[string]int{}
+
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
 	if err != nil {
-		return 0, fmt.Errorf("error getting app scales for app %s: %w", input.cfgTyped.App, err)
+		return result, fmt.Errorf("error getting app scales for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	// count app processes
-	appProcessScales := lo.Map(scales, func(scale model.ScaleState, _ int) int {
-		if scale.Process == "app" {
-			return scale.Count
-		} else {
-			return 0
+	for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
+
+		// count app processes
+		appProcessScales := lo.Map(scales, func(scale model.ScaleState, _ int) int {
+			if scale.Process == "app" && scale.IncludesRegion(region) {
+				return scale.CountInRegion(region)
+			} else {
+				return 0
+			}
+		})
+		appProcessCount := lo.Reduce(appProcessScales, func(agg int, item int, _ int) int {
+			return agg + item
+		}, 0)
+		if appProcessCount > minSvcReq {
+			minSvcReq = appProcessCount
 		}
-	})
-	appProcessCount := lo.Reduce(appProcessScales, func(agg int, item int, _ int) int {
-		return agg + item
-	}, 0)
-	if appProcessCount > minSvcReq {
-		minSvcReq = appProcessCount
+
+		result[region] = minSvcReq
 	}
 
-	return minSvcReq, nil
+	return result, nil
 }
 
 func deployAppToFly(

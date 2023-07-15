@@ -208,6 +208,7 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 					{
 						Process: "app",
 						Count:   test.deployedAppScale,
+						Regions: map[string]int{"arn": test.deployedAppScale},
 					},
 				}, nil)
 
