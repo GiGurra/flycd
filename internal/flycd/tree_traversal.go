@@ -12,31 +12,25 @@ import (
 	"strings"
 )
 
-type seen struct {
-	Apps     map[string]bool
-	Projects map[string]bool
-}
-
-func newSeen() seen {
-	return seen{
-		Apps:     make(map[string]bool),
-		Projects: make(map[string]bool),
-	}
-}
-
 func TraverseDeepAppTree(
-	ctx context.Context,
 	path string,
-	opts model.TraverseAppTreeOptions,
+	ctx model.TraverseAppTreeContext,
 ) error {
-	return doTraverseDeepAppTree(ctx, newSeen(), path, opts)
+	if ctx.Context == nil {
+		ctx.Context = context.Background()
+	}
+	if ctx.Seen.Apps == nil {
+		ctx.Seen.Apps = map[string]bool{}
+	}
+	if ctx.Seen.Projects == nil {
+		ctx.Seen.Projects = map[string]bool{}
+	}
+	return doTraverseDeepAppTree(path, ctx)
 }
 
 func doTraverseDeepAppTree(
-	ctx context.Context,
-	seen seen,
 	path string,
-	opts model.TraverseAppTreeOptions,
+	ctx model.TraverseAppTreeContext,
 ) error {
 
 	analysis, err := scan(path)
@@ -50,9 +44,9 @@ func doTraverseDeepAppTree(
 	// Must traverse projects before apps, to ensure desired project wrapping of apps in case of cyclic dependencies
 	for _, project := range projects {
 
-		if seen.Projects[project.ProjectConfig.Project] {
-			if opts.SkippedProjectCb != nil {
-				err := opts.SkippedProjectCb(project)
+		if ctx.Seen.Projects[project.ProjectConfig.Project] {
+			if ctx.SkippedProjectCb != nil {
+				err := ctx.SkippedProjectCb(project)
 				if err != nil {
 					return fmt.Errorf("error calling function for skipped project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 				}
@@ -60,9 +54,9 @@ func doTraverseDeepAppTree(
 			continue
 		}
 
-		seen.Projects[project.ProjectConfig.Project] = true
+		ctx.Seen.Projects[project.ProjectConfig.Project] = true
 
-		if err := traverseProject(ctx, seen, opts, project); err != nil {
+		if err := traverseProject(ctx, project); err != nil {
 			return err
 		}
 	}
@@ -70,9 +64,9 @@ func doTraverseDeepAppTree(
 	for _, app := range apps {
 		if app.IsValidApp() {
 
-			if seen.Apps[app.AppConfig.App] {
-				if opts.SkippedAppCb != nil {
-					err := opts.SkippedAppCb(app)
+			if ctx.Seen.Apps[app.AppConfig.App] {
+				if ctx.SkippedAppCb != nil {
+					err := ctx.SkippedAppCb(app)
 					if err != nil {
 						return fmt.Errorf("error calling function for skipped app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 					}
@@ -80,17 +74,17 @@ func doTraverseDeepAppTree(
 				continue
 			}
 
-			seen.Apps[app.AppConfig.App] = true
+			ctx.Seen.Apps[app.AppConfig.App] = true
 
-			if opts.ValidAppCb != nil {
-				err := opts.ValidAppCb(app)
+			if ctx.ValidAppCb != nil {
+				err := ctx.ValidAppCb(app)
 				if err != nil {
 					return fmt.Errorf("error calling function for valid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 				}
 			}
 		} else {
-			if opts.InvalidAppCb != nil {
-				err := opts.InvalidAppCb(app)
+			if ctx.InvalidAppCb != nil {
+				err := ctx.InvalidAppCb(app)
 				if err != nil {
 					return fmt.Errorf("error calling function for invalid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 				}
@@ -102,21 +96,19 @@ func doTraverseDeepAppTree(
 }
 
 func traverseProject(
-	ctx context.Context,
-	seen seen,
-	opts model.TraverseAppTreeOptions,
+	ctx model.TraverseAppTreeContext,
 	project model.ProjectNode,
 ) error {
-	if opts.BeginProjectCb != nil {
-		err := opts.BeginProjectCb(project)
+	if ctx.BeginProjectCb != nil {
+		err := ctx.BeginProjectCb(project)
 		if err != nil {
 			return fmt.Errorf("error calling function for valid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 		}
 	}
 
 	defer func() {
-		if opts.EndProjectCb != nil {
-			err := opts.EndProjectCb(project)
+		if ctx.EndProjectCb != nil {
+			err := ctx.EndProjectCb(project)
 			if err != nil {
 				fmt.Printf("error calling function for valid project %s @ %s: %v", project.ProjectConfig.Project, project.Path, err)
 			}
@@ -134,7 +126,7 @@ func traverseProject(
 					return filepath.Join(project.Path, project.ProjectConfig.Source.Path)
 				}
 			}()
-			err := doTraverseDeepAppTree(ctx, seen, absPath, opts)
+			err := doTraverseDeepAppTree(absPath, ctx)
 			if err != nil {
 				return fmt.Errorf("error traversing local project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 			}
@@ -154,7 +146,7 @@ func traverseProject(
 				if err != nil {
 					return fmt.Errorf("cloning project %s: %w", project.ProjectConfig.Project, err)
 				} else {
-					err := doTraverseDeepAppTree(ctx, seen, filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), opts)
+					err := doTraverseDeepAppTree(filepath.Join(cloneResult.Dir.Cwd(), project.ProjectConfig.Source.Path), ctx)
 					if err != nil {
 						return fmt.Errorf("error traversing cloned project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 					}

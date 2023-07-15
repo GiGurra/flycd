@@ -1,19 +1,38 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/samber/lo"
 	"os"
 )
 
-type TraverseAppTreeOptions struct {
+type Seen struct {
+	Apps     map[string]bool
+	Projects map[string]bool
+}
+
+func NewSeen() Seen {
+	return Seen{
+		Apps:     make(map[string]bool),
+		Projects: make(map[string]bool),
+	}
+}
+
+type TraverseAppTreeContext struct {
+	context.Context
 	ValidAppCb       func(AppNode) error
 	InvalidAppCb     func(AppNode) error
 	SkippedAppCb     func(AppNode) error
 	BeginProjectCb   func(ProjectNode) error
 	EndProjectCb     func(ProjectNode) error
 	SkippedProjectCb func(ProjectNode) error
+	Seen             Seen
+	Parents          []ProjectConfig
 }
+
+// provet that TraverseAppTreeContext implements the context interface
+var _ context.Context = TraverseAppTreeContext{}
 
 type TraversalStepAnalysis struct {
 	Path                  string

@@ -41,7 +41,8 @@ var Cmd = &cobra.Command{
 		projectRepos := make([]model.ProjectNode, 0)
 
 		ctx := context.Background()
-		err = flycd.TraverseDeepAppTree(ctx, path, model.TraverseAppTreeOptions{
+		err = flycd.TraverseDeepAppTree(path, model.TraverseAppTreeContext{
+			Context: ctx,
 			ValidAppCb: func(node model.AppNode) error {
 				fmt.Printf("Checking app %s @ %s...\n", node.AppConfig.App, node.Path)
 				if node.AppConfig.Source.Repo != "" {

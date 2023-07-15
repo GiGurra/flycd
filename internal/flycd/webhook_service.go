@@ -66,7 +66,8 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 
 		matchedProjCount := 0
 		ctx := context.Background()
-		err := TraverseDeepAppTree(ctx, path, model.TraverseAppTreeOptions{
+		err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
+			Context: ctx,
 			ValidAppCb: func(app model.AppNode) error {
 
 				if matchedProjCount > 0 || matchesApp(app, payload) {
