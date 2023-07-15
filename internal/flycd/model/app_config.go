@@ -60,7 +60,7 @@ type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
 	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
-	ExtraRegions  []string          `yaml:"ExtraRegions,omitempty" toml:"ExtraRegions,omitempty"`
+	ExtraRegions  []string          `yaml:"extra_regions,omitempty" toml:"extra_regions,omitempty"`
 	Source        Source            `yaml:"source,omitempty" toml:"source"`
 	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
 	Services      []Service         `yaml:"services,omitempty" toml:"services,omitempty"`
