@@ -6,5 +6,5 @@ type ScaleState struct {
 	CPUKind  string         `json:"CPUKind"`
 	CPUs     int            `json:"CPUs"`
 	MemoryMB int            `json:"Memory"`
-	Regions  map[string]int `json:"Regions"`
+	Regions  map[string]int `json:"RegionsWPrimaryLast"`
 }

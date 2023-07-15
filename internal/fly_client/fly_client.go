@@ -174,7 +174,7 @@ func (c FlyClientImpl) CreateVolume(
 ) (model.VolumeState, error) {
 
 	result, err := util_cmd.
-		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "--app", app, "-y", "--json").
+		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
 		WithTimeout(60 * time.Second).
 		WithTimeoutRetries(0).
 		Run(ctx)

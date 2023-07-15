@@ -265,18 +265,16 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCountByServices, input.cfgTyped.App)
-
 	numExtendedVolumes := 0
 	numCreatedVolumes := 0
 
-	for _, region := range input.cfgTyped.Regions() {
+	for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
 
 		for _, wantedVolume := range input.cfgTyped.Volumes {
 
 			wantedCount := util_math.Max(wantedVolume.Count, minVolumeCountByServices)
 
-			fmt.Printf(" - %d x '%s' of %d GB in region %s \n", wantedCount, wantedVolume.Name, wantedVolume.SizeGb, region)
+			fmt.Printf("Volumes '%s': We need %d x %d GB in region %s \n", wantedVolume.Name, wantedCount, wantedVolume.SizeGb, region)
 
 			deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+region]
 
@@ -369,7 +367,7 @@ func deployAppToFly(
 			if err != nil {
 				return "", err
 			}
-			for _, region := range input.cfgTyped.Regions() {
+			for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
 				fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
 				err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
 				if err != nil {
@@ -392,7 +390,7 @@ func deployAppToFly(
 			return "", err
 		}
 		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		for _, region := range input.cfgTyped.Regions() {
+		for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
 			fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
 			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
 		}

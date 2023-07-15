@@ -73,10 +73,10 @@ type AppConfig struct {
 	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
 }
 
-func (a *AppConfig) Regions() []string {
+func (a *AppConfig) RegionsWPrimaryLast() []string {
 	result := []string{}
-	result = append(result, a.PrimaryRegion)
 	result = append(result, a.ExtraRegions...)
+	result = append(result, a.PrimaryRegion) // last to ensure we deploy it last (saves hash values)
 	return lo.Uniq(result)
 }
 
