@@ -121,6 +121,10 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 		return fmt.Errorf("app name is required")
 	}
 
+	if a.PrimaryRegion == "" {
+		return fmt.Errorf("primary_region is required")
+	}
+
 	opts := NewValidateAppConfigOptions()
 	if len(options) > 0 {
 		opts = options[0]

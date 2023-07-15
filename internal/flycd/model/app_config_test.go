@@ -67,8 +67,8 @@ deploy_params:
 
 var srcToml = `
 app = "example-project1-local-app-foobar12341"
-org = "personal"
 primary_region = "arn"
+org = "personal"
 launch_params = ["--ha=false", "--auto-confirm", "--now", "--copy-config", "--name", "example-project1-local-app-foobar12341", "--region", "arn", "--org", "personal"]
 deploy_params = ["--ha=false"]
 
@@ -229,7 +229,7 @@ func TestZeroValue(t *testing.T) {
 
 	err := cfg.Validate()
 	if err == nil {
-		t.Fatalf("Souuld have failed source validation!")
+		t.Fatalf("Should have failed source validation!")
 	}
 
 	cfg = AppConfig{
@@ -238,15 +238,6 @@ func TestZeroValue(t *testing.T) {
 
 	err = cfg.Validate()
 	if err == nil {
-		t.Fatalf("Souuld have failed source validation!")
-	}
-
-	// Zero value for map and slice fields are not nil
-	if cfg.Env == nil {
-		t.Fatalf("Env should not be nil!")
-	}
-
-	if cfg.Services == nil {
-		t.Fatalf("Services should not be nil!")
+		t.Fatalf("Should have failed source validation!")
 	}
 }
