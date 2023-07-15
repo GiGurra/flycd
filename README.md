@@ -175,6 +175,7 @@ env:
 #   but no less than 1. So if you have min_machines_running: 0, you will always have at least 1 volume instance.
 volumes:
   - name: my-volume
+    # size_gb: can be increased later, but cannot be reduced (fly.io limitation)
     size_gb: 10
     # count: should be enough to cover the number of app instances.
     # flycd will automatically use actual app instance count if it's higher than this.
