@@ -6,9 +6,9 @@ import (
 )
 
 type CommonValues struct {
+	Defaults        map[string]any `yaml:"defaults" toml:"defaults"`
 	ProjectDefaults map[string]any `yaml:"project_defaults" toml:"project_defaults"`
 	AppDefaults     map[string]any `yaml:"app_defaults" toml:"app_defaults"`
-	Defaults        map[string]any `yaml:"defaults" toml:"defaults"`
 }
 
 type ProjectConfig struct {
