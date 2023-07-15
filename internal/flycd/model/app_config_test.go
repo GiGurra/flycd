@@ -269,6 +269,89 @@ func TestAppConfig_CalcScalePerRegion_default_scale(t *testing.T) {
 		t.Fatalf("Scales are not equal: %v", diff)
 	}
 }
+func TestAppConfig_CalcScalePerRegion_primary_region_scale(t *testing.T) {
+
+	cfg := AppConfig{
+		PrimaryRegion: "arn",
+		PrimaryRegionScale: &AppScaleConfig{
+			Min:             4,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+		DefaultScale: &AppScaleConfig{
+			Min:             3,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+		HttpService: &HttpService{
+			InternalPort:       80,
+			AutoStopMachines:   true,
+			AutoStartMachines:  true,
+			MinMachinesRunning: 2,
+			Concurrency: Concurrency{
+				Type:      "requests",
+				SoftLimit: 200,
+				HardLimit: 250,
+			},
+		},
+	}
+
+	wanted := map[string]AppScaleConfig{
+		"arn": {
+			Min:             4,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+	}
+	actual := cfg.CalcScalePerRegion()
+
+	diff := cmp.Diff(wanted, actual)
+	if diff != "" {
+		t.Fatalf("Scales are not equal: %v", diff)
+	}
+}
+func TestAppConfig_CalcScalePerRegion_region_scale(t *testing.T) {
+
+	cfg := AppConfig{
+		PrimaryRegion: "arn",
+		OtherRegionScales: map[string]AppScaleConfig{
+			"arn": {
+				Min:   4,
+				Fixed: nil,
+			},
+		},
+		DefaultScale: &AppScaleConfig{
+			Min:             3,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+		HttpService: &HttpService{
+			InternalPort:       80,
+			AutoStopMachines:   true,
+			AutoStartMachines:  true,
+			MinMachinesRunning: 2,
+			Concurrency: Concurrency{
+				Type:      "requests",
+				SoftLimit: 200,
+				HardLimit: 250,
+			},
+		},
+	}
+
+	wanted := map[string]AppScaleConfig{
+		"arn": {
+			Min:             4,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+	}
+	actual := cfg.CalcScalePerRegion()
+
+	diff := cmp.Diff(wanted, actual)
+	if diff != "" {
+		t.Fatalf("Scales are not equal: %v", diff)
+	}
+}
 
 func TestReadFlyToml(t *testing.T) {
 
