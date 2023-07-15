@@ -7,21 +7,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type CommonParams struct {
-	AppDefaults      map[string]any    `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
-	AppSubstitutions map[string]string `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
-	AppOverrides     map[string]any    `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
+type CommonAppConfig struct {
+	AppDefaults      map[string]any `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
+	AppSubstitutions map[string]any `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
+	AppOverrides     map[string]any `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
 }
 
-func (c CommonParams) Plus(other CommonParams) CommonParams {
-	return CommonParams{
+func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
+	return CommonAppConfig{
 		AppDefaults:      util_cfg_merge.Merge(c.AppDefaults, other.AppDefaults),
 		AppOverrides:     util_cfg_merge.Merge(c.AppOverrides, other.AppOverrides),
 		AppSubstitutions: util_cfg_merge.Merge(c.AppSubstitutions, other.AppSubstitutions),
 	}
 }
 
-func (c CommonParams) MakeAppConfig(appYaml []byte) (AppConfig, map[string]any, error) {
+func (c CommonAppConfig) MakeAppConfig(appYaml []byte) (AppConfig, map[string]any, error) {
 
 	untyped := make(map[string]any)
 

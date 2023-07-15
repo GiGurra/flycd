@@ -5,10 +5,10 @@ import (
 	"reflect"
 )
 
-func Merge[T any](base map[string]T, overlay map[string]T) map[string]T {
+func Merge(base map[string]any, overlay map[string]any) map[string]any {
 	merged := doMerge(overlay, base)
 
-	result, ok := merged.(map[string]T)
+	result, ok := merged.(map[string]any)
 	if !ok {
 		panic("Should never be possible: failed to cast merged map to map[string]any")
 	}

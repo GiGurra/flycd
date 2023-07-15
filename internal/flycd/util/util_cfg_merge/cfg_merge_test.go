@@ -58,3 +58,14 @@ func TestMerge_Deep(t *testing.T) {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
 }
+
+func TestMerge_NilNil(t *testing.T) {
+	var base map[string]any = nil
+	var overlay map[string]any = nil
+	var expected map[string]any = nil
+
+	actual := Merge(base, overlay)
+	if diff := cmp.Diff(actual, expected); diff != "" {
+		t.Fatalf("Expected %v, diff: %s", expected, diff)
+	}
+}

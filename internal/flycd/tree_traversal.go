@@ -33,7 +33,7 @@ func doTraverseDeepAppTree(
 	ctx model.TraverseAppTreeContext,
 ) error {
 
-	analysis, err := scan(path)
+	analysis, err := scan(ctx, path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -95,6 +95,19 @@ func doTraverseDeepAppTree(
 	return nil
 }
 
+func calcCommonAppCfg(projectConfigs []model.ProjectConfig) (model.CommonAppConfig, error) {
+	commonAppCfg := model.CommonAppConfig{}
+	for _, projectCfg := range projectConfigs {
+		err := projectCfg.Validate()
+		if err != nil {
+			return commonAppCfg, fmt.Errorf("error validating project config %s: %w", projectCfg.Project, err)
+		} else {
+			commonAppCfg = commonAppCfg.Plus(projectCfg.Common)
+		}
+	}
+	return commonAppCfg, nil
+}
+
 func traverseProject(
 	ctx model.TraverseAppTreeContext,
 	project model.ProjectNode,
@@ -107,7 +120,14 @@ func traverseProject(
 	}
 
 	ctx.Parents = append(ctx.Parents, project.ProjectConfig)
+	commonAppCfgBefore := ctx.CommonAppCfg
+	CommonAppCfgAfter, err := calcCommonAppCfg(ctx.Parents)
+	if err != nil {
+		return fmt.Errorf("error calculating common app config for project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
+	}
+	ctx.CommonAppCfg = CommonAppCfgAfter
 	defer func() {
+		ctx.CommonAppCfg = commonAppCfgBefore
 		ctx.Parents = ctx.Parents[:len(ctx.Parents)-1]
 	}()
 
@@ -172,7 +192,10 @@ func traverseProject(
 	return nil
 }
 
-func scan(inputPath string) (model.SpecNode, error) {
+func scan(
+	ctx model.TraverseAppTreeContext,
+	inputPath string,
+) (model.SpecNode, error) {
 
 	result := model.SpecNode{
 		Path:     inputPath,
@@ -198,31 +221,15 @@ func scan(inputPath string) (model.SpecNode, error) {
 			return result, fmt.Errorf("error reading app.yaml: %w", err)
 		}
 
-		var appConfig model.AppConfig
-		err = yaml.Unmarshal([]byte(appYaml), &appConfig)
-		if err != nil {
-			result.App = &model.AppNode{
-				Path:               path,
-				AppYaml:            appYaml,
-				AppConfigSyntaxErr: err,
-			}
-		} else {
+		cfgTyped, cfgUntyped, errCfg :=
+			ctx.CommonAppCfg.MakeAppConfig([]byte(appYaml))
 
-			err = appConfig.Validate()
-			if err != nil {
-				result.App = &model.AppNode{
-					Path:            path,
-					AppYaml:         appYaml,
-					AppConfigSemErr: err,
-				}
-			} else {
-
-				result.App = &model.AppNode{
-					Path:      path,
-					AppYaml:   appYaml,
-					AppConfig: appConfig,
-				}
-			}
+		result.App = &model.AppNode{
+			Path:             path,
+			AppYaml:          appYaml,
+			AppConfigUntyped: cfgUntyped,
+			AppConfig:        cfgTyped,
+			AppConfigErr:     errCfg,
 		}
 	}
 
@@ -263,7 +270,7 @@ func scan(inputPath string) (model.SpecNode, error) {
 
 	if nodeInfo.HasProjectsDir {
 
-		child, err := scan(filepath.Join(path, "projects"))
+		child, err := scan(ctx, filepath.Join(path, "projects"))
 		if err != nil {
 			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -273,7 +280,7 @@ func scan(inputPath string) (model.SpecNode, error) {
 
 		children := make([]model.SpecNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := scan(filepath.Join(path, entry.Name()))
+			child, err := scan(ctx, filepath.Join(path, entry.Name()))
 			if err != nil {
 				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}

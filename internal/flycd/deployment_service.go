@@ -88,6 +88,7 @@ func deployAll(
 				})
 				return nil
 			} else {
+				deployCfg.CommonAppCfg = ctx.CommonAppCfg
 				res, err := deployAppFromFolder(flyClient, ctx, appNode.Path, deployCfg)
 				if err != nil {
 					result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
@@ -572,7 +573,7 @@ func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
 }
 
 func readAppConfigs(
-	common model.CommonParams,
+	common model.CommonAppConfig,
 	path string,
 ) (model.AppConfig, map[string]any, error) {
 

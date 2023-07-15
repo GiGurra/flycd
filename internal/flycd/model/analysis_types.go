@@ -29,6 +29,7 @@ type TraverseAppTreeContext struct {
 	SkippedProjectCb func(TraverseAppTreeContext, ProjectNode) error
 	Seen             Seen
 	Parents          []ProjectConfig
+	CommonAppCfg     CommonAppConfig
 }
 
 // provet that TraverseAppTreeContext implements the context interface
@@ -43,19 +44,16 @@ type TraversalStepAnalysis struct {
 }
 
 type AppNode struct {
-	Path               string
-	AppYaml            string
-	AppConfig          AppConfig
-	AppConfigSyntaxErr error
-	AppConfigSemErr    error
+	Path             string
+	AppYaml          string
+	AppConfigUntyped map[string]any
+	AppConfig        AppConfig
+	AppConfigErr     error
 }
 
 func (s AppNode) ErrCause() error {
-	if s.AppConfigSemErr != nil {
-		return s.AppConfigSemErr
-	}
-	if s.AppConfigSyntaxErr != nil {
-		return s.AppConfigSyntaxErr
+	if s.AppConfigErr != nil {
+		return s.AppConfigErr
 	}
 	return nil
 }
@@ -160,11 +158,11 @@ func (s AppNode) IsAppNode() bool {
 }
 
 func (s AppNode) IsAppSyntaxValid() bool {
-	return s.IsAppNode() && s.AppConfig.App != "" && s.AppConfigSyntaxErr == nil
+	return s.IsAppNode() && s.AppConfig.App != ""
 }
 
 func (s AppNode) IsValidApp() bool {
-	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigSemErr == nil
+	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigErr == nil
 }
 
 func (s ProjectNode) IsProjectNode() bool {
