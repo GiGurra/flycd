@@ -17,6 +17,7 @@ func TestMerge_TopLevel(t *testing.T) {
 		"foo": "baz",
 		"bar": "bar",
 	}
+
 	actual, err := Merge(base, overlay)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
