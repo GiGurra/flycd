@@ -22,7 +22,7 @@ func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	}
 }
 
-func (c CommonAppConfig) MakeAppConfig(appYaml []byte) (AppConfig, map[string]any, error) {
+func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppConfig, map[string]any, error) {
 
 	untypedLocal := make(map[string]any)
 
@@ -54,9 +54,11 @@ func (c CommonAppConfig) MakeAppConfig(appYaml []byte) (AppConfig, map[string]an
 		return typed, untyped, fmt.Errorf("error converting untyped app.yaml to typed: %w", err)
 	}
 
-	err = typed.Validate()
-	if err != nil {
-		return typed, untyped, fmt.Errorf("error validating app.yaml: %w", err)
+	if len(validate) == 0 || validate[0] {
+		err = typed.Validate()
+		if err != nil {
+			return typed, untyped, fmt.Errorf("error validating app.yaml: %w", err)
+		}
 	}
 
 	return typed, untyped, nil
