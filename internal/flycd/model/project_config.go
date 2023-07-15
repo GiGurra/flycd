@@ -10,13 +10,16 @@ type ProjectConfig struct {
 	Project string `yaml:"project" toml:"project"`
 	// Source Required. Where the app configs of the project are located
 	Source Source `yaml:"source" toml:"source"`
-	// TODO: Implement the below
-	// Org Optional. Default org to be used by all apps in the project
-	//Org string `yaml:"org" toml:"org"`
-	// PrimaryRegion Optional. Default region to be used by all apps in the project
-	//PrimaryRegion string `yaml:"primary_region" toml:"primary_region"`
-	// Env Optional. Default env vars to be used by all apps in the project
-	//Env map[string]string `yaml:"env" toml:"env"`
+	// Default values for the project and/or app configs. These can be overridden by the child project and child apps
+	// These defaults are applied only to child projects
+	ProjectDefaults map[string]any `yaml:"project_defaults" toml:"project_defaults"`
+	// These defaults are applied only to child apps
+	AppDefaults map[string]any `yaml:"app_defaults" toml:"app_defaults"`
+	// These defaults are applied to both child projects and child apps
+	Defaults map[string]any `yaml:"defaults" toml:"defaults"`
+	// Regex substitutions to be applied to all app configs, and child projects (everything recursively) in this project
+	// These override the values in the child apps and child projects, if the regex matches
+	Substitutions map[string]string `yaml:"substitutions" toml:"substitutions"`
 }
 
 func (cfg *ProjectConfig) Validate() error {
