@@ -26,3 +26,31 @@ func TestMerge_TopLevel(t *testing.T) {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
 }
+
+func TestMerge_Deep(t *testing.T) {
+	base := map[string]any{
+		"foo": map[string]any{
+			"bar": "bar",
+			"baz": "baz",
+		},
+	}
+	overlay := map[string]any{
+		"foo": map[string]any{
+			"bar": "baz",
+		},
+	}
+	expected := map[string]any{
+		"foo": map[string]any{
+			"bar": "baz",
+			"baz": "baz",
+		},
+	}
+
+	actual, err := Merge(base, overlay)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if diff := cmp.Diff(actual, expected); diff != "" {
+		t.Fatalf("Expected %v, diff: %s", expected, diff)
+	}
+}
