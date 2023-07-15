@@ -1,65 +1,59 @@
 package util_cfg_merge
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 )
 
-func Merge(base map[string]any, overlay map[string]any) (map[string]any, error) {
-	merged, err := doMerge(overlay, base)
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge overlay: %w", err)
-	}
+func Merge[T any](base map[string]T, overlay map[string]T) map[string]T {
+	merged := doMerge(overlay, base)
 
-	result, ok := merged.(map[string]any)
+	result, ok := merged.(map[string]T)
 	if !ok {
-		return nil, errors.New("failed to cast merged map to map[string]any")
+		panic("Should never be possible: failed to cast merged map to map[string]any")
 	}
 
-	return result, nil
+	return result
 }
 
 // Below is copy pasta from https://github.com/ieee0824/go-deepmerge,
 // which is also under MIT license.
-// + one nil fix
+// + one nil fix + no longer returning errors
 
-var (
-	TypeNotMatchErr = errors.New("type not match")
-)
+func doMerge(overlay, base interface{}) interface{} {
 
-func doMerge(src, dst interface{}) (interface{}, error) {
-
-	if src == nil {
-		return dst, nil
+	if overlay == nil {
+		return base
 	}
 
-	if dst == nil {
-		return src, nil
+	if base == nil {
+		return overlay
 	}
 
-	srcType := reflect.TypeOf(src)
-	dstType := reflect.TypeOf(dst)
-	if srcType.Kind() != dstType.Kind() {
-		return nil, TypeNotMatchErr
+	overlayType := reflect.TypeOf(overlay)
+	baseType := reflect.TypeOf(base)
+	if overlayType.Kind() != baseType.Kind() {
+		fmt.Printf(
+			"Returning overlay data without merge. "+
+				"Type mismatch in merge. overlay type: %v, base type: %v."+
+				"overlay data: %v, base data: %v", overlayType.Kind(), baseType.Kind(), overlay, base,
+		)
+		return overlay
 	}
 
-	switch srcType.Kind() {
+	switch overlayType.Kind() {
 	case reflect.Map:
-		srcMap := src.(map[string]interface{})
-		for k, dstVal := range dst.(map[string]interface{}) {
+		srcMap := overlay.(map[string]interface{})
+		for k, dstVal := range base.(map[string]interface{}) {
 			srcVal, ok := srcMap[k]
 			if !ok {
 				srcMap[k] = dstVal
 			} else {
-				mergedVal, err := doMerge(srcVal, dstVal)
-				if err != nil {
-					return nil, err
-				}
+				mergedVal := doMerge(srcVal, dstVal)
 				srcMap[k] = mergedVal
 			}
 		}
-		return src, nil
+		return overlay
 	case reflect.Slice:
 
 		// Here is how we differ from the go-deepmerge package: We do not merge arrays
@@ -68,14 +62,14 @@ func doMerge(src, dst interface{}) (interface{}, error) {
 		// In the future we might support intelligent merging of arrays (kustomize style),
 		// but for now we just replace them.
 
-		////return append(src.([]interface{}), dst.([]interface{})...), nil
-		//srcSlice := convertSlice(src)
-		//dstSlice := convertSlice(dst)
+		////return append(overlay.([]interface{}), base.([]interface{})...), nil
+		//srcSlice := convertSlice(overlay)
+		//dstSlice := convertSlice(base)
 		//return append(srcSlice, dstSlice...), nil
 
-		return src, nil
+		return overlay
 	default:
-		return src, nil
+		return overlay
 	}
 }
 

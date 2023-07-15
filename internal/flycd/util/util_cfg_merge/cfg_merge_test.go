@@ -25,10 +25,7 @@ func TestMerge_TopLevel(t *testing.T) {
 		"bo":  nil,
 	}
 
-	actual, err := Merge(base, overlay)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	actual := Merge(base, overlay)
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
@@ -56,10 +53,7 @@ func TestMerge_Deep(t *testing.T) {
 		},
 	}
 
-	actual, err := Merge(base, overlay)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	actual := Merge(base, overlay)
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
