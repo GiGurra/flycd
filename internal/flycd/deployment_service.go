@@ -242,6 +242,11 @@ func runIntermediateSteps(input deployInput) error {
 	return nil
 }
 
+type NameAndRegion struct {
+	Name   string
+	Region string
+}
+
 // runIntermediateVolumeSteps Here we analyse the deployed state
 // of volumes for this app vs the desired state and bring the
 // deployed state up to the desired state
@@ -256,67 +261,90 @@ func runIntermediateVolumeSteps(input deployInput) error {
 		return fmt.Errorf("error getting deployed volumes for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	deployedVolumesByNameAndRegion := lo.GroupBy(allDeployedVolumes, func(volume model.VolumeState) string {
-		return volume.Name + volume.Region
-	})
+	fmt.Printf("allDeployedVolumes: %v\n", allDeployedVolumes)
 
-	minVolumeCount, err := getMinimumVolumeCount(input)
-	if err != nil {
-		return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
-	}
+	return fmt.Errorf("not implemented yet")
+	/*
+		deployedVolumesByNameAndRegion := lo.GroupBy(allDeployedVolumes, func(volume model.VolumeState) NameAndRegion {
+			return NameAndRegion{volume.Name, volume.Region}
+		})
 
-	fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCount, input.cfgTyped.App)
+		deployedVolumesByName := lo.GroupBy(allDeployedVolumes, func(volume model.VolumeState) string {
+			return volume.Name
+		})
 
-	numExtendedVolumes := 0
-	numCreatedVolumes := 0
+		wantedVolumesByNameAndRegion := lo.GroupBy(input.cfgTyped.Volumes, func(volume model.VolumeConfig) NameAndRegion {
+			return NameAndRegion{volume.Name, volume.Region}
+		})
 
-	for _, wantedVolume := range input.cfgTyped.Volumes {
+		wantedVolumesByName := lo.GroupBy(input.cfgTyped.Volumes, func(volume model.VolumeConfig) string {
+			return volume.Name
+		})
 
-		if wantedVolume.Region == "" {
-			wantedVolume.Region = input.cfgTyped.PrimaryRegion
+		minVolumeCountByAppScale, err := getMinimumVolumeCount(input)
+		if err != nil {
+			return fmt.Errorf("error getting minimum volume count for app %s: %w", input.cfgTyped.App, err)
 		}
 
-		fmt.Printf(" - %d x '%s' of %d GB in region %s \n", minVolumeCount, wantedVolume.Name, wantedVolume.SizeGb, wantedVolume.Region)
+		fmt.Printf("We need %d instances of each volume for app %s \n", minVolumeCountByAppScale, input.cfgTyped.App)
 
-		deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+wantedVolume.Region]
+		extendedVolumes := []NameAndRegion{}
+		createdVolumes := []NameAndRegion{}
 
-		// First bring all deployed volumes up to our required size
-		for _, currentVolume := range deployedVolumesThisRegion {
-			if currentVolume.SizeGb < wantedVolume.SizeGb {
-				fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, currentVolume.Name, currentVolume.SizeGb, wantedVolume.SizeGb)
-				err := input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, currentVolume.ID, wantedVolume.SizeGb)
-				if err != nil {
-					return fmt.Errorf("error resizing volume %s for app %s: %w", currentVolume.ID, input.cfgTyped.App, err)
+		for name, configs := range wantedVolumesByName {
+
+		}*/
+
+	// First bring all deployed volumes up to our required size.
+	// This needs to be done in a separate loop to support the case of the user not specifying a region at all
+	/*
+		for _, wantedVolume := range input.cfgTyped.Volumes {
+
+			if wantedVolume.Region == "" {
+				wantedVolume.Region = input.cfgTyped.PrimaryRegion
+			}
+
+			fmt.Printf(" - %d x '%s' of %d GB in region %s \n", minVolumeCount, wantedVolume.Name, wantedVolume.SizeGb, wantedVolume.Region)
+
+			deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+wantedVolume.Region]
+
+			// First bring all deployed volumes up to our required size
+			for _, currentVolume := range deployedVolumesThisRegion {
+				if currentVolume.SizeGb < wantedVolume.SizeGb {
+					fmt.Printf("Resizing app %s's volume %s from %d to %d \n", input.cfgTyped.App, currentVolume.Name, currentVolume.SizeGb, wantedVolume.SizeGb)
+					err := input.flyClient.ExtendVolume(input.ctx, input.cfgTyped.App, currentVolume.ID, wantedVolume.SizeGb)
+					if err != nil {
+						return fmt.Errorf("error resizing volume %s for app %s: %w", currentVolume.ID, input.cfgTyped.App, err)
+					}
+					numExtendedVolumes++
 				}
-				numExtendedVolumes++
+			}
+
+			// Create new needed volumes
+			newVolumesNeeded := util_math.Max(0, minVolumeCount-len(deployedVolumesThisRegion))
+			for i := 0; i < newVolumesNeeded; i++ {
+				fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
+				_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)
+				if err != nil {
+					return fmt.Errorf("error creating volume %s for app %s: %w", wantedVolume.Name, input.cfgTyped.App, err)
+				}
+				numCreatedVolumes++
 			}
 		}
 
-		// Create new needed volumes
-		newVolumesNeeded := util_math.Max(0, minVolumeCount-len(deployedVolumesThisRegion))
-		for i := 0; i < newVolumesNeeded; i++ {
-			fmt.Printf("Creating new %s volume for app %s \n", wantedVolume.Name, input.cfgTyped.App)
-			_, err := input.flyClient.CreateVolume(input.ctx, input.cfgTyped.App, wantedVolume)
-			if err != nil {
-				return fmt.Errorf("error creating volume %s for app %s: %w", wantedVolume.Name, input.cfgTyped.App, err)
-			}
-			numCreatedVolumes++
+		if numExtendedVolumes > 0 || numCreatedVolumes > 0 {
+			fmt.Printf("Extended %d volumes and created %d new volumes for app %s \n", numExtendedVolumes, numCreatedVolumes, input.cfgTyped.App)
+		} else {
+			fmt.Printf("No change of volumes needed for app %s \n", input.cfgTyped.App)
 		}
-	}
-
-	if numExtendedVolumes > 0 || numCreatedVolumes > 0 {
-		fmt.Printf("Extended %d volumes and created %d new volumes for app %s \n", numExtendedVolumes, numCreatedVolumes, input.cfgTyped.App)
-	} else {
-		fmt.Printf("No change of volumes needed for app %s \n", input.cfgTyped.App)
-	}
-
+	*/
 	return nil
 }
 
 func getMinimumVolumeCount(input deployInput) (int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
-	minSvcReq := input.cfgTyped.MinMachinesRunning()
+	minSvcReq := util_math.Max(1, input.cfgTyped.CalcMinMachinesRunningByServices())
 
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
@@ -326,7 +354,7 @@ func getMinimumVolumeCount(input deployInput) (int, error) {
 
 	// count app processes
 	appProcessScales := lo.Map(scales, func(scale model.ScaleState, _ int) int {
-		if scale.Process == "app" {
+		if scale.Process == "app" && scale.IncludesRegion(input.cfgTyped.PrimaryRegion) {
 			return scale.Count
 		} else {
 			return 0

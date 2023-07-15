@@ -8,3 +8,8 @@ type ScaleState struct {
 	MemoryMB int            `json:"Memory"`
 	Regions  map[string]int `json:"Regions"`
 }
+
+func (s ScaleState) IncludesRegion(region string) bool {
+	_, ok := s.Regions[region]
+	return ok
+}

@@ -28,9 +28,9 @@ func (v VolumeState) ToConfig() VolumeConfig {
 }
 
 type VolumeScaleConfig struct {
-	Min   int `json:"min" yaml:"min"`
-	Max   int `json:"max" yaml:"max"`
-	Fixed int `json:"fixed" yaml:"fixed"`
+	Min   *int `json:"min" yaml:"min"`
+	Max   *int `json:"max" yaml:"max"`
+	Fixed *int `json:"fixed" yaml:"fixed"`
 }
 
 type VolumeConfig struct {

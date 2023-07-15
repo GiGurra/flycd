@@ -56,23 +56,95 @@ type Mount struct {
 	Destination string `yaml:"destination" toml:"destination"`
 }
 
-type AppConfig struct {
-	App           string            `yaml:"app" toml:"app"`
-	Org           string            `yaml:"org" toml:"org,omitempty"`
-	PrimaryRegion string            `yaml:"primary_region" toml:"primary_region,omitempty"`
-	Source        Source            `yaml:"source,omitempty" toml:"source"`
-	MergeCfg      MergeCfg          `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
-	Services      []Service         `yaml:"services" toml:"services,omitempty"`
-	HttpService   *HttpService      `yaml:"http_service" toml:"http_service,omitempty"`
-	LaunchParams  []string          `yaml:"launch_params" toml:"launch_params,omitempty"`
-	DeployParams  []string          `yaml:"deploy_params" toml:"deploy_params"`
-	Env           map[string]string `yaml:"env" toml:"env,omitempty"`
-	Build         map[string]any    `yaml:"build" toml:"build,omitempty"`
-	Mounts        []Mount           `yaml:"mounts" toml:"mounts,omitempty"` // fly.io only supports one mount :S
-	Volumes       []VolumeConfig    `yaml:"volumes" toml:"volumes,omitempty"`
+type AppScaleConfig struct {
+	Min int `yaml:"min" toml:"min"` // defaulting to 0 is ok. This is the standard fly.io behavior
+	// fly.io doesn't support a Max value, so we don't either
+	Fixed *int `yaml:"fixed" toml:"fixed"` // If set, this will override all fly.io service scale up/down logic using VERY high concurrency limits
 }
 
-func (a *AppConfig) MinMachinesRunning() int {
+type AppConfig struct {
+	App                string                    `yaml:"app" toml:"app"`
+	Org                string                    `yaml:"org" toml:"org,omitempty"`
+	PrimaryRegion      string                    `yaml:"primary_region" toml:"primary_region,omitempty"`
+	Source             Source                    `yaml:"source,omitempty" toml:"source"`
+	MergeCfg           MergeCfg                  `yaml:"merge_cfg,omitempty" toml:"merge_cfg" json:"merge_cfg,omitempty"`
+	PrimaryRegionScale *AppScaleConfig           `yaml:"primary_region_scale,omitempty" toml:"primary_region_scale,omitempty"`
+	OtherRegionScales  map[string]AppScaleConfig `yaml:"region_scale,omitempty" toml:"region_scale,omitempty"`
+	DefaultScale       *AppScaleConfig           `yaml:"scale,omitempty" toml:"scale,omitempty"`
+	Services           []Service                 `yaml:"services,omitempty" toml:"services,omitempty"`
+	HttpService        *HttpService              `yaml:"http_service,omitempty" toml:"http_service,omitempty"`
+	LaunchParams       []string                  `yaml:"launch_params,omitempty" toml:"launch_params,omitempty"`
+	DeployParams       []string                  `yaml:"deploy_params,omitempty" toml:"deploy_params"`
+	Env                map[string]string         `yaml:"env,omitempty" toml:"env,omitempty"`
+	Build              map[string]any            `yaml:"build,omitempty" toml:"build,omitempty"`
+	Mounts             []Mount                   `yaml:"mounts,omitempty" toml:"mounts,omitempty"` // fly.io only supports one mount :S
+	Volumes            []VolumeConfig            `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
+}
+
+func (a *AppConfig) CalcScaleByServices() AppScaleConfig {
+	result := AppScaleConfig{}
+	result.Min = a.CalcMinMachinesRunningByServices()
+	if !a.CanAutoScaleUpByServices() {
+		// have at least one instance if it cannot scale
+		*result.Fixed = util_math.Max(1, result.Min)
+	}
+
+	// fly.io format doesn't support a max count, so we cannot set it here
+
+	return result
+}
+
+func (a *AppConfig) Regions() []string {
+	result := []string{}
+	if a.PrimaryRegion != "" {
+		result = append(result, a.PrimaryRegion)
+	}
+	for region := range a.OtherRegionScales {
+		result = append(result, region)
+	}
+	return lo.Uniq(result)
+}
+
+func (a *AppConfig) CalcScalePerRegion() map[string]AppScaleConfig {
+	result := map[string]AppScaleConfig{}
+	for _, region := range a.Regions() {
+		if region == a.PrimaryRegion {
+			if a.PrimaryRegionScale != nil {
+				result[region] = *a.PrimaryRegionScale
+			} else if regionScale, ok := a.OtherRegionScales[region]; ok {
+				result[region] = regionScale
+			} else if a.DefaultScale != nil {
+				result[region] = *a.DefaultScale
+			} else {
+				result[region] = a.CalcScaleByServices()
+			}
+		} else {
+			if regionScale, ok := a.OtherRegionScales[region]; ok {
+				result[region] = regionScale
+			} else if a.DefaultScale != nil {
+				result[region] = *a.DefaultScale
+			} else {
+				result[region] = a.CalcScaleByServices()
+			}
+		}
+	}
+	return result
+}
+
+func (a *AppConfig) CanAutoScaleUpByServices() bool {
+
+	if a.HttpService != nil && a.HttpService.AutoStartMachines {
+		return true
+	}
+
+	if lo.ContainsBy(a.Services, func(item Service) bool { return item.AutoStartMachines }) {
+		return true
+	}
+
+	return false
+}
+
+func (a *AppConfig) CalcMinMachinesRunningByServices() int {
 	return util_math.Max(
 		func() int {
 			if a.HttpService != nil {
@@ -84,7 +156,7 @@ func (a *AppConfig) MinMachinesRunning() int {
 		lo.Reduce(
 			a.Services,
 			func(agg int, item Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
-			1,
+			0,
 		),
 	)
 }
