@@ -3,7 +3,7 @@ package util_packaged
 import (
 	"embed"
 	"fmt"
-	"github.com/gigurra/flycd/internal/flycd/util/util_work_dir"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_work_dir"
 	"io"
 	"io/fs"
 	"os"

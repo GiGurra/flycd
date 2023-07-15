@@ -2,7 +2,7 @@ package util_work_dir
 
 import (
 	"fmt"
-	"github.com/gigurra/flycd/internal/flycd/util/util_cmd"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_cmd"
 	cp "github.com/otiai10/copy"
 	"os"
 	"path/filepath"

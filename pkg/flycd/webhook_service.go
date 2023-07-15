@@ -3,8 +3,8 @@ package flycd
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/internal/flycd/model"
-	"github.com/gigurra/flycd/internal/github"
+	"github.com/gigurra/flycd/pkg/flycd/model"
+	"github.com/gigurra/flycd/pkg/github"
 	"github.com/samber/lo"
 	"strings"
 )

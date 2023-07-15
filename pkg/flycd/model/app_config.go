@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/gigurra/flycd/internal/flycd/util/util_math"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_math"
 	"github.com/samber/lo"
 	"regexp"
 )

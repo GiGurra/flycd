@@ -3,9 +3,9 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/internal/flycd"
-	"github.com/gigurra/flycd/internal/flycd/model"
-	"github.com/gigurra/flycd/internal/flycd/util/util_cobra"
+	"github.com/gigurra/flycd/pkg/flycd"
+	"github.com/gigurra/flycd/pkg/flycd/model"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_cobra"
 	"github.com/spf13/cobra"
 	"os"
 )

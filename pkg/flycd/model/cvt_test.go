@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/gigurra/flycd/internal/flycd/util/util_cvt"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_cvt"
 	"gopkg.in/yaml.v3"
 	"testing"
 )

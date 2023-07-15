@@ -27,7 +27,7 @@ ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 # Copy over the app, excl the projects folder
 RUN mkdir -p /flycd
 COPY ./cmd /flycd/cmd
-COPY ./internal /flycd/internal
+COPY ./pkg /flycd/pkg
 COPY ./*.go /flycd/
 COPY ./go.mod /flycd/go.mod
 COPY ./go.sum /flycd/go.sum

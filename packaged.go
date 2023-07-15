@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"github.com/gigurra/flycd/internal/flycd/util/util_packaged"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_packaged"
 )
 
 //go:embed Dockerfile
@@ -26,8 +26,8 @@ var PackagedRootGoFiles embed.FS
 //go:embed cmd/*
 var PackagedCmd embed.FS
 
-//go:embed internal/*
-var PackagedInternal embed.FS
+//go:embed pkg/*
+var PackagedPkg embed.FS
 
 var PackagedFileSystem = util_packaged.PackagedFileSystem{
 	Files: []util_packaged.PackagedFile{
@@ -39,7 +39,7 @@ var PackagedFileSystem = util_packaged.PackagedFileSystem{
 	},
 	Directories: []embed.FS{
 		PackagedCmd,
-		PackagedInternal,
+		PackagedPkg,
 		PackagedRootGoFiles,
 	},
 }

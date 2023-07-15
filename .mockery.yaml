@@ -5,11 +5,11 @@ all: True
 #dir: mocks
 #dir: "{{.PackagePath}}"
 #keeptree: True
-inpackage: True
+#filename: "{{.InterfaceName}}_mocks_test.go"
 packages:
-  github.com/gigurra/flycd/internal/fly_client:
+  github.com/gigurra/flycd/pkg/fly_client:
     config:
-      dir: "internal/fly_client"
-  github.com/gigurra/flycd/internal/flycd:
+      dir: "mocks/pkg/fly_client"
+  github.com/gigurra/flycd/pkg/flycd:
     config:
-      dir: "internal/flycd"
+      dir: "mocks/pkg/flycd"
