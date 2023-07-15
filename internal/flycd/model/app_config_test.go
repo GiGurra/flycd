@@ -169,6 +169,107 @@ func TestConvertYaml2TomlEqualConfigsAsObjects(t *testing.T) {
 	}
 }
 
+func TestAppConfig_CalcScalePerRegion_services(t *testing.T) {
+
+	cfg := AppConfig{
+		PrimaryRegion: "arn",
+		Services: []Service{
+			{
+				InternalPort:       80,
+				AutoStopMachines:   true,
+				AutoStartMachines:  true,
+				MinMachinesRunning: 2,
+				Concurrency: Concurrency{
+					Type:      "requests",
+					SoftLimit: 200,
+					HardLimit: 250,
+				},
+			},
+		},
+	}
+
+	wanted := map[string]AppScaleConfig{
+		"arn": {
+			Min:             2,
+			Fixed:           nil,
+			GivenByServices: true,
+		},
+	}
+	actual := cfg.CalcScalePerRegion()
+
+	diff := cmp.Diff(wanted, actual)
+	if diff != "" {
+		t.Fatalf("Scales are not equal: %v", diff)
+	}
+}
+func TestAppConfig_CalcScalePerRegion_http_service(t *testing.T) {
+
+	cfg := AppConfig{
+		PrimaryRegion: "arn",
+		HttpService: &HttpService{
+			InternalPort:       80,
+			AutoStopMachines:   true,
+			AutoStartMachines:  true,
+			MinMachinesRunning: 2,
+			Concurrency: Concurrency{
+				Type:      "requests",
+				SoftLimit: 200,
+				HardLimit: 250,
+			},
+		},
+	}
+
+	wanted := map[string]AppScaleConfig{
+		"arn": {
+			Min:             2,
+			Fixed:           nil,
+			GivenByServices: true,
+		},
+	}
+	actual := cfg.CalcScalePerRegion()
+
+	diff := cmp.Diff(wanted, actual)
+	if diff != "" {
+		t.Fatalf("Scales are not equal: %v", diff)
+	}
+}
+func TestAppConfig_CalcScalePerRegion_default_scale(t *testing.T) {
+
+	cfg := AppConfig{
+		PrimaryRegion: "arn",
+		DefaultScale: &AppScaleConfig{
+			Min:             3,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+		HttpService: &HttpService{
+			InternalPort:       80,
+			AutoStopMachines:   true,
+			AutoStartMachines:  true,
+			MinMachinesRunning: 2,
+			Concurrency: Concurrency{
+				Type:      "requests",
+				SoftLimit: 200,
+				HardLimit: 250,
+			},
+		},
+	}
+
+	wanted := map[string]AppScaleConfig{
+		"arn": {
+			Min:             3,
+			Fixed:           nil,
+			GivenByServices: false,
+		},
+	}
+	actual := cfg.CalcScalePerRegion()
+
+	diff := cmp.Diff(wanted, actual)
+	if diff != "" {
+		t.Fatalf("Scales are not equal: %v", diff)
+	}
+}
+
 func TestReadFlyToml(t *testing.T) {
 
 	flyToml := `
