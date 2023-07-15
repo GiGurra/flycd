@@ -6,7 +6,6 @@ import (
 )
 
 type CommonValues struct {
-	Global  map[string]any `yaml:"global" toml:"global"`
 	Project map[string]any `yaml:"project" toml:"project"`
 	App     map[string]any `yaml:"app" toml:"app"`
 }
