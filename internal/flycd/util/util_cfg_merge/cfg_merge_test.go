@@ -9,13 +9,20 @@ func TestMerge_TopLevel(t *testing.T) {
 	base := map[string]any{
 		"foo": "bar",
 		"bar": "bar",
+		"bo":  nil,
+		"yo2": nil,
 	}
 	overlay := map[string]any{
 		"foo": "baz",
+		"yo":  "ho",
+		"yo2": "ho",
 	}
 	expected := map[string]any{
 		"foo": "baz",
 		"bar": "bar",
+		"yo":  "ho",
+		"yo2": "ho",
+		"bo":  nil,
 	}
 
 	actual, err := Merge(base, overlay)

@@ -23,11 +23,18 @@ func Merge(base map[string]any, overlay map[string]any) (map[string]any, error) 
 // Below is copy pasta from https://github.com/ieee0824/go-deepmerge,
 // which is also under MIT license.
 
+// Has one nil fix
+
 var (
 	TypeNotMatchErr = errors.New("type not match")
 )
 
 func doMerge(src, dst interface{}) (interface{}, error) {
+
+	if dst == nil {
+		return src, nil
+	}
+
 	srcType := reflect.TypeOf(src)
 	dstType := reflect.TypeOf(dst)
 	if srcType.Kind() != dstType.Kind() {
