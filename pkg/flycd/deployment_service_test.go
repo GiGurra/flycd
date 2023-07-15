@@ -3,7 +3,7 @@ package flycd
 import (
 	"context"
 	"fmt"
-	mocks "github.com/gigurra/flycd/mocks/pkg/fly_client"
+	mocks "github.com/gigurra/flycd/mocks/fly_client"
 	"github.com/gigurra/flycd/pkg/flycd/model"
 	"github.com/stretchr/testify/mock"
 	"testing"

@@ -9,7 +9,7 @@ all: True
 packages:
   github.com/gigurra/flycd/pkg/fly_client:
     config:
-      dir: "mocks/pkg/fly_client"
+      dir: "mocks/fly_client"
   github.com/gigurra/flycd/pkg/flycd:
     config:
-      dir: "mocks/pkg/flycd"
+      dir: "mocks/flycd"
