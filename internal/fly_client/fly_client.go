@@ -56,6 +56,7 @@ type FlyClient interface {
 		cfg model.AppConfig,
 		tempDir util_work_dir.WorkDir,
 		deployCfg model.DeployConfig,
+		region string,
 	) error
 
 	CreateVolume(
@@ -350,6 +351,9 @@ func (c FlyClientImpl) CreateNewApp(
 	if twoStep {
 		allParams = append(allParams, "--build-only")
 	}
+	if !lo.Contains(allParams, "--region") && !lo.Contains(allParams, "-r") {
+		allParams = append(allParams, "--region", cfg.PrimaryRegion)
+	}
 	_, err := tempDir.
 		NewCommand("fly", allParams...).
 		WithTimeout(20 * time.Second).
@@ -367,9 +371,13 @@ func (c FlyClientImpl) DeployExistingApp(
 	cfg model.AppConfig,
 	tempDir util_work_dir.WorkDir,
 	deployCfg model.DeployConfig,
+	region string,
 ) error {
 	allParams := append([]string{"deploy"}, cfg.DeployParams...)
 	allParams = append(allParams, "--remote-only", "--detach")
+	if !lo.Contains(allParams, "--region") && !lo.Contains(allParams, "-r") {
+		allParams = append(allParams, "--region", region)
+	}
 
 	_, err := tempDir.
 		NewCommand("fly", allParams...).

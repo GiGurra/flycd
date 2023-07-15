@@ -369,9 +369,12 @@ func deployAppToFly(
 			if err != nil {
 				return "", err
 			}
-			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg)
-			if err != nil {
-				return "", err
+			for _, region := range input.cfgTyped.Regions {
+				fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
+				err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
+				if err != nil {
+					return "", err
+				}
 			}
 			return model.SingleAppDeployUpdated, nil
 		} else {
@@ -389,7 +392,10 @@ func deployAppToFly(
 			return "", err
 		}
 		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg)
+		for _, region := range input.cfgTyped.Regions {
+			fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
+			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
+		}
 		if err != nil {
 			return "", err
 		}

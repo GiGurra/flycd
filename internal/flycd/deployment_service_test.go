@@ -32,7 +32,7 @@ func TestDeployFromFolder_newApp(t *testing.T) {
 
 	flyClient.
 		EXPECT().
-		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 		Return(nil)
 
 	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg)
@@ -65,7 +65,7 @@ func TestDeployFromFolder_existingApp(t *testing.T) {
 
 	flyClient.
 		EXPECT().
-		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 		Return(nil)
 
 	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app1", deployCfg)
@@ -98,7 +98,7 @@ func TestDeployFromFolder_appMergingConfig(t *testing.T) {
 
 	flyClient.
 		EXPECT().
-		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 		Return(nil)
 
 	_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/deploy-tests/apps/app2", deployCfg)
@@ -232,7 +232,7 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 
 			flyClient.
 				EXPECT().
-				DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").
 				Return(nil)
 
 			_, err := deployService.DeployAppFromFolder(ctx, "../../test/test-projects/nginx-with-volumes/app", test.deployCfg)
