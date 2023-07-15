@@ -6,6 +6,15 @@ import (
 )
 
 func Merge(base map[string]any, overlay map[string]any) map[string]any {
+
+	if overlay == nil {
+		return base
+	}
+
+	if base == nil {
+		return overlay
+	}
+
 	merged := doMerge(overlay, base)
 
 	result, ok := merged.(map[string]any)

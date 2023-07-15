@@ -8,29 +8,32 @@ import (
 )
 
 type CommonAppConfig struct {
-	AppDefaults      map[string]any `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
-	AppSubstitutions map[string]any `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
-	AppOverrides     map[string]any `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
+	AppDefaults map[string]any `yaml:"app_defaults" toml:"app_defaults"` // default yaml tree for all apps
+	//AppSubstitutions map[string]any `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
+	AppOverrides map[string]any `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
 }
 
 func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	return CommonAppConfig{
-		AppDefaults:      util_cfg_merge.Merge(c.AppDefaults, other.AppDefaults),
-		AppOverrides:     util_cfg_merge.Merge(c.AppOverrides, other.AppOverrides),
-		AppSubstitutions: util_cfg_merge.Merge(c.AppSubstitutions, other.AppSubstitutions),
+		AppDefaults: util_cfg_merge.Merge(c.AppDefaults, other.AppDefaults),
+		//AppSubstitutions: util_cfg_merge.Merge(c.AppSubstitutions, other.AppSubstitutions),
+		AppOverrides: util_cfg_merge.Merge(c.AppOverrides, other.AppOverrides),
 	}
 }
 
 func (c CommonAppConfig) MakeAppConfig(appYaml []byte) (AppConfig, map[string]any, error) {
 
-	untyped := make(map[string]any)
+	untypedLocal := make(map[string]any)
 
-	// TODO: Use common values
-
-	err := yaml.Unmarshal(appYaml, &untyped)
+	err := yaml.Unmarshal(appYaml, &untypedLocal)
 	if err != nil {
-		return AppConfig{}, untyped, fmt.Errorf("error unmarshalling app.yaml: %w", err)
+		return AppConfig{}, untypedLocal, fmt.Errorf("error unmarshalling app.yaml: %w", err)
 	}
+
+	untyped := map[string]any{}
+	untyped = util_cfg_merge.Merge(untyped, c.AppDefaults)
+	untyped = util_cfg_merge.Merge(untyped, untypedLocal)
+	untyped = util_cfg_merge.Merge(untyped, c.AppOverrides)
 
 	typed, err := util_cvt.MapYamlToStruct[AppConfig](untyped)
 	if err != nil {
