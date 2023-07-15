@@ -21,12 +21,12 @@ func NewSeen() Seen {
 
 type TraverseAppTreeContext struct {
 	context.Context
-	ValidAppCb       func(AppNode) error
-	InvalidAppCb     func(AppNode) error
-	SkippedAppCb     func(AppNode) error
-	BeginProjectCb   func(ProjectNode) error
-	EndProjectCb     func(ProjectNode) error
-	SkippedProjectCb func(ProjectNode) error
+	ValidAppCb       func(TraverseAppTreeContext, AppNode) error
+	InvalidAppCb     func(TraverseAppTreeContext, AppNode) error
+	SkippedAppCb     func(TraverseAppTreeContext, AppNode) error
+	BeginProjectCb   func(TraverseAppTreeContext, ProjectNode) error
+	EndProjectCb     func(TraverseAppTreeContext, ProjectNode) error
+	SkippedProjectCb func(TraverseAppTreeContext, ProjectNode) error
 	Seen             Seen
 	Parents          []ProjectConfig
 }

@@ -46,7 +46,7 @@ func doTraverseDeepAppTree(
 
 		if ctx.Seen.Projects[project.ProjectConfig.Project] {
 			if ctx.SkippedProjectCb != nil {
-				err := ctx.SkippedProjectCb(project)
+				err := ctx.SkippedProjectCb(ctx, project)
 				if err != nil {
 					return fmt.Errorf("error calling function for skipped project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 				}
@@ -66,7 +66,7 @@ func doTraverseDeepAppTree(
 
 			if ctx.Seen.Apps[app.AppConfig.App] {
 				if ctx.SkippedAppCb != nil {
-					err := ctx.SkippedAppCb(app)
+					err := ctx.SkippedAppCb(ctx, app)
 					if err != nil {
 						return fmt.Errorf("error calling function for skipped app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 					}
@@ -77,14 +77,14 @@ func doTraverseDeepAppTree(
 			ctx.Seen.Apps[app.AppConfig.App] = true
 
 			if ctx.ValidAppCb != nil {
-				err := ctx.ValidAppCb(app)
+				err := ctx.ValidAppCb(ctx, app)
 				if err != nil {
 					return fmt.Errorf("error calling function for valid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 				}
 			}
 		} else {
 			if ctx.InvalidAppCb != nil {
-				err := ctx.InvalidAppCb(app)
+				err := ctx.InvalidAppCb(ctx, app)
 				if err != nil {
 					return fmt.Errorf("error calling function for invalid app %s @ %s: %w", app.AppConfig.App, app.Path, err)
 				}
@@ -100,7 +100,7 @@ func traverseProject(
 	project model.ProjectNode,
 ) error {
 	if ctx.BeginProjectCb != nil {
-		err := ctx.BeginProjectCb(project)
+		err := ctx.BeginProjectCb(ctx, project)
 		if err != nil {
 			return fmt.Errorf("error calling function for valid project %s @ %s: %w", project.ProjectConfig.Project, project.Path, err)
 		}
@@ -108,7 +108,7 @@ func traverseProject(
 
 	defer func() {
 		if ctx.EndProjectCb != nil {
-			err := ctx.EndProjectCb(project)
+			err := ctx.EndProjectCb(ctx, project)
 			if err != nil {
 				fmt.Printf("error calling function for valid project %s @ %s: %v", project.ProjectConfig.Project, project.Path, err)
 			}

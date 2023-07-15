@@ -12,7 +12,7 @@ func TestTraverseDeepAppTree(t *testing.T) {
 	path := "../../examples/projects"
 	err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 		Context: context.Background(),
-		ValidAppCb: func(node model.AppNode) error {
+		ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			fmt.Printf("Valid app: %s @ %s\n", node.AppConfig.App, node.Path)
 			return nil
 		},
@@ -30,19 +30,19 @@ func TestTraverseDeepAppTree_cyclicDetection(t *testing.T) {
 
 	err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 		Context: context.Background(),
-		ValidAppCb: func(node model.AppNode) error {
+		ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Valid app: %s", node.AppConfig.App))
 			return nil
 		},
-		InvalidAppCb: func(node model.AppNode) error {
+		InvalidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Invalid app: %s", node.AppConfig.App))
 			return nil
 		},
-		BeginProjectCb: func(node model.ProjectNode) error {
+		BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("Begin project: %s", node.ProjectConfig.Project))
 			return nil
 		},
-		EndProjectCb: func(node model.ProjectNode) error {
+		EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("End project: %s", node.ProjectConfig.Project))
 			return nil
 		},
@@ -76,19 +76,19 @@ func TestTraverseDeepAppTree_regularTree(t *testing.T) {
 
 	err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 		Context: context.Background(),
-		ValidAppCb: func(node model.AppNode) error {
+		ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Valid app: %s", node.AppConfig.App))
 			return nil
 		},
-		InvalidAppCb: func(node model.AppNode) error {
+		InvalidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Invalid app: %s", node.AppConfig.App))
 			return nil
 		},
-		BeginProjectCb: func(node model.ProjectNode) error {
+		BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("Begin project: %s", node.ProjectConfig.Project))
 			return nil
 		},
-		EndProjectCb: func(node model.ProjectNode) error {
+		EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("End project: %s", node.ProjectConfig.Project))
 			return nil
 		},
@@ -121,19 +121,19 @@ func TestTraverseDeepAppTree_pointToSingleAppFile(t *testing.T) {
 
 	err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 		Context: context.Background(),
-		ValidAppCb: func(node model.AppNode) error {
+		ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Valid app: %s", node.AppConfig.App))
 			return nil
 		},
-		InvalidAppCb: func(node model.AppNode) error {
+		InvalidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Invalid app: %s", node.AppConfig.App))
 			return nil
 		},
-		BeginProjectCb: func(node model.ProjectNode) error {
+		BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("Begin project: %s", node.ProjectConfig.Project))
 			return nil
 		},
-		EndProjectCb: func(node model.ProjectNode) error {
+		EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("End project: %s", node.ProjectConfig.Project))
 			return nil
 		},
@@ -164,19 +164,19 @@ func TestTraverseDeepAppTree_pointToSingleProjectAppFile(t *testing.T) {
 
 	err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 		Context: context.Background(),
-		ValidAppCb: func(node model.AppNode) error {
+		ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Valid app: %s", node.AppConfig.App))
 			return nil
 		},
-		InvalidAppCb: func(node model.AppNode) error {
+		InvalidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
 			actual = append(actual, fmt.Sprintf("Invalid app: %s", node.AppConfig.App))
 			return nil
 		},
-		BeginProjectCb: func(node model.ProjectNode) error {
+		BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("Begin project: %s", node.ProjectConfig.Project))
 			return nil
 		},
-		EndProjectCb: func(node model.ProjectNode) error {
+		EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 			actual = append(actual, fmt.Sprintf("End project: %s", node.ProjectConfig.Project))
 			return nil
 		},

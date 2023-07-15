@@ -65,10 +65,9 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 		defer close(ch)
 
 		matchedProjCount := 0
-		ctx := context.Background()
 		err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
-			Context: ctx,
-			ValidAppCb: func(app model.AppNode) error {
+			Context: context.Background(),
+			ValidAppCb: func(ctx model.TraverseAppTreeContext, app model.AppNode) error {
 
 				if matchedProjCount > 0 || matchesApp(app, payload) {
 
@@ -89,7 +88,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 				}
 				return nil
 			},
-			BeginProjectCb: func(node model.ProjectNode) error {
+			BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 				// unfortunately we have to deploy everything here :S. This is because we don't know how far down
 				// the tree the change might affect our apps. So we have to deploy everything to be sure.
 				// It would be better to just use app repo webhooks instead, or at least group apps into small projects
@@ -100,7 +99,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 				}
 				return nil
 			},
-			EndProjectCb: func(node model.ProjectNode) error {
+			EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
 				if matchesProject(node, payload) {
 					matchedProjCount--
 				}
