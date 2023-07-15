@@ -6,11 +6,9 @@ import (
 )
 
 type ProjectConfig struct {
-	Project          string            `yaml:"project" toml:"project"`             // Name Required. Unique name of the project
-	Source           Source            `yaml:"source" toml:"source"`               // Source Required. Where the app configs of the project are located
-	AppDefaults      map[string]any    `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
-	AppSubstitutions map[string]string `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
-	AppOverrides     map[string]any    `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
+	Project string       `yaml:"project" toml:"project"` // Name Required. Unique name of the project
+	Source  Source       `yaml:"source" toml:"source"`   // Source Required. Where the app configs of the project are located
+	Common  CommonParams `yaml:"common" toml:"common"`   // Common Optional. Common config for all apps in the project
 }
 
 func (cfg *ProjectConfig) Validate() error {

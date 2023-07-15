@@ -1,7 +1,7 @@
-package util_cvt
+package model
 
 import (
-	"github.com/gigurra/flycd/internal/flycd/model"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cvt"
 	"gopkg.in/yaml.v3"
 	"testing"
 )
@@ -56,7 +56,7 @@ func TestMapYamlToStruct(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	cfg, err := MapYamlToStruct[model.AppConfig](mapStringAny)
+	cfg, err := util_cvt.MapYamlToStruct[AppConfig](mapStringAny)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

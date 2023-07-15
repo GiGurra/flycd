@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/internal/fly_client"
 	"github.com/gigurra/flycd/internal/flycd/model"
-	"github.com/gigurra/flycd/internal/flycd/util/util_cvt"
 	"github.com/gigurra/flycd/internal/flycd/util/util_git"
 	"github.com/gigurra/flycd/internal/flycd/util/util_math"
 	"github.com/gigurra/flycd/internal/flycd/util/util_toml"
@@ -171,7 +170,7 @@ func deployAppFromFolder(
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
-	cfgTyped, cfgUntyped, err := readAppConfigs(path)
+	cfgTyped, cfgUntyped, err := readAppConfigs(deployCfg.CommonAppCfg, path)
 	if err != nil {
 		return "", err
 	}
@@ -572,59 +571,20 @@ func ensureDockerIgnoreExists(tempDir util_work_dir.WorkDir, err error) error {
 	return nil
 }
 
-func readAppConfigs(path string) (model.AppConfig, map[string]any, error) {
+func readAppConfigs(
+	common model.CommonParams,
+	path string,
+) (model.AppConfig, map[string]any, error) {
 
-	untyped, err := readAppConfigUntyped(path)
+	appYaml, err := os.ReadFile(path + "/app.yaml")
 	if err != nil {
-		return model.AppConfig{}, untyped, err
+		return model.AppConfig{}, map[string]any{}, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
 	}
 
-	typed, err := util_cvt.MapYamlToStruct[model.AppConfig](untyped)
+	typed, untyped, err := common.MakeAppConfig(appYaml)
 	if err != nil {
-		return model.AppConfig{}, untyped, fmt.Errorf("error converting untyped app.yaml to typed for app @ %s: %w", path, err)
-	}
-
-	err = typed.Validate()
-	if err != nil {
-		return typed, untyped, fmt.Errorf("error validating app.yaml from folder %s: %w", path, err)
+		return model.AppConfig{}, untyped, fmt.Errorf("error making app config from folder %s: %w", path, err)
 	}
 
 	return typed, untyped, nil
-}
-
-func readAppConfigTyped(path string) (model.AppConfig, error) {
-	var cfg model.AppConfig
-
-	appYaml, err := os.ReadFile(path + "/app.yaml")
-	if err != nil {
-		return model.AppConfig{}, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
-	}
-
-	err = yaml.Unmarshal(appYaml, &cfg)
-	if err != nil {
-		return model.AppConfig{}, fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
-	}
-
-	err = cfg.Validate()
-	if err != nil {
-		return cfg, fmt.Errorf("error validating app.yaml from folder %s: %w", path, err)
-	}
-
-	return cfg, nil
-}
-
-func readAppConfigUntyped(path string) (map[string]any, error) {
-	cfg := make(map[string]any)
-
-	appYaml, err := os.ReadFile(path + "/app.yaml")
-	if err != nil {
-		return cfg, fmt.Errorf("error reading app.yaml from folder %s: %w", path, err)
-	}
-
-	err = yaml.Unmarshal(appYaml, &cfg)
-	if err != nil {
-		return cfg, fmt.Errorf("error unmarshalling app.yaml from folder %s: %w", path, err)
-	}
-
-	return cfg, nil
 }

@@ -1,12 +1,48 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"github.com/gigurra/flycd/internal/flycd/util/util_cvt"
+	"gopkg.in/yaml.v3"
+	"time"
+)
+
+type CommonParams struct {
+	AppDefaults      map[string]any    `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
+	AppSubstitutions map[string]string `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
+	AppOverrides     map[string]any    `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
+}
+
+func (c CommonParams) MakeAppConfig(appYaml []byte) (AppConfig, map[string]any, error) {
+
+	untyped := make(map[string]any)
+
+	// TODO: Use common values
+
+	err := yaml.Unmarshal(appYaml, &untyped)
+	if err != nil {
+		return AppConfig{}, untyped, fmt.Errorf("error unmarshalling app.yaml: %w", err)
+	}
+
+	typed, err := util_cvt.MapYamlToStruct[AppConfig](untyped)
+	if err != nil {
+		return typed, untyped, fmt.Errorf("error converting untyped app.yaml to typed: %w", err)
+	}
+
+	err = typed.Validate()
+	if err != nil {
+		return typed, untyped, fmt.Errorf("error validating app.yaml: %w", err)
+	}
+
+	return typed, untyped, nil
+}
 
 type DeployConfig struct {
 	Force             bool
 	Retries           int
 	AttemptTimeout    time.Duration
 	AbortOnFirstError bool
+	CommonAppCfg      CommonParams
 }
 
 func NewDefaultDeployConfig() DeployConfig {
