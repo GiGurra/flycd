@@ -32,17 +32,20 @@ func TestMerge_Deep(t *testing.T) {
 		"foo": map[string]any{
 			"bar": "bar",
 			"baz": "baz",
+			"qux": []any{"foo", "bar", "baz"},
 		},
 	}
 	overlay := map[string]any{
 		"foo": map[string]any{
 			"bar": "baz",
+			"qux": []any{"foo2", "bar2", "baz2"},
 		},
 	}
 	expected := map[string]any{
 		"foo": map[string]any{
 			"bar": "baz",
 			"baz": "baz",
+			"qux": []any{"foo2", "bar2", "baz2"},
 		},
 	}
 
