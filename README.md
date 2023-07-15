@@ -176,7 +176,11 @@ env:
 volumes:
   - name: my-volume
     size_gb: 10
-    count: 3 # should be enough to cover the number of app instances. flycd will automatically use actual app instance count if it's higher than this.
+    # count: should be enough to cover the number of app instances.
+    # flycd will automatically use actual app instance count if it's higher than this.
+    # However, if fly.io wants to scale higher than this, it won't be able to until you increase the count.
+    # For most applications you probably won't use fly.io auto-scaling in combination with volumes :S 
+    count: 3 
 mounts:
   - destination: /mnt/my-volume-goes-here
     source: my-volume
