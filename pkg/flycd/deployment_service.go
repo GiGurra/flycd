@@ -265,6 +265,24 @@ func runIntermediateSteps(input deployInput) error {
 	return nil
 }
 
+func runPostDeploySteps(input deployInput) error {
+
+	err := runScaleAllRegionsPostDeployStep(input)
+	if err != nil {
+		return fmt.Errorf("error running post deploy scale-all-regions steps: %w", err)
+	}
+
+	// add post-deploy steps here
+
+	return nil
+}
+
+func runScaleAllRegionsPostDeployStep(input deployInput) error {
+
+	fmt.Printf("not implemented yet\n")
+	return nil
+}
+
 // runIntermediateVolumeSteps Here we analyse the deployed state
 // of volumes for this app vs the desired state and bring the
 // deployed state up to the desired state
@@ -405,6 +423,10 @@ func deployAppToFly(
 			if err != nil {
 				return "", err
 			}
+			err = runPostDeploySteps(input)
+			if err != nil {
+				return "", err
+			}
 			return model.SingleAppDeployUpdated, nil
 		} else {
 			fmt.Printf("App is already up to date, skipping deploy\n")
@@ -426,6 +448,10 @@ func deployAppToFly(
 		// So there is no point in looping over regions here and deploying to each.
 		fmt.Printf("Deploying app %s\n", input.cfgTyped.App)
 		err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, input.cfgTyped.PrimaryRegion)
+		if err != nil {
+			return "", err
+		}
+		err = runPostDeploySteps(input)
 		if err != nil {
 			return "", err
 		}
