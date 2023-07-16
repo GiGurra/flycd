@@ -72,6 +72,9 @@ There are two kinds of webhooks:
 
 FlyCD listens to both on the same path (`/webhook` by default), but they are handled differently.
 
+Currently only GitHub push webhooks are supported - simply click settings on your github repo's page and add a webhook
+to your flycd installation's url (e.g. `https://<your-flycd-app-name>.fly.dev/webhook`).
+
 #### Configuration repo webhooks
 
 Configuration repos ar where you store the flycd configuration files (app.yaml, project.yaml, etc).
@@ -84,8 +87,7 @@ but the choice is yours.
 
 App repos are where you store your app code, and optionally part of your app configuration (but never app.yaml).
 To have flycd auto deploy your apps, you need to set up webhooks from your app repos to flycd. Just enable GitHub's
-regular push webhook functionality and point it to your flycd app's webhook url (
-e.g. `https://<your-flycd-app-name>.fly.dev/webhook`).
+regular push webhook functionality and point it to your flycd app's webhook url.
 
 FlyCD will then automatically fetch the latest version (or specific version, if set in your config repo) of your apps
 and deploy them and any updates to their configuration.
