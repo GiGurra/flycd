@@ -22,7 +22,7 @@ func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	}
 }
 
-var mergeKeys = []string{"internal_port", "id", "port", "name", "source", "protocol"}
+var mergeKeys = []string{"internal_port", "id", "port", "name", "source"}
 
 func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppConfig, map[string]any, error) {
 
