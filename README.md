@@ -21,7 +21,7 @@ The illustration below gives an idea of FlyCD enabled configuration:
 
 ### Installation
 
-1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.36`)
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.38`)
 2. Run `flycd deploy <fs path>` to deploy a configuration (single app or folder structure, you decide)
 3. (Optional) Installing flycd as an app in your fly.io account or as a daemon somewhere else where you prefer to have
    it running.
