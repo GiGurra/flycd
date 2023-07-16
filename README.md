@@ -63,42 +63,6 @@ Flags:
 Use "flycd [command] --help" for more information about a command.
 ```
 
-### Webhooks
-
-There are two kinds of webhooks:
-
-* Configuration repo webhooks
-* App repo webhooks
-
-FlyCD listens to both on the same path (`/webhook` by default), but they are handled differently.
-
-Currently only GitHub push webhooks are supported - simply click settings on your github repo's page and add a webhook
-to your flycd installation's url (e.g. `https://<your-flycd-app-name>.fly.dev/webhook`).
-
-#### Configuration repo webhooks
-
-Configuration repos ar where you store the flycd configuration files (app.yaml, project.yaml, etc).
-If your cloud setup is fairly small/static, or you want to manage its configuration without flycd, you can skip setting
-up webhooks from this repo. In that case you need to ensure you re-run `flycd install` every time your configuration
-changes. Having a configuration repo with webhooks, means less manual interation with flycd and less CD configuration,
-but the choice is yours.
-
-When a configuration repo (=project repo) webhook is triggered, flycd traverse the entire tree structure of projects and
-apps enclosed by the repo/project, and evaluate all apps inside if the config change has made it necessary to re-deploy
-them.
-
-#### App repo webhooks
-
-App repos are where you store your app code, and optionally part of your app configuration (but never app.yaml).
-To have flycd auto deploy your apps, you need to set up webhooks from your app repos to flycd. Just enable GitHub's
-regular push webhook functionality and point it to your flycd app's webhook url.
-
-FlyCD will then automatically fetch the latest version (or specific version, if set in your config repo) of your apps
-and deploy them and any updates to their configuration.
-
-When an app repo webhook is triggered, flycd will will only evaluate that specific app for changes to know if it needs
-to be re-deployed.
-
 ### Configuration examples
 
 #### File system layout
@@ -319,6 +283,42 @@ subjective, like the author of FlyCD just likes yaml more than toml :D.
 
 Check the [examples](examples) directory for more ideas. You can also check the [tests](test) directory for some special
 cases
+
+### Webhooks
+
+There are two kinds of webhooks:
+
+* Configuration repo webhooks
+* App repo webhooks
+
+FlyCD listens to both on the same path (`/webhook` by default), but they are handled differently.
+
+Currently only GitHub push webhooks are supported - simply click settings on your github repo's page and add a webhook
+to your flycd installation's url (e.g. `https://<your-flycd-app-name>.fly.dev/webhook`).
+
+#### Configuration repo webhooks
+
+Configuration repos ar where you store the flycd configuration files (app.yaml, project.yaml, etc).
+If your cloud setup is fairly small/static, or you want to manage its configuration without flycd, you can skip setting
+up webhooks from this repo. In that case you need to ensure you re-run `flycd install` every time your configuration
+changes. Having a configuration repo with webhooks, means less manual interation with flycd and less CD configuration,
+but the choice is yours.
+
+When a configuration repo (=project repo) webhook is triggered, flycd traverse the entire tree structure of projects and
+apps enclosed by the repo/project, and evaluate all apps inside if the config change has made it necessary to re-deploy
+them.
+
+#### App repo webhooks
+
+App repos are where you store your app code, and optionally part of your app configuration (but never app.yaml).
+To have flycd auto deploy your apps, you need to set up webhooks from your app repos to flycd. Just enable GitHub's
+regular push webhook functionality and point it to your flycd app's webhook url.
+
+FlyCD will then automatically fetch the latest version (or specific version, if set in your config repo) of your apps
+and deploy them and any updates to their configuration.
+
+When an app repo webhook is triggered, flycd will will only evaluate that specific app for changes to know if it needs
+to be re-deployed.
 
 ## Where it probably needs some improvement
 
