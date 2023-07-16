@@ -41,7 +41,7 @@ The best is probably to check the `--help` output:
 ```
 $flycd --help
 
-Starting FlyCD v0.0.37...
+Starting FlyCD v0.0.38...
 Complete documentation is available at https://github.com/gigurra/flycd
 
 Usage:
