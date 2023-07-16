@@ -107,7 +107,8 @@ The project structure doesn't have to look like this (flycd walks it recursively
 we have defined a top level of two "clouds" (cloud-x and cloud-y), cloud-x also having two environments (stage and
 prod).
 
-At the top we have a `project.yaml` file which lets FlyCD know where this is located.
+At the top we have a `project.yaml` file which lets FlyCD know where this is located. We could also have
+local `project.yaml` files further down the tree to set common parameters/values for configurations for that subtree.
 
 ```yaml
 # project.yaml
