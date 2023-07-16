@@ -126,8 +126,10 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 					}
 					baseKind := reflect.TypeOf(baseValue).Kind()
 					overlayKind := reflect.TypeOf(overlayValue).Kind()
-					return baseKind == overlayKind &&
-						(baseKind == reflect.Int || baseKind == reflect.String || baseKind == reflect.Bool || baseKind == reflect.Float64)
+					if baseKind != overlayKind {
+						return false
+					}
+					return lo.Contains(mergeKeyKinds, baseKind)
 				})
 
 				if len(sameKeys) == 0 {
@@ -174,6 +176,27 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 	default:
 		return overlay
 	}
+}
+
+var mergeKeyKinds = []reflect.Kind{
+	reflect.Bool,
+	reflect.String,
+	// int types
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	// float types
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
 }
 
 // Because go has strongly typed (non-erasure) generics,
