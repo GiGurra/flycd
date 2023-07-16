@@ -279,7 +279,23 @@ func runPostDeploySteps(input deployInput) error {
 
 func runScaleAllRegionsPostDeployStep(input deployInput) error {
 
+	minSvcReq := input.cfgTyped.MinMachinesRunning()
+	if len(input.cfgTyped.ExtraRegions) == 0 && minSvcReq <= 1 {
+		return nil // nothing to do
+	}
+
 	fmt.Printf("not implemented yet\n")
+	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
+	if err != nil {
+		return fmt.Errorf("error getting app scale for app %s: %w", input.cfgTyped.App, err)
+	}
+
+	currentCountPerRegion := model.CountAppsPerRegion(scales)
+	for region, currentCount := range currentCountPerRegion {
+		fmt.Printf("region %s has %d instances\n", region, currentCount)
+		// TODO: Implement
+	}
+
 	return nil
 }
 
@@ -358,32 +374,17 @@ func getMinimumVolumeCountPerRegion(input deployInput) (map[string]int, error) {
 	// In the fly.io configuration, this is given by the `min_instances` field.
 	minSvcReq := input.cfgTyped.MinMachinesRunning()
 
-	result := map[string]int{}
-
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
 	if err != nil {
-		return result, fmt.Errorf("error getting app scales for app %s: %w", input.cfgTyped.App, err)
+		return map[string]int{}, fmt.Errorf("error getting app scales for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
-
-		// count app processes
-		appProcessScales := lo.Map(scales, func(scale model.ScaleState, _ int) int {
-			if scale.Process == "app" && scale.IncludesRegion(region) {
-				return scale.CountInRegion(region)
-			} else {
-				return 0
-			}
-		})
-		appProcessCount := lo.Reduce(appProcessScales, func(agg int, item int, _ int) int {
-			return agg + item
-		}, 0)
-		if appProcessCount > minSvcReq {
-			minSvcReq = appProcessCount
+	result := model.CountAppsPerRegion(scales)
+	for region, count := range result {
+		if count < minSvcReq {
+			result[region] = minSvcReq
 		}
-
-		result[region] = minSvcReq
 	}
 
 	return result, nil
