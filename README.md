@@ -63,8 +63,34 @@ Flags:
 Use "flycd [command] --help" for more information about a command.
 ```
 
-### Examples
+### Webhooks
 
+There are two kinds of webhooks:
+
+* Configuration repo webhooks
+* App repo webhooks
+
+FlyCD listens to both on the same path (`/webhook` by default), but they are handled differently.
+
+#### Configuration repo webhooks
+
+Configuration repos ar where you store the flycd configuration files (app.yaml, project.yaml, etc).
+If your cloud setup is fairly small/static, or you want to manage its configuration without flycd, you can skip setting
+up webhooks from this repo. In that case you need to ensure you re-run `flycd install` every time your configuration
+changes. Having a configuration repo with webhooks, means less manual interation with flycd and less CD configuration,
+but the choice is yours.
+
+#### App repo webhooks
+
+App repos are where you store your app code, and optionally part of your app configuration (but never app.yaml).
+To have flycd auto deploy your apps, you need to set up webhooks from your app repos to flycd. Just enable GitHub's
+regular push webhook functionality and point it to your flycd app's webhook url (
+e.g. `https://<your-flycd-app-name>.fly.dev/webhook`).
+
+FlyCD will then automatically fetch the latest version (or specific version, if set in your config repo) of your apps
+and deploy them and any updates to their configuration.
+
+### Configuration examples
 
 #### File system layout
 
@@ -282,7 +308,8 @@ subjective, like the author of FlyCD just likes yaml more than toml :D.
 
 #### More examples
 
-Check the [examples](examples) directory for more ideas. You can also check the [tests](test) directory for some special cases
+Check the [examples](examples) directory for more ideas. You can also check the [tests](test) directory for some special
+cases
 
 ## Where it probably needs some improvement
 
@@ -314,7 +341,7 @@ Check the [examples](examples) directory for more ideas. You can also check the 
 * Support multiprocess apps (flycd currently only supports 'app' for figuring out when scale up the number of machines
   and volumes)
 * More practical ways to configure Machine types, ram & cpu modifications
-  * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
+    * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
 * better error handling :S
 * better logging
 * fly.io native postgres, redis, etc...
