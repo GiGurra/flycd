@@ -215,7 +215,10 @@ build:
   buildpacks:
     - gcr.io/paketo-buildpacks/go
 
-# Optional secrets config. Currently only supports env vars and raw in-config/inline plaintext
+# Optional config for secrets. Here you define what the secrets should be created in the fly.io app
+# and where to get the value from. Currently only supports getting the value from env vars on the host 
+# running flycd itself, or (for test purposes) as raw in-config/inline plaintext.
+# It works by creating a fly.io secret with the same name as the secret config entry.
 secrets:
   # Secrets forwarded from env vars on the host running flycd (e.g. your local machine or installed flycd instance) 
   - name: SOME_SECRET_FWD # this is the name/key the secret will have in the fly.io app
