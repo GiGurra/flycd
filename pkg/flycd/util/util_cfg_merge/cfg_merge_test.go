@@ -50,7 +50,7 @@ func TestMerge_Deep(t *testing.T) {
 		"foo": map[string]any{
 			"bar": "baz",
 			"baz": "baz",
-			"qux": []any{"foo2", "bar2", "baz2"},
+			"qux": []any{"foo", "bar", "baz", "foo2", "bar2", "baz2"},
 		},
 	}
 
@@ -177,7 +177,7 @@ func TestMerge_Arrays(t *testing.T) {
 		"foo": expectedArray,
 	}
 
-	actual := MergeMaps(base, overlay, "common1", "common2")
+	actual := MergeMaps(base, overlay, MergeConfig{SliceStrategy: SliceStrategyMergeOverlapReplaceRest, SliceMergeKeys: []string{"common1", "common2"}})
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}

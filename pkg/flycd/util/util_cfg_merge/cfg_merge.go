@@ -6,11 +6,25 @@ import (
 	"reflect"
 )
 
+type MergeConfig struct {
+	SliceStrategy  SliceStrategy
+	SliceMergeKeys []string
+}
+
+type SliceStrategy string
+
+const (
+	SliceStrategyAppendNoDuplicates      SliceStrategy = "append-no-duplicates"       // default: append the new slice to the original slice, but ignore duplicates
+	SliceStrategyAppend                  SliceStrategy = "append"                     // append the new slice to the original slice
+	SliceStrategyTruncateAndReplace      SliceStrategy = "replace"                    // replace the original slice with the new slice
+	SliceStrategyMergeOverlapReplaceRest SliceStrategy = "merge-overlap-replace-rest" // replace the original slice with the new slice
+)
+
 // MergeMaps This only works with basic builtin types - NOT with structs or pointers inside the maps
 func MergeMaps(
 	base map[string]any,
 	overlay map[string]any,
-	sliceMergeKeys ...string, // internal_port, port, name, source
+	configs ...MergeConfig,
 ) map[string]any {
 
 	if overlay == nil {
@@ -21,7 +35,14 @@ func MergeMaps(
 		return overlay
 	}
 
-	merged := doMerge(overlay, base, sliceMergeKeys)
+	config := MergeConfig{
+		SliceStrategy: SliceStrategyAppendNoDuplicates,
+	}
+	if len(configs) > 0 {
+		config = configs[0]
+	}
+
+	merged := doMerge(overlay, base, config)
 
 	result, ok := merged.(map[string]any)
 	if !ok {
@@ -35,7 +56,11 @@ func MergeMaps(
 // which is also under MIT license.
 // + one nil fix + no longer returning errors
 
-func doMerge(overlay, base any, sliceMergeKeys []string) any {
+func doMerge(
+	overlay any,
+	base any,
+	config MergeConfig,
+) any {
 
 	if overlay == nil {
 		return base
@@ -71,7 +96,7 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 			if !existsInBase {
 				resultMap[k] = overlayVal
 			} else {
-				mergedVal := doMerge(overlayVal, baseVal, sliceMergeKeys)
+				mergedVal := doMerge(overlayVal, baseVal, config)
 				resultMap[k] = mergedVal
 			}
 		}
@@ -80,89 +105,107 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 
 	case reflect.Slice:
 
-		resultSlice := []any{}
-		baseSlice := convertSlice(base)
-		baseSliceMaps := lo.Map(lo.Filter(baseSlice, func(item any, index int) bool {
-			return item != nil && reflect.TypeOf(item).Kind() == reflect.Map
-		}), func(item any, _ int) map[string]any {
-			return convertMap(item)
-		})
-
-		for _, overlayItem := range convertSlice(overlay) {
-
-			// Check if the value is already in the slice
-			// The equality test is performed if both baseVal and overlayItem are of type map or object
-			// The equality is given if all the primitive
-
-			if overlayItem == nil {
-				resultSlice = append(resultSlice, overlayItem)
-				continue
-			}
-
-			if reflect.TypeOf(overlayItem).Kind() != reflect.Map {
-				resultSlice = append(resultSlice, overlayItem)
-				continue
-			}
-
-			overlayItem := convertMap(overlayItem)
-
-			// We need to check if we are to merge this with base array element or not
-			matched := lo.Filter(baseSliceMaps, func(baseItem map[string]any, index int) bool {
-
-				baseItemKeys := lo.Keys(baseItem)
-				overlayItemKeys := lo.Keys(overlayItem)
-
-				// Find same keys overlapping with sliceMergeKeys
-				sameKeys := lo.Filter(baseItemKeys, func(key string, index int) bool {
-					return lo.Contains(sliceMergeKeys, key) && lo.IndexOf(overlayItemKeys, key) != -1
-				})
-
-				// only allow same keys if the values they point to are of the same type and of primitive (int, string, bool, float)
-				sameKeys = lo.Filter(sameKeys, func(key string, index int) bool {
-					baseValue := baseItem[key]
-					overlayValue := overlayItem[key]
-					if baseValue == nil || overlayValue == nil {
-						return baseValue == nil && overlayValue == nil
-					}
-					baseKind := reflect.TypeOf(baseValue).Kind()
-					overlayKind := reflect.TypeOf(overlayValue).Kind()
-					if baseKind != overlayKind {
-						return false
-					}
-					return lo.Contains(mergeKeyKinds, baseKind)
-				})
-
-				if len(sameKeys) == 0 {
-					return false
+		switch config.SliceStrategy {
+		case SliceStrategyAppendNoDuplicates:
+			resultSlice := convertSlice(base)
+			for _, overlayItem := range convertSlice(overlay) {
+				if !lo.Contains(resultSlice, overlayItem) {
+					resultSlice = append(resultSlice, overlayItem)
 				}
+			}
+			return resultSlice
+		case SliceStrategyAppend:
+			return append(convertSlice(base), convertSlice(overlay)...)
+		case SliceStrategyTruncateAndReplace:
+			return overlay
+		case SliceStrategyMergeOverlapReplaceRest:
 
-				// Check if all the values are the same
-				for _, key := range sameKeys {
-					baseValue := baseItem[key]
-					overlayValue := overlayItem[key]
-					if baseValue != overlayValue {
-						return false
-					}
-				}
-
-				return true
+			resultSlice := []any{}
+			baseSlice := convertSlice(base)
+			baseSliceMaps := lo.Map(lo.Filter(baseSlice, func(item any, index int) bool {
+				return item != nil && reflect.TypeOf(item).Kind() == reflect.Map
+			}), func(item any, _ int) map[string]any {
+				return convertMap(item)
 			})
 
-			if len(matched) == 0 {
-				resultSlice = append(resultSlice, overlayItem)
-				continue
+			for _, overlayItem := range convertSlice(overlay) {
+
+				// Check if the value is already in the slice
+				// The equality test is performed if both baseVal and overlayItem are of type map or object
+				// The equality is given if all the primitive
+
+				if overlayItem == nil {
+					resultSlice = append(resultSlice, overlayItem)
+					continue
+				}
+
+				if reflect.TypeOf(overlayItem).Kind() != reflect.Map {
+					resultSlice = append(resultSlice, overlayItem)
+					continue
+				}
+
+				overlayItem := convertMap(overlayItem)
+
+				// We need to check if we are to merge this with base array element or not
+				matched := lo.Filter(baseSliceMaps, func(baseItem map[string]any, index int) bool {
+
+					baseItemKeys := lo.Keys(baseItem)
+					overlayItemKeys := lo.Keys(overlayItem)
+
+					// Find same keys overlapping with SliceMergeKeys
+					sameKeys := lo.Filter(baseItemKeys, func(key string, index int) bool {
+						return lo.Contains(config.SliceMergeKeys, key) && lo.IndexOf(overlayItemKeys, key) != -1
+					})
+
+					// only allow same keys if the values they point to are of the same type and of primitive (int, string, bool, float)
+					sameKeys = lo.Filter(sameKeys, func(key string, index int) bool {
+						baseValue := baseItem[key]
+						overlayValue := overlayItem[key]
+						if baseValue == nil || overlayValue == nil {
+							return baseValue == nil && overlayValue == nil
+						}
+						baseKind := reflect.TypeOf(baseValue).Kind()
+						overlayKind := reflect.TypeOf(overlayValue).Kind()
+						if baseKind != overlayKind {
+							return false
+						}
+						return lo.Contains(mergeKeyKinds, baseKind)
+					})
+
+					if len(sameKeys) == 0 {
+						return false
+					}
+
+					// Check if all the values are the same
+					for _, key := range sameKeys {
+						baseValue := baseItem[key]
+						overlayValue := overlayItem[key]
+						if baseValue != overlayValue {
+							return false
+						}
+					}
+
+					return true
+				})
+
+				if len(matched) == 0 {
+					resultSlice = append(resultSlice, overlayItem)
+					continue
+				}
+
+				// Merge the values
+				valuesToAppend := lo.Map(matched, func(baseItem map[string]any, index int) any {
+					result := doMerge(overlayItem, baseItem, config)
+					return result
+				})
+
+				resultSlice = append(resultSlice, valuesToAppend...)
 			}
 
-			// Merge the values
-			valuesToAppend := lo.Map(matched, func(baseItem map[string]any, index int) any {
-				result := doMerge(overlayItem, baseItem, sliceMergeKeys)
-				return result
-			})
-
-			resultSlice = append(resultSlice, valuesToAppend...)
+			return resultSlice
+		default:
+			return append(convertSlice(base), convertSlice(overlay)...)
 		}
-
-		return resultSlice
 	default:
 		return overlay
 	}

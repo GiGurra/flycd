@@ -43,8 +43,8 @@ source:
 		App:           "app1",
 		Org:           "test-org",
 		PrimaryRegion: "blarn",
-		ExtraRegions:  []string{"ams"},
-		DeployParams:  []string{"--busted"},
+		ExtraRegions:  []string{"amx", "ams"},
+		DeployParams:  []string{"--ok", "--busted"},
 		Source: Source{
 			Type: "local",
 		},
@@ -55,8 +55,8 @@ source:
 		"org":            "test-org",
 		"primary_region": "blarn",
 		"foo":            "bar",
-		"extra_regions":  []any{"ams"},
-		"deploy_params":  []any{"--busted"},
+		"extra_regions":  []any{"amx", "ams"},
+		"deploy_params":  []any{"--ok", "--busted"},
 		"source": map[string]any{
 			"type": "local",
 		},
