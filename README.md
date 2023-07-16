@@ -320,6 +320,14 @@ and deploy them and any updates to their configuration.
 When an app repo webhook is triggered, flycd will will only evaluate that specific app for changes to know if it needs
 to be re-deployed.
 
+### Pruning policies
+
+Currently, FlyCD never deletes any resources from your fly.io account. FlyCD just adds and updates existing resources.
+This means for example that if you delete an app from your config, it will still exist in your fly.io account. The same
+goes for environment variables, secrets, etc.
+
+This may change in the future, and if so, FlyCD will have this an opt-in feature (just like auto pruning with ArgoCD).
+
 ## Where it probably needs some improvement
 
 * Performance: It needs some way of determining if webhooks interfere with each other. Right now they are just executed
@@ -330,6 +338,7 @@ to be re-deployed.
 * Consistency: It needs some persistence of incoming webhooks. Right now if FlyCD goes down during a deployment, the
   deployment will be lost.
 * Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like's ArgoCD's 3-minute polling.
+* Consistency: Support for pruning policies.
 * Security: It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are
   trivial to create :S.
 * Security: Better/more secrets providers
