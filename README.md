@@ -21,7 +21,7 @@ The illustration below gives an idea of FlyCD enabled configuration:
 
 ### Installation
 
-1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.37`)
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.36`)
 2. Run `flycd deploy <fs path>` to deploy a configuration (single app or folder structure, you decide)
 3. Optional: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
    This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
@@ -177,6 +177,12 @@ source:
 # note: All volumes and mounts will be created in all regions (primary + extra regions).  
 extra_regions:
   - ams
+
+# optional machine config. Currently only supports count
+machines:
+  count: 2 # default count for all regions
+  regions:
+    ams: 3 # override count for a specific region
 
 ## Optional env vars
 env:
