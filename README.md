@@ -335,7 +335,7 @@ goes for environment variables, secrets, etc.
 
 This may change in the future, and if so, FlyCD will have this an opt-in feature (just like auto pruning with ArgoCD).
 
-### Storage
+### Storage and State
 
 FlyCD is currently mostly stateless - it doesn't keep any persistent storage. Instead it uses fly.ioapp environment
 variables to store configuration and app repo hashes to later determine if a re-deploy is required or not. You can
