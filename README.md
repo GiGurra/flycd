@@ -181,7 +181,7 @@ extra_regions:
 # optional machine config. Currently only supports count
 machines:
   count: 2 # default count for all regions
-  regions:
+  count_per_region:
     ams: 3 # override count for a specific region
 
 ## Optional env vars
