@@ -337,7 +337,7 @@ This may change in the future, and if so, FlyCD will have this an opt-in feature
 
 ### Storage and State
 
-FlyCD is currently mostly stateless - it doesn't keep any persistent storage. Instead it uses fly.ioapp environment
+FlyCD is currently mostly stateless - it doesn't keep any persistent storage. Instead it uses fly.io app environment
 variables to store configuration and app repo hashes to later determine if a re-deploy is required or not. You can
 override this using `flycd deploy <path> --force`.
 
