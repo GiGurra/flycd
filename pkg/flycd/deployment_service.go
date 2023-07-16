@@ -397,12 +397,13 @@ func deployAppToFly(
 			if err != nil {
 				return "", err
 			}
-			for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
-				fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
-				err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
-				if err != nil {
-					return "", err
-				}
+			// At first, it was believed that we could deploy to each region here to create machines there.
+			// However, it turns out that fly.io doesn't create machines at all with the 'deploy' command at all.
+			// So there is no point in looping over regions here and deploying to each.
+			fmt.Printf("Deploying app %s\n", input.cfgTyped.App)
+			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, input.cfgTyped.PrimaryRegion)
+			if err != nil {
+				return "", err
 			}
 			return model.SingleAppDeployUpdated, nil
 		} else {
@@ -419,11 +420,12 @@ func deployAppToFly(
 		if err != nil {
 			return "", err
 		}
-		fmt.Printf("Issuing an explicit deploy command, since a fly.io bug when deploying within the launch freezes the operation\n")
-		for _, region := range input.cfgTyped.RegionsWPrimaryLast() {
-			fmt.Printf("Deploying app %s to region %s\n", input.cfgTyped.App, region)
-			err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, region)
-		}
+		fmt.Printf("Issuing an explicit deploy command\n")
+		// At first, it was believed that we could deploy to each region here to create machines there.
+		// However, it turns out that fly.io doesn't create machines at all with the 'deploy' command at all.
+		// So there is no point in looping over regions here and deploying to each.
+		fmt.Printf("Deploying app %s\n", input.cfgTyped.App)
+		err = input.flyClient.DeployExistingApp(input.ctx, input.cfgTyped, input.tempDir, input.deployCfg, input.cfgTyped.PrimaryRegion)
 		if err != nil {
 			return "", err
 		}

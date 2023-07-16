@@ -61,6 +61,9 @@ type PreCalculatedAppConfig struct {
 	UnTyped map[string]any
 }
 
+type MachineConfig struct {
+}
+
 type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
@@ -76,6 +79,7 @@ type AppConfig struct {
 	Build         map[string]any    `yaml:"build,omitempty" toml:"build,omitempty"`
 	Mounts        []Mount           `yaml:"mounts,omitempty" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
+	Machines      *MachineConfig    `yaml:"machines,omitempty" toml:"machines,omitempty"`
 }
 
 func (a *AppConfig) RegionsWPrimaryLast() []string {
