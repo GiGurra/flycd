@@ -65,10 +65,10 @@ if [[ $(git ls-remote --tags origin "NEXT_TAG") ]]; then
 fi
 
 # Update the tag in main.go
-sed -i "main.go" "s/$CUR_TAG/$NEXT_TAG/g"
+sed -i -e "s/$CUR_TAG/$NEXT_TAG/g" "main.go"
 
 # Update the tag in the README
-sed -i "README.md" "s/$PREV_TAG/$CUR_TAG/g"
+sed -i -e "s/$PREV_TAG/$CUR_TAG/g" "README.md"
 
 # add the changes to git
 git add main.go README.md
