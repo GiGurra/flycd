@@ -281,7 +281,10 @@ func runScaleAllRegionsPostDeployStep(input deployInput) error {
 
 	fmt.Printf("Checking if we need to scale up instance count in any region\n")
 	minSvcReq := input.cfgTyped.MinMachinesFromSvcs()
-	if len(input.cfgTyped.ExtraRegions) == 0 && minSvcReq <= 1 && len(input.cfgTyped.Machines.CountPerRegion) == 0 {
+	if len(input.cfgTyped.ExtraRegions) == 0 &&
+		minSvcReq <= 1 &&
+		len(input.cfgTyped.Machines.CountPerRegion) == 0 &&
+		input.cfgTyped.Machines.Count <= 1 {
 		fmt.Printf("No need to scale up instance count in any region, beacuse we only have one region and don't require more than 1 instance\n")
 		return nil // nothing to do
 	}
