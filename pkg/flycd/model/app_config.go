@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/pkg/flycd/util/util_math"
 	"github.com/samber/lo"
+	"os"
 	"regexp"
 )
 
@@ -90,6 +91,7 @@ type AppConfig struct {
 	Mounts        []Mount           `yaml:"mounts,omitempty" toml:"mounts,omitempty"` // fly.io only supports one mount :S
 	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
 	Machines      MachineConfig     `yaml:"machines,omitempty" toml:"machines,omitempty"`
+	Secrets       []SecretRef       `yaml:"secrets,omitempty" toml:"secrets,omitempty"`
 }
 
 func (a *AppConfig) RegionsWPrimaryLast() []string {
@@ -114,6 +116,46 @@ func (a *AppConfig) MinMachinesFromSvcs() int {
 			0,
 		),
 	)
+}
+
+type SecretSourceType string
+
+const (
+	SecretSourceTypeEnv SecretSourceType = "env"
+	SecretSourceTypeRaw SecretSourceType = "raw" // not recommended
+	// Add more as needed
+)
+
+type SecretRef struct {
+	Name string           `yaml:"name" toml:"name"`
+	Type SecretSourceType `yaml:"type" toml:"type"`
+	Env  string           `yaml:"env" toml:"env"`
+	Raw  string           `yaml:"raw" toml:"raw"`
+}
+
+func (s SecretRef) GetValue() (string, error) {
+	switch s.Type {
+	case SecretSourceTypeEnv:
+		if s.Env == "" {
+			value, exists := os.LookupEnv(s.Name)
+			if !exists {
+				return "", fmt.Errorf("env var %s for secret %s does not exist", s.Name, s.Name)
+			} else {
+				return value, nil
+			}
+		} else {
+			value, exists := os.LookupEnv(s.Env)
+			if !exists {
+				return "", fmt.Errorf("env var %s for secret %s does not exist", s.Env, s.Name)
+			} else {
+				return value, nil
+			}
+		}
+	case SecretSourceTypeRaw:
+		return s.Raw, nil
+	default:
+		return "", fmt.Errorf("unknown secret type: %s", s.Type)
+	}
 }
 
 type ValidateAppConfigOptions struct {
