@@ -64,11 +64,19 @@ if [[ $(git ls-remote --tags origin "NEXT_TAG") ]]; then
   exit 1
 fi
 
-# Update the tag in main.go
-sed -i -e "s/$CUR_TAG/$NEXT_TAG/g" "main.go"
+# Sed is different on macos and linux :S
+if [[ "$(uname)" == "Darwin" ]]; then
+    # MacOS
+    sed -i "" "s/$CUR_TAG/$NEXT_TAG/g" "main.go" # Update the tag in main.go
+    sed -i "" "s/$PREV_TAG/$CUR_TAG/g" "README.md" # Update the tag in the README
+elif [[ "$(uname)" == "Linux" ]]; then
+    # Linux
+    sed -i "s/$CUR_TAG/$NEXT_TAG/g" "main.go" # Update the tag in main.go
+    sed -i "s/$PREV_TAG/$CUR_TAG/g" "README.md" # Update the tag in the README
+else
+    echo "Unsupported operating system"
+fi
 
-# Update the tag in the README
-sed -i -e "s/$PREV_TAG/$CUR_TAG/g" "README.md"
 
 # add the changes to git
 git add main.go README.md
