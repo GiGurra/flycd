@@ -16,11 +16,13 @@ type CommonAppConfig struct {
 
 func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	return CommonAppConfig{
-		AppDefaults:      util_cfg_merge.MergeMaps(c.AppDefaults, other.AppDefaults),
+		AppDefaults:      util_cfg_merge.MergeMaps(c.AppDefaults, other.AppDefaults, mergeKeys...),
 		AppSubstitutions: util_cfg_merge.MergeMaps(c.AppSubstitutions, other.AppSubstitutions),
-		AppOverrides:     util_cfg_merge.MergeMaps(c.AppOverrides, other.AppOverrides),
+		AppOverrides:     util_cfg_merge.MergeMaps(c.AppOverrides, other.AppOverrides, mergeKeys...),
 	}
 }
+
+var mergeKeys = []string{"internal_port", "id", "port", "name", "source", "protocol"}
 
 func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppConfig, map[string]any, error) {
 
