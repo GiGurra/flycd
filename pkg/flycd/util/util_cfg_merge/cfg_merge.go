@@ -88,35 +88,73 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 			return convertMap(item)
 		})
 
-		for _, overlayVal := range convertSlice(overlay) {
+		for _, overlayItem := range convertSlice(overlay) {
 
 			// Check if the value is already in the slice
-			// The equality test is performed if both baseVal and overlayVal are of type map or object
+			// The equality test is performed if both baseVal and overlayItem are of type map or object
 			// The equality is given if all the primitive
 
-			if overlayVal == nil {
-				resultSlice = append(resultSlice, overlayVal)
+			if overlayItem == nil {
+				resultSlice = append(resultSlice, overlayItem)
 				continue
 			}
 
-			if reflect.TypeOf(overlayVal).Kind() != reflect.Map {
-				resultSlice = append(resultSlice, overlayVal)
+			if reflect.TypeOf(overlayItem).Kind() != reflect.Map {
+				resultSlice = append(resultSlice, overlayItem)
 				continue
 			}
 
-			// We need to check if we are too merge this with base array element or not
+			overlayItem := convertMap(overlayItem)
+
+			// We need to check if we are to merge this with base array element or not
 			matched := lo.Filter(baseSliceMaps, func(baseItem map[string]any, index int) bool {
-				return false
+
+				baseItemKeys := lo.Keys(baseItem)
+				overlayItemKeys := lo.Keys(overlayItem)
+
+				// Find same keys overlapping with sliceMergeKeys
+				sameKeys := lo.Filter(baseItemKeys, func(key string, index int) bool {
+					return lo.Contains(sliceMergeKeys, key) && lo.IndexOf(overlayItemKeys, key) != -1
+				})
+
+				// only allow same keys if the values they point to are of the same type and of primitive (int, string, bool, float)
+				sameKeys = lo.Filter(sameKeys, func(key string, index int) bool {
+					baseValue := baseItem[key]
+					overlayValue := overlayItem[key]
+					if baseValue == nil || overlayValue == nil {
+						return baseValue == nil && overlayValue == nil
+					}
+					baseKind := reflect.TypeOf(baseValue).Kind()
+					overlayKind := reflect.TypeOf(overlayValue).Kind()
+					return baseKind == overlayKind &&
+						(baseKind == reflect.Int || baseKind == reflect.String || baseKind == reflect.Bool || baseKind == reflect.Float64)
+				})
+
+				if len(sameKeys) == 0 {
+					return false
+				}
+
+				// Check if all the values are the same
+				for _, key := range sameKeys {
+					baseValue := baseItem[key]
+					overlayValue := overlayItem[key]
+					if baseValue != overlayValue {
+						return false
+					}
+				}
+
+				return true
 			})
 
 			if len(matched) == 0 {
-				resultSlice = append(resultSlice, overlayVal)
+				resultSlice = append(resultSlice, overlayItem)
 				continue
 			}
 
 			// Merge the values
 			valuesToAppend := lo.Map(matched, func(baseItem map[string]any, index int) any {
-				return doMerge(overlayVal, baseItem, sliceMergeKeys)
+				result := doMerge(overlayItem, baseItem, sliceMergeKeys)
+				return result
 			})
 
 			resultSlice = append(resultSlice, valuesToAppend...)
@@ -132,7 +170,7 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 		//dstSlice := convertSlice(base)
 		//return append(srcSlice, dstSlice...), nil
 
-		return overlay
+		return resultSlice
 	default:
 		return overlay
 	}

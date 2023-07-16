@@ -70,6 +70,45 @@ func TestMerge_NilNil(t *testing.T) {
 	}
 }
 
+func TestMerge_mapInMap(t *testing.T) {
+
+	base := map[string]any{
+		"common1": "base-common1",
+		"common2": "base-common2",
+		"unique1": "base-unique1",
+		"blah":    "hah",
+		"subMapKey": map[string]any{
+			"sub1": "base-sub1",
+			"sub2": "base-sub2",
+		},
+	}
+
+	overlay := map[string]any{
+		"common1": "base-common1",
+		"common2": "base-common2x",
+		"uq":      "vq",
+		"subMapKey": map[string]any{
+			"sub1": "overlay-sub1",
+		},
+	}
+
+	expected := map[string]any{
+		"common1": "base-common1",
+		"common2": "base-common2x",
+		"uq":      "vq",
+		"blah":    "hah",
+		"subMapKey": map[string]any{
+			"sub1": "overlay-sub1",
+			"sub2": "base-sub2",
+		},
+	}
+
+	actual := MergeMaps(base, overlay)
+	if diff := cmp.Diff(actual, expected); diff != "" {
+		t.Fatalf("Expected %v, diff: %s", expected, diff)
+	}
+}
+
 func TestMerge_Arrays(t *testing.T) {
 
 	// Case:
@@ -141,7 +180,7 @@ func TestMerge_Arrays(t *testing.T) {
 		"foo": expectedArray,
 	}
 
-	actual := MergeMaps(base, overlay)
+	actual := MergeMaps(base, overlay, "common1", "common2")
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
