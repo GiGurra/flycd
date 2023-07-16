@@ -345,7 +345,7 @@ For performance and consistency reasons flycd will probably become stateful at s
 
 NOTE: You should never run more than 1 flycd instance. This is because flycd currently is quite basic in determining
 what changes could conflict or cause race conditions with each other if deployed in parallel. FlyCD just queues all
-changes/webhooks to a single worker, so they are executed in order. This is not ideal, but it works for now.
+changes/webhooks to a single im-mem worker, so they are executed in order. This is not ideal, but it works for now.
 
 ## Where it probably needs some improvement
 
