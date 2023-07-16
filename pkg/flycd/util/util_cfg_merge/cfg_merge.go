@@ -161,16 +161,6 @@ func doMerge(overlay, base any, sliceMergeKeys []string) any {
 
 			resultSlice = append(resultSlice, valuesToAppend...)
 		}
-		// Here is how we differ from the go-deepmerge package: We do not merge arrays
-		// but instead replace them.
-
-		// In the future we might support intelligent merging of arrays (kustomize style),
-		// but for now we just replace them.
-
-		////return append(overlay.([]any), base.([]any)...), nil
-		//srcSlice := convertSlice(overlay)
-		//dstSlice := convertSlice(base)
-		//return append(srcSlice, dstSlice...), nil
 
 		return resultSlice
 	default:
