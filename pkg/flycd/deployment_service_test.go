@@ -231,6 +231,13 @@ func TestDeployFromFolder_withVolumes(t *testing.T) {
 					Times(test.numExtendedVolumes)
 			}
 
+			if test.numCreatedVolumes+test.numExtendedVolumes != test.deployedAppScale {
+				flyClient.
+					EXPECT().
+					ScaleApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+			}
+
 			flyClient.
 				EXPECT().
 				DeployExistingApp(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "arn").

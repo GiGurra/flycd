@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/pkg/fly_client"
 	"github.com/gigurra/flycd/pkg/flycd/model"
+	"github.com/gigurra/flycd/pkg/flycd/util/util_cvt"
 	"github.com/gigurra/flycd/pkg/flycd/util/util_git"
 	"github.com/gigurra/flycd/pkg/flycd/util/util_math"
 	"github.com/gigurra/flycd/pkg/flycd/util/util_toml"
@@ -183,6 +184,13 @@ func deployAppFromFolder(
 	deployCfg model.DeployConfig,
 	preCalculatedAppCfg *model.PreCalculatedAppConfig,
 ) (model.SingleAppDeploySuccessType, error) {
+
+	if preCalculatedAppCfg != nil {
+		err := preCalculatedAppCfg.Typed.Validate()
+		if err != nil {
+			return "", fmt.Errorf("error validating app config: %w", err)
+		}
+	}
 
 	cfgDir := util_work_dir.NewWorkDir(path)
 
@@ -590,6 +598,9 @@ func updateCfgHashes(
 	appHash string,
 	cfgHash string,
 ) {
+	if cfg.Env == nil {
+		cfg.Env = map[string]string{}
+	}
 	cfg.Env["FLYCD_CONFIG_VERSION"] = cfgHash
 	cfg.Env["FLYCD_APP_VERSION"] = appHash
 	cfg.Env["FLYCD_APP_SOURCE_TYPE"] = string(cfg.Source.Type)
@@ -598,7 +609,11 @@ func updateCfgHashes(
 	cfg.Env["FLYCD_APP_SOURCE_REF_BRANCH"] = cfg.Source.Ref.Branch
 	cfg.Env["FLYCD_APP_SOURCE_REF_COMMIT"] = cfg.Source.Ref.Commit
 	cfg.Env["FLYCD_APP_SOURCE_REF_TAG"] = cfg.Source.Ref.Tag
-	(*cfgUntyped)["env"] = cfg.Env
+	envUntyped, err := util_cvt.StructToMapYaml(cfg.Env)
+	if err != nil {
+		panic(err)
+	}
+	(*cfgUntyped)["env"] = envUntyped
 }
 
 func writeOutUpdatedConfigFiles(cfgUntyped map[string]any, tempDir util_work_dir.WorkDir) error {
