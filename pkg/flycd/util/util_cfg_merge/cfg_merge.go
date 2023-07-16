@@ -106,14 +106,6 @@ func doMerge(
 	case reflect.Slice:
 
 		switch config.SliceStrategy {
-		case SliceStrategyAppendNoDuplicates:
-			resultSlice := convertSlice(base)
-			for _, overlayItem := range convertSlice(overlay) {
-				if !lo.Contains(resultSlice, overlayItem) {
-					resultSlice = append(resultSlice, overlayItem)
-				}
-			}
-			return resultSlice
 		case SliceStrategyAppend:
 			return append(convertSlice(base), convertSlice(overlay)...)
 		case SliceStrategyTruncateAndReplace:
@@ -203,8 +195,16 @@ func doMerge(
 			}
 
 			return resultSlice
+		case SliceStrategyAppendNoDuplicates:
+			fallthrough
 		default:
-			return append(convertSlice(base), convertSlice(overlay)...)
+			resultSlice := convertSlice(base)
+			for _, overlayItem := range convertSlice(overlay) {
+				if !lo.Contains(resultSlice, overlayItem) {
+					resultSlice = append(resultSlice, overlayItem)
+				}
+			}
+			return resultSlice
 		}
 	default:
 		return overlay
