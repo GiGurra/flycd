@@ -25,7 +25,7 @@ func TestMerge_TopLevel(t *testing.T) {
 		"bo":  nil,
 	}
 
-	actual := Merge(base, overlay)
+	actual := MergeMaps(base, overlay)
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
@@ -53,7 +53,7 @@ func TestMerge_Deep(t *testing.T) {
 		},
 	}
 
-	actual := Merge(base, overlay)
+	actual := MergeMaps(base, overlay)
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
@@ -64,8 +64,85 @@ func TestMerge_NilNil(t *testing.T) {
 	var overlay map[string]any = nil
 	var expected map[string]any = nil
 
-	actual := Merge(base, overlay)
+	actual := MergeMaps(base, overlay)
 	if diff := cmp.Diff(actual, expected); diff != "" {
+		t.Fatalf("Expected %v, diff: %s", expected, diff)
+	}
+}
+
+func TestMerge_Arrays(t *testing.T) {
+
+	// Case:
+	// - the base array contains objects/maps
+	// - the overlay array contains objects/maps
+	// -> merge deep, calculate keys using common primitive fields (non-object, non-map, non-slice)
+
+	baseArray := []any{
+		map[string]any{
+			"common1": "base-common1",
+			"common2": "base-common2",
+			"unique1": "base-unique1",
+			"subMapKey": map[string]any{
+				"sub1": "base-sub1",
+				"sub2": "base-sub2",
+			},
+		},
+		map[string]any{
+			"xcommon1": "base-common1",
+			"xcommon2": "base-common2",
+			"unique1":  "base-unique1",
+			"subMapKey": map[string]any{
+				"sub1": "base-sub1",
+				"sub2": "base-sub2",
+			},
+		},
+	}
+
+	overlayArray := []any{
+		map[string]any{
+			"common1": "base-common1",
+			"common2": "base-common2",
+			"subMapKey": map[string]any{
+				"sub1": "overlay-sub1",
+			},
+		},
+	}
+
+	expectedArray := []any{
+		map[string]any{
+			"common1": "base-common1",
+			"common2": "base-common2",
+			"unique1": "base-unique1",
+			"subMapKey": map[string]any{
+				"sub1": "base-sub1",
+				"sub2": "base-sub2",
+			},
+		},
+		map[string]any{
+			"xcommon1": "base-common1",
+			"xcommon2": "base-common2",
+			"unique1":  "base-unique1",
+			"subMapKey": map[string]any{
+				"sub1": "overlay-sub1",
+				"sub2": "base-sub2",
+			},
+		},
+	}
+
+	base := map[string]any{
+		"foo": baseArray,
+	}
+
+	overlay := map[string]any{
+		"foo": overlayArray,
+	}
+
+	expected := map[string]any{
+		"foo": expectedArray,
+	}
+
+	actual := MergeMaps(base, overlay)
+	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
 }

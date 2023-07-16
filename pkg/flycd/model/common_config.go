@@ -16,9 +16,9 @@ type CommonAppConfig struct {
 
 func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	return CommonAppConfig{
-		AppDefaults:      util_cfg_merge.Merge(c.AppDefaults, other.AppDefaults),
-		AppSubstitutions: util_cfg_merge.Merge(c.AppSubstitutions, other.AppSubstitutions),
-		AppOverrides:     util_cfg_merge.Merge(c.AppOverrides, other.AppOverrides),
+		AppDefaults:      util_cfg_merge.MergeMaps(c.AppDefaults, other.AppDefaults),
+		AppSubstitutions: util_cfg_merge.MergeMaps(c.AppSubstitutions, other.AppSubstitutions),
+		AppOverrides:     util_cfg_merge.MergeMaps(c.AppOverrides, other.AppOverrides),
 	}
 }
 
@@ -45,9 +45,9 @@ func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppCon
 	}
 
 	untyped := map[string]any{}
-	untyped = util_cfg_merge.Merge(untyped, c.AppDefaults)
-	untyped = util_cfg_merge.Merge(untyped, untypedLocal)
-	untyped = util_cfg_merge.Merge(untyped, c.AppOverrides)
+	untyped = util_cfg_merge.MergeMaps(untyped, c.AppDefaults)
+	untyped = util_cfg_merge.MergeMaps(untyped, untypedLocal)
+	untyped = util_cfg_merge.MergeMaps(untyped, c.AppOverrides)
 
 	typed, err := util_cvt.MapYamlToStruct[AppConfig](untyped)
 	if err != nil {
