@@ -23,13 +23,19 @@ The illustration below gives an idea of FlyCD enabled configuration:
 
 1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.36`)
 2. Run `flycd deploy <fs path>` to deploy a configuration (single app or folder structure, you decide)
-3. Optional: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
-   This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command will
-   automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into your
-   flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just locally
-   verify that it works.
-    * To make it able to clone private git repos, create a fly.io secret called `FLY_SSH_PRIVATE_KEY`
-    * `flycd install` is also how you upgrade a fly.io deployed flycd installation to a new flycd version.
+3. (Optional) Installing flycd as an app in your fly.io account or as a daemon somewhere else where you prefer to have
+   it running.
+    * Method 1: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
+      This will create a new fly.io app running flycd in monitoring mode/webhook listening mode. The `install` command
+      will automatically issue a fly.io API token for itself, and store it as an app secret in fly.io. You can ssh into
+      your flycd container and copy it from there if you want to use it for other purposes (you prob shouldn't) or just
+      locally verify that it works.
+        * To make it able to clone private git repos, create a fly.io secret called `FLY_SSH_PRIVATE_KEY`
+        * `flycd install` is also how you upgrade a fly.io deployed flycd installation to a new flycd version.
+    * Method 2: Use the flycd docker image (https://hub.docker.com/r/gigurra/flycd) and mount a project.yaml into
+      the container's `/flycd/projects/project.yaml`, where your `project.yaml` points to your config repo. You could
+      also customize the image to your liking (see [Dockerfile](Dockerfile)).
+    * There are many other ways you could do this as well
 4. Optional: Add a webhook to your GitHub repo(s), pointing to your flycd app's url,
    e.g. the default POST path `https://<your-flycd-app-name>.fly.dev/webhook`, which currently just supports GitHub push
    webhooks.
