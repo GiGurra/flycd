@@ -284,7 +284,7 @@ Check the [examples](examples) directory for more ideas.
 
 * Support for creation/updating fly.io secrets (not sure how though :S)
 * Support per-region machine size configurations (ram, cpu)
-* Support multiprocess apps (flycd currently only supports 'app' for machine and volume scaling)
+* Support multiprocess apps (flycd currently only supports 'app' for figuring out when scale up the number of machines and volumes)
 * More practical ways to configure Machine types, ram & cpu modifications
       * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
 * better error handling :S
