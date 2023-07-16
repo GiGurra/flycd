@@ -83,6 +83,10 @@ up webhooks from this repo. In that case you need to ensure you re-run `flycd in
 changes. Having a configuration repo with webhooks, means less manual interation with flycd and less CD configuration,
 but the choice is yours.
 
+When a configuration repo (=project repo) webhook is triggered, flycd traverse the entire tree structure of projects and
+apps enclosed by the repo/project, and evaluate all apps inside if the config change has made it necessary to re-deploy
+them.
+
 #### App repo webhooks
 
 App repos are where you store your app code, and optionally part of your app configuration (but never app.yaml).
@@ -91,6 +95,9 @@ regular push webhook functionality and point it to your flycd app's webhook url.
 
 FlyCD will then automatically fetch the latest version (or specific version, if set in your config repo) of your apps
 and deploy them and any updates to their configuration.
+
+When an app repo webhook is triggered, flycd will will only evaluate that specific app for changes to know if it needs
+to be re-deployed.
 
 ### Configuration examples
 
