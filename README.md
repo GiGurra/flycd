@@ -117,6 +117,7 @@ source:
   repo: "git@github.com:my-org/my-cloud"
 
 # Optional common parameters that affect all apps within this project
+# This also works for nested projects (projects within projects)
 common:
   app_defaults:
     http_service:
