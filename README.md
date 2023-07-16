@@ -109,6 +109,8 @@ prod).
 
 At the top we have a `project.yaml` file which lets FlyCD know where this is located. We could also have
 local `project.yaml` files further down the tree to set common parameters/values for configurations for that subtree.
+You can also skip having `project.yaml` files entirely, though in that case you need to only use manual deployments, or
+manually redeploy your installed flycd instance to your fly.io environment for every config change.
 
 ```yaml
 # project.yaml
