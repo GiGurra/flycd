@@ -215,6 +215,19 @@ build:
   buildpacks:
     - gcr.io/paketo-buildpacks/go
 
+# Optional secrets config. Currently only supports env vars and raw in-config/inline plaintext
+secrets:
+  # Secrets forwarded from env vars on the host running flycd (e.g. your local machine or installed flycd instance) 
+  - name: SOME_SECRET_FWD # this is the name/key the secret will have in the fly.io app
+    type: env # this tells flycd how to extract the secret value
+    env: SOME_SECRET # optional name of the source env var on the host running flycd. Defaults to the name of the secret
+  - name: SOME_SECRET_2
+    type: env
+  # unencrypted plaintext in config. NOT recommended. For testing only!
+  - name: SOME_TEST_SECRET
+    type: raw
+    raw: secret
+
 vm_size: &vm_size "shared-cpu-1x"
 
 org: &org personal
@@ -257,7 +270,7 @@ subjective, like the author of FlyCD just likes yaml more than toml :D.
 
 Check the [examples](examples) directory for more ideas.
 
-## Where it needs improvement
+## Where it probably needs some improvement
 
 * Performance: It needs some way of determining if webhooks interfere with each other. Right now they are just executed
   one at a time (they are queued to a single worker to avoid races)..
@@ -269,6 +282,7 @@ Check the [examples](examples) directory for more ideas.
 * Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like's ArgoCD's 3-minute polling.
 * Security: It needs some security validation of webhooks from GitHub :D. Currently, there is none so DOS attacks are
   trivial to create :S.
+* Security: Better/more secrets providers
 * Non-Github: It currently only supports webhooks from git repos at GitHub.
 * Non-Git sources: It might be useful to also support regular docker images and different docker registries (right now
   to deploy from an image, you have to create a proxy Dockerfile, Or create a single line inline Dockerfile in your
@@ -282,7 +296,6 @@ Check the [examples](examples) directory for more ideas.
 
 ### Some immediate TODOs
 
-* Support for creation/updating fly.io secrets (not sure how though :S)
 * Support per-region machine size configurations (ram, cpu)
 * Support multiprocess apps (flycd currently only supports 'app' for figuring out when scale up the number of machines
   and volumes)
