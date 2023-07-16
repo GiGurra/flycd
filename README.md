@@ -337,11 +337,15 @@ This may change in the future, and if so, FlyCD will have this an opt-in feature
 
 ### Storage
 
-FlyCD is currently stateless, i.e. it doesn't keep any persistent storage. Instead it uses fly.ioapp environment
+FlyCD is currently mostly stateless - it doesn't keep any persistent storage. Instead it uses fly.ioapp environment
 variables to store configuration and app repo hashes to later determine if a re-deploy is required or not. You can
 override this using `flycd deploy <path> --force`.
 
-For performance and consistency reasons flycd will probably become stateful at some point in the future. 
+For performance and consistency reasons flycd will probably become stateful at some point in the future.
+
+NOTE: You should never run more than 1 flycd instance. This is because flycd currently is quite basic in determining
+what changes could conflict or cause race conditions with each other if deployed in parallel. FlyCD just queues all
+changes/webhooks to a single worker, so they are executed in order. This is not ideal, but it works for now.
 
 ## Where it probably needs some improvement
 
