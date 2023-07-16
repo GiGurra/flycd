@@ -77,6 +77,13 @@ type FlyClient interface {
 		volumeId string,
 		gb int,
 	) error
+
+	ScaleApp(
+		ctx context.Context,
+		app string,
+		region string,
+		count int,
+	) error
 }
 
 type FlyClientImpl struct{}
@@ -144,6 +151,26 @@ func (c FlyClientImpl) GetAppScale(
 	}
 
 	return scaleStates, nil
+}
+
+func (c FlyClientImpl) ScaleApp(
+	ctx context.Context,
+	app string,
+	region string,
+	count int,
+) error {
+
+	_, err := util_cmd.
+		NewCommandA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
+		WithTimeout(120 * time.Second).
+		WithTimeoutRetries(1).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error running 'fly scale count %d --app %s --region %s -y': %w", count, app, region, err)
+	}
+
+	return nil
 }
 
 func (c FlyClientImpl) ExtendVolume(

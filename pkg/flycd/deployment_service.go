@@ -279,39 +279,42 @@ func runPostDeploySteps(input deployInput) error {
 
 func runScaleAllRegionsPostDeployStep(input deployInput) error {
 
-	minSvcReq := input.cfgTyped.MinMachinesRunning()
+	fmt.Printf("Checking if we need to scale up instance count in any region\n")
+	minSvcReq := input.cfgTyped.MinMachinesFromSvcs()
 	if len(input.cfgTyped.ExtraRegions) == 0 && minSvcReq <= 1 && len(input.cfgTyped.Machines.CountPerRegion) == 0 {
+		fmt.Printf("No need to scale up instance count in any region, beacuse we only have one region and don't require more than 1 instance\n")
 		return nil // nothing to do
 	}
 
-	fmt.Printf("not implemented yet\n")
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
 	if err != nil {
 		return fmt.Errorf("error getting app scale for app %s: %w", input.cfgTyped.App, err)
 	}
 
 	currentCountPerRegion := model.CountAppsPerRegion(scales)
-	for region, currentCount := range currentCountPerRegion {
-		fmt.Printf("region %s has %d instances\n", region, currentCount)
-		// TODO: Implement
-	}
-
 	wantedRegions := input.cfgTyped.RegionsWPrimaryLast()
 	for _, wantedRegion := range wantedRegions {
-		wantedCount := input.cfgTyped.Machines.Count
+		wantedCountForRegion := input.cfgTyped.Machines.Count
 		if wantedRegionCount, hasRegionCount := input.cfgTyped.Machines.CountPerRegion[wantedRegion]; hasRegionCount {
-			wantedCount = wantedRegionCount
+			wantedCountForRegion = wantedRegionCount
 		}
-		if wantedCount < minSvcReq {
-			wantedCount = minSvcReq
+		if wantedCountForRegion < minSvcReq {
+			wantedCountForRegion = minSvcReq
 		}
 
-		if wantedCount != currentCountPerRegion[wantedRegion] {
-			fmt.Printf("region %s has %d instances, but we want %d\n", wantedRegion, currentCountPerRegion[wantedRegion], wantedCount)
+		if wantedCountForRegion > currentCountPerRegion[wantedRegion] {
+			fmt.Printf("Need to region %s has %d instances, but we want %d (region_min)... scaling up!\n", wantedRegion, currentCountPerRegion[wantedRegion], wantedCountForRegion)
+			err = input.flyClient.ScaleApp(input.ctx, input.cfgTyped.App, wantedRegion, wantedCountForRegion)
+			if err != nil {
+				// Don't return immediately, try to scale all regions
+				fmt.Printf("error scaling app %s to %d in region %s: %v\n", input.cfgTyped.App, wantedCountForRegion, wantedRegion, err)
+			}
+		} else {
+			fmt.Printf("region %s has %d instances, which is >= %d (region_min)... no need to scale up\n", wantedRegion, currentCountPerRegion[wantedRegion], wantedCountForRegion)
 		}
 	}
 
-	return nil
+	return err
 }
 
 // runIntermediateVolumeSteps Here we analyse the deployed state
@@ -387,7 +390,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 func getMinimumVolumeCountPerRegion(input deployInput) (map[string]int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
-	minSvcReq := input.cfgTyped.MinMachinesRunning()
+	minSvcReq := input.cfgTyped.MinMachinesFromSvcs()
 
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)

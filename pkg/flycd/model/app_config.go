@@ -91,7 +91,7 @@ func (a *AppConfig) RegionsWPrimaryLast() []string {
 	return lo.Uniq(result)
 }
 
-func (a *AppConfig) MinMachinesRunning() int {
+func (a *AppConfig) MinMachinesFromSvcs() int {
 	return util_math.Max(
 		func() int {
 			if a.HttpService != nil {
