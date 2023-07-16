@@ -148,6 +148,8 @@ These might look something like this:
 # NOTE: Most of the below is optional! (essentially, fly.io dictates which fields are optional, and flycd will try not to enforce too much)
 app: &app cloud-x--prod--some-backend # Unique dns name at <app>.fly.dev, as is the case with fly.io apps with automatic dns
 
+# All regular fly.io config file fields are supported (by preserving untyped config tree in parallel with typed).
+# This is just an example with fly.io's 'http_service'. You can also use 'services'.
 http_service:
   auto_start_machines: true
   auto_stop_machines: true
