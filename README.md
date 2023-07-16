@@ -63,7 +63,10 @@ Flags:
 Use "flycd [command] --help" for more information about a command.
 ```
 
-### Configuration examples
+### Examples
+
+
+#### File system layout
 
 Suppose you have a GitHub repo called `my-cloud` in `my-org` (https://github.com/my-org/my-cloud), looking something
 like this
@@ -107,6 +110,8 @@ The project structure doesn't have to look like this (flycd walks it recursively
 we have defined a top level of two "clouds" (cloud-x and cloud-y), cloud-x also having two environments (stage and
 prod).
 
+#### project.yaml
+
 At the top we have a `project.yaml` file which lets FlyCD know where this is located. We could also have
 local `project.yaml` files further down the tree to set common parameters/values for configurations for that subtree.
 You can also skip having `project.yaml` files entirely, though in that case you need to only use manual deployments, or
@@ -131,6 +136,8 @@ common:
   substitutions: # raw string replacements in all app.yaml files
     someRegex: "strReplacement" # could prob be improved
 ```
+
+#### app.yaml
 
 Further down the tree we have app directories with `app.yaml` files (or more `project.yaml` files if you want to have
 recursive projects/projects-in-projects :P).
@@ -261,6 +268,8 @@ deploy_params:
   - *vm_size
 ```
 
+#### Deploying the example
+
 * Test deploy your config with `flycd deploy .`
 * Before installing it into your fly.io account with `flycd install --project-path .`
 
@@ -271,7 +280,9 @@ and the fly.io cli actually modifies the `fly.toml` in place when deploying :S. 
 within the config, and `.toml` is not a very good format for that. There are probably more reasons, some
 subjective, like the author of FlyCD just likes yaml more than toml :D.
 
-Check the [examples](examples) directory for more ideas.
+#### More examples
+
+Check the [examples](examples) directory for more ideas. You can also check the [tests](test) directory for some special cases
 
 ## Where it probably needs some improvement
 
