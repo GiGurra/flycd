@@ -66,6 +66,14 @@ type MachineConfig struct {
 	CountPerRegion map[string]int `yaml:"count_per_region" toml:"count_per_region"`
 }
 
+func (m MachineConfig) CountInRegion(region string) int {
+	count, ok := m.CountPerRegion[region]
+	if !ok {
+		return m.Count
+	}
+	return count
+}
+
 type AppConfig struct {
 	App           string            `yaml:"app" toml:"app"`
 	Org           string            `yaml:"org" toml:"org,omitempty"`
@@ -103,7 +111,7 @@ func (a *AppConfig) MinMachinesFromSvcs() int {
 		lo.Reduce(
 			a.Services,
 			func(agg int, item Service, _ int) int { return util_math.Max(agg, item.MinMachinesRunning) },
-			1,
+			0,
 		),
 	)
 }

@@ -289,18 +289,15 @@ func runScaleAllRegionsPostDeployStep(input deployInput) error {
 		return nil // nothing to do
 	}
 
-	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
+	deployedScales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
 	if err != nil {
 		return fmt.Errorf("error getting app scale for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	currentCountPerRegion := model.CountAppsPerRegion(scales)
+	currentCountPerRegion := model.CountDeployedAppsPerRegion(deployedScales)
 	wantedRegions := input.cfgTyped.RegionsWPrimaryLast()
 	for _, wantedRegion := range wantedRegions {
-		wantedCountForRegion := input.cfgTyped.Machines.Count
-		if wantedRegionCount, hasRegionCount := input.cfgTyped.Machines.CountPerRegion[wantedRegion]; hasRegionCount {
-			wantedCountForRegion = wantedRegionCount
-		}
+		wantedCountForRegion := input.cfgTyped.Machines.CountInRegion(wantedRegion)
 		if wantedCountForRegion < minSvcReq {
 			wantedCountForRegion = minSvcReq
 		}
@@ -393,7 +390,10 @@ func runIntermediateVolumeSteps(input deployInput) error {
 func getMinimumVolumeCountPerRegion(input deployInput) (map[string]int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
-	minSvcReq := input.cfgTyped.MinMachinesFromSvcs()
+	minReqBase := util_math.Max(1, input.cfgTyped.MinMachinesFromSvcs())
+
+	// We also need at least as many volumes as the minimum number of app instances
+	machineCfg := input.cfgTyped.Machines
 
 	// We should also consider the actual number of app instances that are currently running.
 	scales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
@@ -401,10 +401,13 @@ func getMinimumVolumeCountPerRegion(input deployInput) (map[string]int, error) {
 		return map[string]int{}, fmt.Errorf("error getting app scales for app %s: %w", input.cfgTyped.App, err)
 	}
 
-	result := model.CountAppsPerRegion(scales)
+	result := model.CountDeployedAppsPerRegion(scales)
 	for region, count := range result {
-		if count < minSvcReq {
-			result[region] = minSvcReq
+		if count < minReqBase {
+			result[region] = minReqBase
+		}
+		if wantedMachineCountInRegion := machineCfg.CountInRegion(region); count < wantedMachineCountInRegion {
+			result[region] = wantedMachineCountInRegion
 		}
 	}
 

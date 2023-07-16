@@ -18,7 +18,7 @@ func (s ScaleState) CountInRegion(region string) int {
 	return s.Regions[region]
 }
 
-func CountAppsPerRegion(apps []ScaleState) map[string]int {
+func CountDeployedAppsPerRegion(apps []ScaleState) map[string]int {
 	regionCounts := make(map[string]int)
 	for _, app := range apps {
 		if app.Process == "app" {
