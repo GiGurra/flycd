@@ -298,7 +298,7 @@ to your flycd installation's url (e.g. `https://<your-flycd-app-name>.fly.dev/we
 
 #### Configuration repo webhooks
 
-Configuration repos ar where you store the flycd configuration files (app.yaml, project.yaml, etc).
+Configuration repos are where you store the flycd configuration files (app.yaml, project.yaml, etc).
 If your cloud setup is fairly small/static, or you want to manage its configuration without flycd, you can skip setting
 up webhooks from this repo. In that case you need to ensure you re-run `flycd install` every time your configuration
 changes. Having a configuration repo with webhooks, means less manual interation with flycd and less CD configuration,
