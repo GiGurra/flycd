@@ -1,6 +1,7 @@
 package util_cfg_merge
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 )
@@ -96,6 +97,7 @@ func TestMerge_mapInMap(t *testing.T) {
 		"common1": "base-common1",
 		"common2": "base-common2x",
 		"uq":      "vq",
+		"unique1": "base-unique1",
 		"blah":    "hah",
 		"subMapKey": map[string]any{
 			"sub1": "overlay-sub1",
@@ -104,6 +106,10 @@ func TestMerge_mapInMap(t *testing.T) {
 	}
 
 	actual := MergeMaps(base, overlay)
+
+	fmt.Printf("  actual: %v\n", actual)
+	fmt.Printf("expected: %v\n", expected)
+
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Fatalf("Expected %v, diff: %s", expected, diff)
 	}
@@ -152,15 +158,6 @@ func TestMerge_Arrays(t *testing.T) {
 			"common1": "base-common1",
 			"common2": "base-common2",
 			"unique1": "base-unique1",
-			"subMapKey": map[string]any{
-				"sub1": "base-sub1",
-				"sub2": "base-sub2",
-			},
-		},
-		map[string]any{
-			"xcommon1": "base-common1",
-			"xcommon2": "base-common2",
-			"unique1":  "base-unique1",
 			"subMapKey": map[string]any{
 				"sub1": "overlay-sub1",
 				"sub2": "base-sub2",

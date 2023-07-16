@@ -29,8 +29,8 @@ source:
 		},
 		AppOverrides: map[string]any{
 			"foo":           "bar",
-			"extra_regions": []string{"ams"},
-			"deploy_params": []string{"--busted"},
+			"extra_regions": []any{"ams"},
+			"deploy_params": []any{"--busted"},
 		},
 	}
 
@@ -55,8 +55,8 @@ source:
 		"org":            "test-org",
 		"primary_region": "blarn",
 		"foo":            "bar",
-		"extra_regions":  []string{"ams"},
-		"deploy_params":  []string{"--busted"},
+		"extra_regions":  []any{"ams"},
+		"deploy_params":  []any{"--busted"},
 		"source": map[string]any{
 			"type": "local",
 		},
