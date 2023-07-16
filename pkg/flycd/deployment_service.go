@@ -280,7 +280,7 @@ func runPostDeploySteps(input deployInput) error {
 func runScaleAllRegionsPostDeployStep(input deployInput) error {
 
 	minSvcReq := input.cfgTyped.MinMachinesRunning()
-	if len(input.cfgTyped.ExtraRegions) == 0 && minSvcReq <= 1 {
+	if len(input.cfgTyped.ExtraRegions) == 0 && minSvcReq <= 1 && len(input.cfgTyped.Machines.CountPerRegion) == 0 {
 		return nil // nothing to do
 	}
 
@@ -294,6 +294,21 @@ func runScaleAllRegionsPostDeployStep(input deployInput) error {
 	for region, currentCount := range currentCountPerRegion {
 		fmt.Printf("region %s has %d instances\n", region, currentCount)
 		// TODO: Implement
+	}
+
+	wantedRegions := input.cfgTyped.RegionsWPrimaryLast()
+	for _, wantedRegion := range wantedRegions {
+		wantedCount := input.cfgTyped.Machines.Count
+		if wantedRegionCount, hasRegionCount := input.cfgTyped.Machines.CountPerRegion[wantedRegion]; hasRegionCount {
+			wantedCount = wantedRegionCount
+		}
+		if wantedCount < minSvcReq {
+			wantedCount = minSvcReq
+		}
+
+		if wantedCount != currentCountPerRegion[wantedRegion] {
+			fmt.Printf("region %s has %d instances, but we want %d\n", wantedRegion, currentCountPerRegion[wantedRegion], wantedCount)
+		}
 	}
 
 	return nil
