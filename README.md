@@ -22,7 +22,8 @@ The illustration below gives an idea of FlyCD enabled configuration:
 ### Installation
 
 1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.38`)
-2. Run `flycd deploy <fs path>` to deploy a configuration (single app or structure with many projects and apps, you decide)
+2. Run `flycd deploy <fs path>` to deploy a configuration (single app or structure with many projects and apps, you
+   decide)
 3. (Optional) Installing flycd as an app in your fly.io account or as a daemon somewhere else where you prefer to have
    it running.
     * Method 1: Run `flycd install --project-path <fs path>` to install flycd into your fly.io environment.
@@ -334,6 +335,14 @@ goes for environment variables, secrets, etc.
 
 This may change in the future, and if so, FlyCD will have this an opt-in feature (just like auto pruning with ArgoCD).
 
+### Storage
+
+FlyCD is currently stateless, i.e. it doesn't keep any persistent storage. Instead it uses fly.ioapp environment
+variables to store configuration and app repo hashes to later determine if a re-deploy is required or not. You can
+override this using `flycd deploy <path> --force`.
+
+For performance and consistency reasons flycd will probably become stateful at some point in the future. 
+
 ## Where it probably needs some improvement
 
 * Performance: It needs some way of determining if webhooks interfere with each other. Right now they are just executed
@@ -365,7 +374,7 @@ This may change in the future, and if so, FlyCD will have this an opt-in feature
 * Support multiprocess apps (flycd currently only supports 'app' for figuring out when scale up the number of machines
   and volumes)
 * More practical ways to configure Machine types, ram & cpu modifications
-      * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
+    * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
 * Cron style jobs by leveraging fly.io's scheduled machines
 * better error handling :S
 * better logging
