@@ -115,6 +115,17 @@ project: "my-org-cloud"
 source:
   type: git
   repo: "git@github.com:my-org/my-cloud"
+
+# Optional common parameters that affect all apps within this project
+common:
+  app_defaults:
+    http_service:
+      min_machines_running: 2
+  app_overrides:
+    org: my-org-2
+    primary_region: ams
+  substitutions: # raw string replacements in all app.yaml files
+    someRegex: "strReplacement" # could prob be improved
 ```
 
 Further down the tree we have app directories with `app.yaml` files (or more `project.yaml` files if you want to have
