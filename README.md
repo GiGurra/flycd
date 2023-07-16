@@ -272,7 +272,6 @@ Check the [examples](examples) directory for more ideas.
 ### Some immediate TODOs
 
 * Support for creation/updating fly.io secrets (not sure how though :S)
-* Support for setting env vars, secrets and common values on a project level
 * More practical ways to configure Machine types, ram & cpu modifications
     * Right now it is possible, but only by setting the `launch_params` and/or `deploy_params` fields (see examples)
 * better error handling :S
