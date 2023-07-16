@@ -133,7 +133,7 @@ type SecretRef struct {
 	Raw  string           `yaml:"raw" toml:"raw"`
 }
 
-func (s SecretRef) GetValue() (string, error) {
+func (s SecretRef) GetSecretValue() (string, error) {
 	switch s.Type {
 	case SecretSourceTypeEnv:
 		if s.Env == "" {

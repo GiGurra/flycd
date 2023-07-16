@@ -84,6 +84,13 @@ type FlyClient interface {
 		region string,
 		count int,
 	) error
+
+	SaveSecrets(
+		ctx context.Context,
+		app string,
+		secrets []Secret,
+		stage bool,
+	) error
 }
 
 type FlyClientImpl struct{}
@@ -217,6 +224,41 @@ func (c FlyClientImpl) CreateVolume(
 	}
 
 	return volumeState, nil
+}
+
+type Secret struct {
+	Name  string
+	Value string
+}
+
+func (c FlyClientImpl) SaveSecrets(
+	ctx context.Context,
+	app string,
+	secrets []Secret,
+	stage bool,
+) error {
+
+	args := []string{"secrets", "set", "-a", app}
+
+	if stage {
+		args = append(args, "--stage")
+	}
+
+	for _, secret := range secrets {
+		args = append(args, fmt.Sprintf("%s=%s", secret.Name, secret.Value))
+	}
+
+	_, err := util_cmd.
+		NewCommandA("fly", args...).
+		WithTimeout(30 * time.Second).
+		WithTimeoutRetries(2).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error running 'fly secrets set' for app %s: %w", app, err)
+	}
+
+	return nil
 }
 
 type StoreSecretCmd struct {

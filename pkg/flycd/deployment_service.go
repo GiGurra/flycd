@@ -268,6 +268,11 @@ func runIntermediateSteps(input deployInput) error {
 		return fmt.Errorf("error running intermediate volume steps: %w", err)
 	}
 
+	err = runIntermediateSecretsSteps(input)
+	if err != nil {
+		return fmt.Errorf("error running intermediate secrets steps: %w", err)
+	}
+
 	// add intermediate steps here
 
 	return nil
@@ -323,6 +328,32 @@ func runScaleAllRegionsPostDeployStep(input deployInput) error {
 	}
 
 	return err
+}
+
+// runIntermediateSecretsSteps Here we extract and deploy all secrets
+func runIntermediateSecretsSteps(input deployInput) error {
+
+	if len(input.cfgTyped.Secrets) == 0 {
+		return nil
+	}
+
+	// we re-save all secrets every time, since we don't know which ones have changed
+	secretsToSave := []fly_client.Secret{}
+	for _, secretRef := range input.cfgTyped.Secrets {
+		secretValue, err := secretRef.GetSecretValue()
+		if err != nil {
+			return fmt.Errorf("error getting value for secret %s for app %s: %w", secretRef.Name, input.cfgTyped.App, err)
+		}
+		secretsToSave = append(secretsToSave, fly_client.Secret{
+			Name:  secretRef.Name,
+			Value: secretValue,
+		})
+	}
+	err := input.flyClient.SaveSecrets(input.ctx, input.cfgTyped.App, secretsToSave, true)
+	if err != nil {
+		return fmt.Errorf("error saving secrets for app %s: %w", input.cfgTyped.App, err)
+	}
+	return nil
 }
 
 // runIntermediateVolumeSteps Here we analyse the deployed state
