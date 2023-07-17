@@ -21,11 +21,7 @@ func (t WorkDir) RemoveAll() {
 }
 
 func NewTempDir(name string, root string) (WorkDir, error) {
-	pattern := "domain"
-	if name != "" {
-		pattern = name
-	}
-	tempDir, err := os.MkdirTemp(root, pattern)
+	tempDir, err := os.MkdirTemp(root, name)
 	if err != nil {
 		return WorkDir{}, fmt.Errorf("error creating temp tempDir: %w", err)
 	}
