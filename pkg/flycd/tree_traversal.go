@@ -33,7 +33,7 @@ func doTraverseDeepAppTree(
 	ctx model.TraverseAppTreeContext,
 ) error {
 
-	analysis, err := scanFsNode(ctx, path)
+	analysis, err := analyzeFsTree(ctx, path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -192,7 +192,7 @@ func traverseProject(
 	return nil
 }
 
-func scanFsNode(
+func analyzeFsTree(
 	ctx model.TraverseAppTreeContext,
 	inputPath string,
 ) (model.FsNode, error) {
@@ -270,7 +270,7 @@ func scanFsNode(
 
 	if nodeInfo.HasProjectsDir {
 
-		child, err := scanFsNode(ctx, filepath.Join(path, "projects"))
+		child, err := analyzeFsTree(ctx, filepath.Join(path, "projects"))
 		if err != nil {
 			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -280,7 +280,7 @@ func scanFsNode(
 
 		children := make([]model.FsNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := scanFsNode(ctx, filepath.Join(path, entry.Name()))
+			child, err := analyzeFsTree(ctx, filepath.Join(path, entry.Name()))
 			if err != nil {
 				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
