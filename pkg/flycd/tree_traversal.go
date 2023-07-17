@@ -33,7 +33,7 @@ func doTraverseDeepAppTree(
 	ctx model.TraverseAppTreeContext,
 ) error {
 
-	analysis, err := analyzeFsTree(ctx, path)
+	analysis, err := analyzeLocalFsTree(ctx, path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -192,7 +192,7 @@ func traverseProject(
 	return nil
 }
 
-func analyzeFsTree(
+func analyzeLocalFsTree(
 	ctx model.TraverseAppTreeContext,
 	inputPath string,
 ) (model.FsNode, error) {
@@ -270,7 +270,7 @@ func analyzeFsTree(
 
 	if nodeInfo.HasProjectsDir {
 
-		child, err := analyzeFsTree(ctx, filepath.Join(path, "projects"))
+		child, err := analyzeLocalFsTree(ctx, filepath.Join(path, "projects"))
 		if err != nil {
 			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -280,7 +280,7 @@ func analyzeFsTree(
 
 		children := make([]model.FsNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := analyzeFsTree(ctx, filepath.Join(path, entry.Name()))
+			child, err := analyzeLocalFsTree(ctx, filepath.Join(path, entry.Name()))
 			if err != nil {
 				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
@@ -293,12 +293,12 @@ func analyzeFsTree(
 	return result, nil
 }
 
-func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error) {
+func analyseTraversalCandidate(path string) (model.ShallowFsNode, error) {
 
 	// check if path is file or dir
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return model.TraversalStepAnalysis{}, fmt.Errorf("error stating path '%s': %w", path, err)
+		return model.ShallowFsNode{}, fmt.Errorf("error stating path '%s': %w", path, err)
 	}
 
 	if !fileInfo.IsDir() {
@@ -306,7 +306,7 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 			dirPath := filepath.Dir(path)
 			fileName := filepath.Base(path)
 			if fileName == "app.yaml" {
-				return model.TraversalStepAnalysis{
+				return model.ShallowFsNode{
 					Path:                  dirPath,
 					HasAppYaml:            true,
 					HasProjectYaml:        false,
@@ -314,7 +314,7 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 					TraversableCandidates: []os.DirEntry{},
 				}, nil
 			} else if fileName == "project.yaml" {
-				return model.TraversalStepAnalysis{
+				return model.ShallowFsNode{
 					Path:                  dirPath,
 					HasAppYaml:            false,
 					HasProjectYaml:        true,
@@ -322,21 +322,21 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 					TraversableCandidates: []os.DirEntry{},
 				}, nil
 			} else {
-				return model.TraversalStepAnalysis{}, fmt.Errorf("unexpected yaml file '%s'", path)
+				return model.ShallowFsNode{}, fmt.Errorf("unexpected yaml file '%s'", path)
 			}
 		} else {
-			return model.TraversalStepAnalysis{}, fmt.Errorf("unexpected file '%s'", path)
+			return model.ShallowFsNode{}, fmt.Errorf("unexpected file '%s'", path)
 		}
 	}
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return model.TraversalStepAnalysis{}, fmt.Errorf("error reading directory: %w", err)
+		return model.ShallowFsNode{}, fmt.Errorf("error reading directory: %w", err)
 	}
 
 	// Collect potentially traversable dirs
 
-	result := model.TraversalStepAnalysis{
+	result := model.ShallowFsNode{
 		Path:                  path,
 		HasAppYaml:            false,
 		HasProjectYaml:        false,
@@ -348,7 +348,7 @@ func analyseTraversalCandidate(path string) (model.TraversalStepAnalysis, error)
 		if entry.IsDir() {
 			shouldTraverse, err := canTraverseDir(entry)
 			if err != nil {
-				return model.TraversalStepAnalysis{}, fmt.Errorf("error checking for symlink: %w", err)
+				return model.ShallowFsNode{}, fmt.Errorf("error checking for symlink: %w", err)
 			}
 			if !shouldTraverse {
 				continue

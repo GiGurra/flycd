@@ -7,18 +7,6 @@ import (
 	"os"
 )
 
-type Seen struct {
-	Apps     map[string]bool
-	Projects map[string]bool
-}
-
-func NewSeen() Seen {
-	return Seen{
-		Apps:     make(map[string]bool),
-		Projects: make(map[string]bool),
-	}
-}
-
 type TraverseAppTreeContext struct {
 	context.Context
 	ValidAppCb       func(TraverseAppTreeContext, AppAtFsNode) error
@@ -27,15 +15,18 @@ type TraverseAppTreeContext struct {
 	BeginProjectCb   func(TraverseAppTreeContext, ProjectAtFsNode) error
 	EndProjectCb     func(TraverseAppTreeContext, ProjectAtFsNode) error
 	SkippedProjectCb func(TraverseAppTreeContext, ProjectAtFsNode) error
-	Seen             Seen
-	Parents          []ProjectConfig
-	CommonAppCfg     CommonAppConfig
+	Seen             struct {
+		Apps     map[string]bool
+		Projects map[string]bool
+	}
+	Parents      []ProjectConfig
+	CommonAppCfg CommonAppConfig
 }
 
 // provet that TraverseAppTreeContext implements the context interface
 var _ context.Context = TraverseAppTreeContext{}
 
-type TraversalStepAnalysis struct {
+type ShallowFsNode struct {
 	Path                  string
 	HasAppYaml            bool
 	HasProjectYaml        bool
