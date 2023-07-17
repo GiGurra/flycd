@@ -67,7 +67,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 		matchedProjCount := 0
 		err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 			Context: context.Background(),
-			ValidAppCb: func(ctx model.TraverseAppTreeContext, app model.AppNode) error {
+			ValidAppCb: func(ctx model.TraverseAppTreeContext, app model.AppAtFsNode) error {
 
 				if matchedProjCount > 0 || matchesApp(app, payload) {
 
@@ -88,7 +88,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 				}
 				return nil
 			},
-			BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
+			BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectAtFsNode) error {
 				// unfortunately we have to deploy everything here :S. This is because we don't know how far down
 				// the tree the change might affect our apps. So we have to deploy everything to be sure.
 				// It would be better to just use app repo webhooks instead, or at least group apps into small projects
@@ -99,7 +99,7 @@ func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayloa
 				}
 				return nil
 			},
-			EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
+			EndProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectAtFsNode) error {
 				if matchesProject(node, payload) {
 					matchedProjCount--
 				}
@@ -150,10 +150,10 @@ func allEntriesBothWithAndWithoutGitSuffix(entries []string) []string {
 	return lo.Uniq(append(normalized, withSuffix...))
 }
 
-func matchesApp(app model.AppNode, payload github.PushWebhookPayload) bool {
+func matchesApp(app model.AppAtFsNode, payload github.PushWebhookPayload) bool {
 	return matchesSpec(app.AppConfig.Source, payload)
 }
 
-func matchesProject(project model.ProjectNode, payload github.PushWebhookPayload) bool {
+func matchesProject(project model.ProjectAtFsNode, payload github.PushWebhookPayload) bool {
 	return matchesSpec(project.ProjectConfig.Source, payload)
 }

@@ -21,12 +21,12 @@ func NewSeen() Seen {
 
 type TraverseAppTreeContext struct {
 	context.Context
-	ValidAppCb       func(TraverseAppTreeContext, AppNode) error
-	InvalidAppCb     func(TraverseAppTreeContext, AppNode) error
-	SkippedAppCb     func(TraverseAppTreeContext, AppNode) error
-	BeginProjectCb   func(TraverseAppTreeContext, ProjectNode) error
-	EndProjectCb     func(TraverseAppTreeContext, ProjectNode) error
-	SkippedProjectCb func(TraverseAppTreeContext, ProjectNode) error
+	ValidAppCb       func(TraverseAppTreeContext, AppAtFsNode) error
+	InvalidAppCb     func(TraverseAppTreeContext, AppAtFsNode) error
+	SkippedAppCb     func(TraverseAppTreeContext, AppAtFsNode) error
+	BeginProjectCb   func(TraverseAppTreeContext, ProjectAtFsNode) error
+	EndProjectCb     func(TraverseAppTreeContext, ProjectAtFsNode) error
+	SkippedProjectCb func(TraverseAppTreeContext, ProjectAtFsNode) error
 	Seen             Seen
 	Parents          []ProjectConfig
 	CommonAppCfg     CommonAppConfig
@@ -43,7 +43,7 @@ type TraversalStepAnalysis struct {
 	TraversableCandidates []os.DirEntry
 }
 
-type AppNode struct {
+type AppAtFsNode struct {
 	Path             string
 	AppYaml          string
 	AppConfigUntyped map[string]any
@@ -51,21 +51,21 @@ type AppNode struct {
 	AppConfigErr     error
 }
 
-func (s AppNode) ToPreCalculatedApoConf() *PreCalculatedAppConfig {
+func (s AppAtFsNode) ToPreCalculatedApoConf() *PreCalculatedAppConfig {
 	return &PreCalculatedAppConfig{
 		Typed:   s.AppConfig,
 		UnTyped: s.AppConfigUntyped,
 	}
 }
 
-func (s AppNode) ErrCause() error {
+func (s AppAtFsNode) ErrCause() error {
 	if s.AppConfigErr != nil {
 		return s.AppConfigErr
 	}
 	return nil
 }
 
-type ProjectNode struct {
+type ProjectAtFsNode struct {
 	Path                   string
 	ProjectYaml            string
 	ProjectConfig          ProjectConfig
@@ -73,7 +73,7 @@ type ProjectNode struct {
 	ProjectConfigSemErr    error
 }
 
-func (s ProjectNode) ErrCause() error {
+func (s ProjectAtFsNode) ErrCause() error {
 	if s.ProjectConfigSemErr != nil {
 		return s.ProjectConfigSemErr
 	}
@@ -85,12 +85,12 @@ func (s ProjectNode) ErrCause() error {
 
 type FsNode struct {
 	Path     string
-	App      *AppNode
-	Project  *ProjectNode
+	App      *AppAtFsNode
+	Project  *ProjectAtFsNode
 	Children []FsNode
 }
 
-func (s FsNode) Apps() []AppNode {
+func (s FsNode) Apps() []AppAtFsNode {
 
 	nodeList := s.Flatten()
 
@@ -98,19 +98,19 @@ func (s FsNode) Apps() []AppNode {
 		return node.HasAppNode()
 	})
 
-	return lo.Map(apps, func(item FsNode, index int) AppNode {
+	return lo.Map(apps, func(item FsNode, index int) AppAtFsNode {
 		return *item.App
 	})
 }
 
-func (s FsNode) Projects() []ProjectNode {
+func (s FsNode) Projects() []ProjectAtFsNode {
 
 	nodeList := s.Flatten()
 	projects := lo.Filter(nodeList, func(node FsNode, _ int) bool {
 		return node.HasProjectNode()
 	})
 
-	return lo.Map(projects, func(item FsNode, index int) ProjectNode {
+	return lo.Map(projects, func(item FsNode, index int) ProjectAtFsNode {
 		return *item.Project
 	})
 }
@@ -160,26 +160,26 @@ func (s FsNode) IsValidApp() bool {
 	return s.App != nil && s.App.IsValidApp()
 }
 
-func (s AppNode) IsAppNode() bool {
+func (s AppAtFsNode) IsAppNode() bool {
 	return s.AppYaml != ""
 }
 
-func (s AppNode) IsAppSyntaxValid() bool {
+func (s AppAtFsNode) IsAppSyntaxValid() bool {
 	return s.IsAppNode() && s.AppConfig.App != ""
 }
 
-func (s AppNode) IsValidApp() bool {
+func (s AppAtFsNode) IsValidApp() bool {
 	return s.IsAppNode() && s.IsAppSyntaxValid() && s.AppConfigErr == nil
 }
 
-func (s ProjectNode) IsProjectNode() bool {
+func (s ProjectAtFsNode) IsProjectNode() bool {
 	return s.ProjectYaml != ""
 }
 
-func (s ProjectNode) IsProjectSyntaxValid() bool {
+func (s ProjectAtFsNode) IsProjectSyntaxValid() bool {
 	return s.IsProjectNode() && s.ProjectConfig.Project != "" && s.ProjectConfigSyntaxErr == nil
 }
 
-func (s ProjectNode) IsValidProject() bool {
+func (s ProjectAtFsNode) IsValidProject() bool {
 	return s.IsProjectNode() && s.IsProjectSyntaxValid() && s.ProjectConfigSemErr == nil
 }

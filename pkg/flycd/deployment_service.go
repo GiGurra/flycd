@@ -85,7 +85,7 @@ func deployAll(
 
 	err := TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 		Context: ctx,
-		ValidAppCb: func(ctx model.TraverseAppTreeContext, appNode model.AppNode) error {
+		ValidAppCb: func(ctx model.TraverseAppTreeContext, appNode model.AppAtFsNode) error {
 			fmt.Printf("Considering app %s @ %s\n", appNode.AppConfig.App, appNode.Path)
 			if deployCfg.AbortOnFirstError && result.HasErrors() {
 				fmt.Printf("Aborted earlier, skipping!\n")
@@ -110,14 +110,14 @@ func deployAll(
 				return nil
 			}
 		},
-		InvalidAppCb: func(ctx model.TraverseAppTreeContext, appNode model.AppNode) error {
+		InvalidAppCb: func(ctx model.TraverseAppTreeContext, appNode model.AppAtFsNode) error {
 			result.FailedApps = append(result.FailedApps, model.AppDeployFailure{
 				Spec:  appNode,
 				Cause: SkippedNotValid(appNode.ErrCause()),
 			})
 			return nil
 		},
-		BeginProjectCb: func(ctx model.TraverseAppTreeContext, projNode model.ProjectNode) error {
+		BeginProjectCb: func(ctx model.TraverseAppTreeContext, projNode model.ProjectAtFsNode) error {
 			if deployCfg.AbortOnFirstError && result.HasErrors() {
 				result.FailedProjects = append(result.FailedProjects, model.ProjectProcessingFailure{
 					Spec:  projNode,

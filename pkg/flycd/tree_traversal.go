@@ -110,7 +110,7 @@ func calcCommonAppCfg(projectConfigs []model.ProjectConfig) (model.CommonAppConf
 
 func traverseProject(
 	ctx model.TraverseAppTreeContext,
-	project model.ProjectNode,
+	project model.ProjectAtFsNode,
 ) error {
 	if ctx.BeginProjectCb != nil {
 		err := ctx.BeginProjectCb(ctx, project)
@@ -224,7 +224,7 @@ func scanFsNode(
 		cfgTyped, cfgUntyped, errCfg :=
 			ctx.CommonAppCfg.MakeAppConfig([]byte(appYaml))
 
-		result.App = &model.AppNode{
+		result.App = &model.AppAtFsNode{
 			Path:             path,
 			AppYaml:          appYaml,
 			AppConfigUntyped: cfgUntyped,
@@ -244,7 +244,7 @@ func scanFsNode(
 		var projectConfig model.ProjectConfig
 		err = yaml.Unmarshal([]byte(projectYaml), &projectConfig)
 		if err != nil {
-			result.Project = &model.ProjectNode{
+			result.Project = &model.ProjectAtFsNode{
 				Path:                   path,
 				ProjectYaml:            projectYaml,
 				ProjectConfigSyntaxErr: err,
@@ -253,13 +253,13 @@ func scanFsNode(
 
 			err = projectConfig.Validate()
 			if err != nil {
-				result.Project = &model.ProjectNode{
+				result.Project = &model.ProjectAtFsNode{
 					Path:                path,
 					ProjectYaml:         projectYaml,
 					ProjectConfigSemErr: err,
 				}
 			} else {
-				result.Project = &model.ProjectNode{
+				result.Project = &model.ProjectAtFsNode{
 					Path:          path,
 					ProjectYaml:   projectYaml,
 					ProjectConfig: projectConfig,

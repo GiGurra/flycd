@@ -9,24 +9,24 @@ const (
 )
 
 type AppDeployFailure struct {
-	Spec  AppNode
+	Spec  AppAtFsNode
 	Cause error
 }
 
 type ProjectProcessingFailure struct {
-	Spec  ProjectNode
+	Spec  ProjectAtFsNode
 	Cause error
 }
 
 type AppDeploySuccess struct {
-	Spec        AppNode
+	Spec        AppAtFsNode
 	SuccessType SingleAppDeploySuccessType
 }
 
 type DeployResult struct {
 	SucceededApps     []AppDeploySuccess
 	FailedApps        []AppDeployFailure
-	ProcessedProjects []ProjectNode
+	ProcessedProjects []ProjectAtFsNode
 	FailedProjects    []ProjectProcessingFailure
 }
 
@@ -51,7 +51,7 @@ func NewEmptyDeployResult() DeployResult {
 	return DeployResult{
 		SucceededApps:     make([]AppDeploySuccess, 0),
 		FailedApps:        make([]AppDeployFailure, 0),
-		ProcessedProjects: make([]ProjectNode, 0),
+		ProcessedProjects: make([]ProjectAtFsNode, 0),
 		FailedProjects:    make([]ProjectProcessingFailure, 0),
 	}
 }

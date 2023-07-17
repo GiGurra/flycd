@@ -37,20 +37,20 @@ var Cmd = &cobra.Command{
 
 		fmt.Printf("Scanning for git repos referenced inside project @ %s\n", path)
 
-		appRepos := make([]model.AppNode, 0)
-		projectRepos := make([]model.ProjectNode, 0)
+		appRepos := make([]model.AppAtFsNode, 0)
+		projectRepos := make([]model.ProjectAtFsNode, 0)
 
 		ctx := context.Background()
 		err = flycd.TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 			Context: ctx,
-			ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppNode) error {
+			ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppAtFsNode) error {
 				fmt.Printf("Checking app %s @ %s...\n", node.AppConfig.App, node.Path)
 				if node.AppConfig.Source.Repo != "" {
 					appRepos = append(appRepos, node)
 				}
 				return nil
 			},
-			BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectNode) error {
+			BeginProjectCb: func(ctx model.TraverseAppTreeContext, node model.ProjectAtFsNode) error {
 				if node.IsValidProject() {
 					fmt.Printf("Checking project %s @ %s...\n", node.ProjectConfig.Project, node.Path)
 					if node.ProjectConfig.Source.Repo != "" {
