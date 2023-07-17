@@ -589,9 +589,6 @@ func fetchAppFs(
 		if err != nil {
 			return "", fmt.Errorf("error getting local dir hash for '%s': %w", tempDir.Cwd(), err)
 		}
-		if err != nil {
-			return "", fmt.Errorf("error getting local dir hash for '%s': %w", tempDir.Cwd(), err)
-		}
 
 	default:
 		return "", fmt.Errorf("unknown source type %s", cfgTyped.Source.Type)
