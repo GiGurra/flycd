@@ -36,6 +36,10 @@ func (t *GhTime) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (t GhTime) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Underlying)
+}
+
 type Repository struct {
 	ID            int    `json:"id"`
 	Name          string `json:"name"`
