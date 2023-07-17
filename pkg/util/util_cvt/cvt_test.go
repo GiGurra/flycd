@@ -1,7 +1,7 @@
-package model
+package util_cvt
 
 import (
-	"github.com/gigurra/flycd/pkg/util/util_cvt"
+	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
 	"testing"
 )
@@ -49,6 +49,17 @@ deploy_params:
 
 `
 
+type FakeAppConfig struct {
+	App           string         `yaml:"app" toml:"app"`
+	HttpService   map[string]any `yaml:"http_service" toml:"http_service"`
+	PrimaryRegion string         `yaml:"primary_region" toml:"primary_region"`
+	Source        map[string]any `yaml:"source" toml:"source"`
+	Org           string         `yaml:"org" toml:"org"`
+	VmSize        string         `yaml:"vm_size" toml:"vm_size"`
+	LaunchParams  []string       `yaml:"launch_params" toml:"launch_params"`
+	DeployParams  []string       `yaml:"deploy_params" toml:"deploy_params"`
+}
+
 func TestMapYamlToStruct(t *testing.T) {
 	var mapStringAny map[string]any
 	err := yaml.Unmarshal([]byte(someAppConf), &mapStringAny)
@@ -56,7 +67,7 @@ func TestMapYamlToStruct(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	cfg, err := util_cvt.MapYamlToStruct[AppConfig](mapStringAny)
+	cfg, err := MapYamlToStruct[FakeAppConfig](mapStringAny)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -67,5 +78,38 @@ func TestMapYamlToStruct(t *testing.T) {
 
 	if cfg.HttpService != nil {
 		t.Fatalf("Unexpected http_service: %v", cfg.HttpService)
+	}
+
+	expectedConfig := FakeAppConfig{
+		App:           "some-application",
+		HttpService:   nil,
+		PrimaryRegion: "arn",
+		Source:        map[string]any{"type": "local"},
+		Org:           "personal",
+		VmSize:        "shared-cpu-1x",
+		LaunchParams: []string{
+			"--ha=false",
+			"--auto-confirm",
+			"--now",
+			"--copy-config",
+			"--name",
+			"some-application",
+			"--region",
+			"arn",
+			"--org",
+			"personal",
+			"--vm-size",
+			"shared-cpu-1x",
+		},
+		DeployParams: []string{
+			"--ha=false",
+			"--vm-size",
+			"shared-cpu-1x",
+		},
+	}
+
+	diff := cmp.Diff(expectedConfig, cfg)
+	if diff != "" {
+		t.Fatalf("Unexpected config:\n%v", diff)
 	}
 }
