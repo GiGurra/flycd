@@ -2,7 +2,7 @@ package util_work_dir
 
 import (
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cmd"
+	"github.com/gigurra/flycd/pkg/util/util_cmd"
 	cp "github.com/otiai10/copy"
 	"os"
 	"path/filepath"
@@ -21,7 +21,7 @@ func (t WorkDir) RemoveAll() {
 }
 
 func NewTempDir(name string, root string) (WorkDir, error) {
-	pattern := "flycd"
+	pattern := "domain"
 	if name != "" {
 		pattern = name
 	}

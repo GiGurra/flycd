@@ -3,8 +3,8 @@ package util_git
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_work_dir"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"strings"
 )
 

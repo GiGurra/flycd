@@ -3,9 +3,9 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cobra"
+	"github.com/gigurra/flycd/pkg/domain"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/util/util_cobra"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -20,12 +20,12 @@ func (f *flags) Init(cmd *cobra.Command) {
 	f.abortEarly = cmd.Flags().BoolP("abort-early", "a", false, "Abort on first error")
 }
 
-func Cmd(deployService flycd.DeployService) *cobra.Command {
+func Cmd(deployService domain.DeployService) *cobra.Command {
 	flags := flags{}
 	return util_cobra.CreateCmd(&flags, func() *cobra.Command {
 		return &cobra.Command{
 			Use:   "deploy <path>",
-			Short: "Manually deploy a single flycd app, or all flycd apps inside a folder",
+			Short: "Manually deploy a single domain app, or all domain apps inside a folder",
 			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
 				path := args[0]

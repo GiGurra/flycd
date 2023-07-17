@@ -1,11 +1,11 @@
-package flycd
+package domain
 
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_git"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_work_dir"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/util/util_git"
+	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -164,7 +164,7 @@ func traverseProject(
 			err := func() error {
 
 				// Clone to a temp folder
-				tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
+				tempDir, err := util_work_dir.NewTempDir("domain-temp-cloned-project", "")
 				if err != nil {
 					return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
 				}

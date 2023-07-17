@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_packaged"
+	"github.com/gigurra/flycd/pkg/util/util_packaged"
 )
 
 //go:embed Dockerfile

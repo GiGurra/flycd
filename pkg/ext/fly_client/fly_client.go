@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cmd"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_work_dir"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/util/util_cmd"
+	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"github.com/samber/lo"
 	"strconv"
 	"strings"
@@ -103,8 +103,7 @@ var _ FlyClient = FlyClientImpl{}
 
 func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
 
-	result, err := util_cmd.
-		NewCommandA("fly", "tokens", "create", "org", orgSlug).
+	result, err := util_cmd.NewCommandA("fly", "tokens", "create", "org", orgSlug).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(1).
 		Run(ctx)
@@ -141,8 +140,7 @@ func (c FlyClientImpl) GetAppScale(
 	app string,
 ) ([]model.ScaleState, error) {
 
-	result, err := util_cmd.
-		NewCommandA("fly", "scale", "show", "-a", app, "--json").
+	result, err := util_cmd.NewCommandA("fly", "scale", "show", "-a", app, "--json").
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(2).
 		Run(ctx)
@@ -167,8 +165,7 @@ func (c FlyClientImpl) ScaleApp(
 	count int,
 ) error {
 
-	_, err := util_cmd.
-		NewCommandA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
+	_, err := util_cmd.NewCommandA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
 		WithTimeout(120 * time.Second).
 		WithTimeoutRetries(1).
 		Run(ctx)
@@ -187,8 +184,7 @@ func (c FlyClientImpl) ExtendVolume(
 	gb int,
 ) error {
 
-	_, err := util_cmd.
-		NewCommandA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
+	_, err := util_cmd.NewCommandA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
 		WithTimeout(60 * time.Second).
 		WithTimeoutRetries(2).
 		Run(ctx)
@@ -207,8 +203,7 @@ func (c FlyClientImpl) CreateVolume(
 	region string,
 ) (model.VolumeState, error) {
 
-	result, err := util_cmd.
-		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
+	result, err := util_cmd.NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
 		WithTimeout(60 * time.Second).
 		WithTimeoutRetries(0).
 		Run(ctx)
@@ -248,8 +243,7 @@ func (c FlyClientImpl) SaveSecrets(
 		args = append(args, fmt.Sprintf("%s=%s", secret.Name, secret.Value))
 	}
 
-	_, err := util_cmd.
-		NewCommandA("fly", args...).
+	_, err := util_cmd.NewCommandA("fly", args...).
 		WithTimeout(30 * time.Second).
 		WithTimeoutRetries(2).
 		Run(ctx)
@@ -294,8 +288,7 @@ func (c FlyClientImpl) ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (b
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	res, err := util_cmd.
-		NewCommandA("fly", args...).
+	res, err := util_cmd.NewCommandA("fly", args...).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(5).
 		Run(ctx)
@@ -335,8 +328,7 @@ func (c FlyClientImpl) StoreSecret(ctx context.Context, cmd StoreSecretCmd) erro
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	_, err := util_cmd.
-		NewCommandA("fly", args...).
+	_, err := util_cmd.NewCommandA("fly", args...).
 		WithTimeout(240 * time.Second).
 		WithTimeoutRetries(5).
 		WithStdLogging().

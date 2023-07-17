@@ -7,9 +7,9 @@ all: True
 #keeptree: True
 #filename: "{{.InterfaceName}}_mocks_test.go"
 packages:
-  github.com/gigurra/flycd/pkg/fly_client:
+  github.com/gigurra/flycd/pkg/ext/fly_client:
     config:
-      dir: "mocks/fly_client"
-  github.com/gigurra/flycd/pkg/flycd:
+      dir: "mocks/ext/fly_client"
+  github.com/gigurra/flycd/pkg/domain:
     config:
-      dir: "mocks/flycd"
+      dir: "mocks/domain"

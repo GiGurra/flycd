@@ -1,10 +1,10 @@
-package flycd
+package domain
 
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/github"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/ext/github"
 	"github.com/samber/lo"
 	"strings"
 )

@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_toml"
+	"github.com/gigurra/flycd/pkg/util/util_toml"
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
 	"testing"

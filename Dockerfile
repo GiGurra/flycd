@@ -25,7 +25,7 @@ ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"
 
 # Copy over the app, excl the projects folder
-RUN mkdir -p /flycd
+RUN mkdir -p /domain
 COPY ./cmd /flycd/cmd
 COPY ./pkg /flycd/pkg
 COPY ./*.go /flycd/
@@ -41,7 +41,7 @@ ENV PATH="/flycd:${PATH}"
 RUN go mod download
 
 # Build the latest version of the app
-RUN go build -o flycd
+RUN go build -o domain
 
 # grab the latest version of fly.io cli
 RUN fly version upgrade

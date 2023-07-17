@@ -3,12 +3,12 @@ package install
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/fly_client"
-	"github.com/gigurra/flycd/pkg/flycd"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cobra"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_packaged"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_work_dir"
+	"github.com/gigurra/flycd/pkg/domain"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/ext/fly_client"
+	"github.com/gigurra/flycd/pkg/util/util_cobra"
+	"github.com/gigurra/flycd/pkg/util/util_packaged"
+	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"os"
@@ -33,7 +33,7 @@ func (f *Flags) Init(cmd *cobra.Command) {
 func Cmd(
 	packagedFs util_packaged.PackagedFileSystem,
 	flyClient fly_client.FlyClient,
-	deployService flycd.DeployService,
+	deployService domain.DeployService,
 ) *cobra.Command {
 	flags := Flags{}
 	return util_cobra.CreateCmd(&flags, func() *cobra.Command {
@@ -46,7 +46,7 @@ func Cmd(
 				appName := *flags.appName
 				if appName == "" {
 					// Ask the user for app name
-					fmt.Printf("Enter an app name to use for flycd: ")
+					fmt.Printf("Enter an app name to use for domain: ")
 					_, err := fmt.Scanln(&appName)
 					if err != nil {
 						fmt.Printf("Error reading app name: %v\n", err)
@@ -97,7 +97,7 @@ func Cmd(
 					}
 				}
 
-				fmt.Printf("Installing flycd with app-name='%s', org='%s' \n", appName, orgSlug)
+				fmt.Printf("Installing domain with app-name='%s', org='%s' \n", appName, orgSlug)
 
 				ctx := context.Background()
 
@@ -164,7 +164,7 @@ func Cmd(
 
 				// Copy FlyCD sources etc. from embedded files to temp dir
 				// So we can add it to our docker image, and then build and deploy it
-				tempDir, err := util_work_dir.NewTempDir("flycd-install", "")
+				tempDir, err := util_work_dir.NewTempDir("domain-install", "")
 				if err != nil {
 					fmt.Printf("Error creating temp dir: %v\n", err)
 					os.Exit(1)
@@ -195,7 +195,7 @@ func Cmd(
 				}
 
 				// Deploy it!
-				fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
+				fmt.Printf("Deploying domain in monitoring mode to fly.io\n")
 				deployCfg := model.
 					NewDefaultDeployConfig().
 					WithForce(true).
@@ -210,7 +210,7 @@ func Cmd(
 					Services:      []model.Service{model.NewDefaultServiceConfig()},
 				})
 				if err != nil {
-					fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
+					fmt.Printf("Error deploying domain in monitoring mode: %v\n", err)
 					os.Exit(1)
 				}
 			},

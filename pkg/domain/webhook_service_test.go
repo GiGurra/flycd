@@ -1,11 +1,11 @@
-package flycd
+package domain
 
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/mocks/flycd"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/github"
+	"github.com/gigurra/flycd/mocks/domain"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/ext/github"
 	"github.com/stretchr/testify/mock"
 	"path/filepath"
 	"testing"
@@ -35,7 +35,7 @@ func TestWebHookService(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			fakeDeployService := flycd.NewMockDeployService(t)
+			fakeDeployService := domain.NewMockDeployService(t)
 			webhookService := NewWebHookService(ctx, fakeDeployService)
 
 			fmt.Printf("webhookService: %v\n", webhookService)

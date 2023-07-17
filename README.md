@@ -157,8 +157,8 @@ Tip: Easy ways to create your own app.yaml files:
 These might look something like this:
 
 ```yaml
-# app.yaml containing the regular fly.io app config + flycd's additional fields
-# NOTE: Most of the below is optional! (essentially, fly.io dictates which fields are optional, and flycd will try not to enforce too much)
+# app.yaml containing the regular fly.io app config + domain's additional fields
+# NOTE: Most of the below is optional! (essentially, fly.io dictates which fields are optional, and domain will try not to enforce too much)
 app: &app cloud-x--prod--some-backend # Unique dns name at <app>.fly.dev, as is the case with fly.io apps with automatic dns
 
 # All regular fly.io config file fields are supported (by preserving untyped config tree in parallel with typed).
@@ -205,7 +205,7 @@ env:
 
 ## Optional volumes and mounts. It has some limitations:
 # - Currently, fly.io only supports 1 mount point and volume per machine.
-#   In principle, flycd supports arbitrary numbers of both, should fly.io change this in the future.
+#   In principle, domain supports arbitrary numbers of both, should fly.io change this in the future.
 # - The number of volume instances will be created to match the number of app instances (machines). 
 #   This is the max between current existing instances/machines and the min_machines_running field,
 #   but no less than 1. So if you have min_machines_running: 0, you will always have at least 1 volume instance.
@@ -214,7 +214,7 @@ volumes:
     # size_gb: can be increased later, but cannot be reduced (fly.io limitation)
     size_gb: 10
     # count: should be enough to cover the number of app instances.
-    # flycd will automatically use actual app instance count if it's higher than this.
+    # domain will automatically use actual app instance count if it's higher than this.
     # However, if fly.io wants to scale higher than this, it won't be able to until you increase the count.
     # For most applications you probably won't use fly.io auto-scaling in combination with volumes :S 
     count: 3
@@ -234,13 +234,13 @@ build:
 
 # Optional config for secrets. Here you define what the secrets should be created in the fly.io app
 # and where to get the value from. Currently only supports getting the value from env vars on the host 
-# running flycd itself, or (for test purposes) as raw in-config/inline plaintext.
+# running domain itself, or (for test purposes) as raw in-config/inline plaintext.
 # It works by creating a fly.io secret with the same name as the secret config entry.
 secrets:
-  # Secrets forwarded from env vars on the host running flycd (e.g. your local machine or installed flycd instance) 
+  # Secrets forwarded from env vars on the host running domain (e.g. your local machine or installed domain instance) 
   - name: SOME_SECRET_FWD # this is the name/key the secret will have in the fly.io app
-    type: env # this tells flycd how to extract the secret value
-    env: SOME_SECRET # optional name of the source env var on the host running flycd. Defaults to the name of the secret
+    type: env # this tells domain how to extract the secret value
+    env: SOME_SECRET # optional name of the source env var on the host running domain. Defaults to the name of the secret
   - name: SOME_SECRET_2
     type: env
   # unencrypted plaintext in config. NOT recommended. For testing only!

@@ -1,15 +1,15 @@
-package flycd
+package domain
 
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/fly_client"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cvt"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_git"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_math"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_toml"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_work_dir"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/ext/fly_client"
+	"github.com/gigurra/flycd/pkg/util/util_cvt"
+	"github.com/gigurra/flycd/pkg/util/util_git"
+	"github.com/gigurra/flycd/pkg/util/util_math"
+	"github.com/gigurra/flycd/pkg/util/util_toml"
+	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"github.com/samber/lo"
 	"golang.org/x/mod/sumdb/dirhash"
 	"gopkg.in/yaml.v3"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd"
-	"github.com/gigurra/flycd/pkg/flycd/model"
+	"github.com/gigurra/flycd/pkg/domain"
+	"github.com/gigurra/flycd/pkg/domain/model"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
@@ -41,7 +41,7 @@ var Cmd = &cobra.Command{
 		projectRepos := make([]model.ProjectAtFsNode, 0)
 
 		ctx := context.Background()
-		err = flycd.TraverseDeepAppTree(path, model.TraverseAppTreeContext{
+		err = domain.TraverseDeepAppTree(path, model.TraverseAppTreeContext{
 			Context: ctx,
 			ValidAppCb: func(ctx model.TraverseAppTreeContext, node model.AppAtFsNode) error {
 				fmt.Printf("Checking app %s @ %s...\n", node.AppConfig.App, node.Path)

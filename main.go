@@ -9,8 +9,8 @@ import (
 	"github.com/gigurra/flycd/cmd/install"
 	"github.com/gigurra/flycd/cmd/monitor"
 	"github.com/gigurra/flycd/cmd/repos"
-	"github.com/gigurra/flycd/pkg/fly_client"
-	"github.com/gigurra/flycd/pkg/flycd"
+	"github.com/gigurra/flycd/pkg/domain"
+	"github.com/gigurra/flycd/pkg/ext/fly_client"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -19,8 +19,8 @@ import (
 const Version = "v0.0.39"
 
 var rootCmd = &cobra.Command{
-	Use:   "flycd",
-	Short: "flycd deployment of fly apps entirely from code, without manual fly.io cli commands... I hope :D",
+	Use:   "domain",
+	Short: "domain deployment of fly apps entirely from code, without manual fly.io cli commands... I hope :D",
 	Long:  `Complete documentation is available at https://github.com/gigurra/flycd`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
@@ -52,8 +52,8 @@ func main() {
 	// Create services (sigh, feels like java again :S)
 	appCtx := context.Background() // TODO: make cancellable later on signals
 	flyClient := fly_client.NewFlyClient()
-	deployService := flycd.NewDeployService(flyClient)
-	webhookService := flycd.NewWebHookService(appCtx, deployService)
+	deployService := domain.NewDeployService(flyClient)
+	webhookService := domain.NewWebHookService(appCtx, deployService)
 
 	// prepare cli
 	rootCmd.AddCommand(

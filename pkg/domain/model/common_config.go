@@ -2,8 +2,8 @@ package model
 
 import (
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cfg_merge"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cvt"
+	"github.com/gigurra/flycd/pkg/util/util_cfg_merge"
+	"github.com/gigurra/flycd/pkg/util/util_cvt"
 	"gopkg.in/yaml.v3"
 	"regexp"
 )

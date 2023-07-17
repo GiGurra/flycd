@@ -1,10 +1,10 @@
-package flycd
+package domain
 
 import (
 	"context"
 	"fmt"
-	mocks "github.com/gigurra/flycd/mocks/fly_client"
-	"github.com/gigurra/flycd/pkg/flycd/model"
+	mocks "github.com/gigurra/flycd/mocks/ext/fly_client"
+	"github.com/gigurra/flycd/pkg/domain/model"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )

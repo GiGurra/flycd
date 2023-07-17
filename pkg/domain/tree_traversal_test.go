@@ -1,9 +1,9 @@
-package flycd
+package domain
 
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd/model"
+	"github.com/gigurra/flycd/pkg/domain/model"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 )

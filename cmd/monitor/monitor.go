@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/flycd"
-	"github.com/gigurra/flycd/pkg/flycd/model"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cmd"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_cobra"
-	"github.com/gigurra/flycd/pkg/flycd/util/util_tab_table"
-	"github.com/gigurra/flycd/pkg/github"
+	"github.com/gigurra/flycd/pkg/domain"
+	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/ext/github"
+	"github.com/gigurra/flycd/pkg/util/util_cmd"
+	"github.com/gigurra/flycd/pkg/util/util_cobra"
+	"github.com/gigurra/flycd/pkg/util/util_tab_table"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -51,14 +51,14 @@ func defaultWhPort() int {
 }
 
 func Cmd(
-	deployService flycd.DeployService,
-	webhookService flycd.WebHookService,
+	deployService domain.DeployService,
+	webhookService domain.WebHookService,
 ) *cobra.Command {
 	flags := flags{}
 	return util_cobra.CreateCmd(&flags, func() *cobra.Command {
 		return &cobra.Command{
 			Use:   "monitor",
-			Short: "(Used when installed in fly.io env) Monitors flycd apps, listens to webhooks, grabs new states from git, etc",
+			Short: "(Used when installed in fly.io env) Monitors domain apps, listens to webhooks, grabs new states from git, etc",
 			Args:  cobra.RangeArgs(0, 1),
 			Run: func(cmd *cobra.Command, args []string) {
 
@@ -84,7 +84,7 @@ func Cmd(
 					ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 				}
 
-				// Get flycd ssh key from env var
+				// Get domain ssh key from env var
 				fmt.Printf("Checking if to store ssh... \n")
 				sshKey := os.Getenv("FLY_SSH_PRIVATE_KEY")
 				sshKeyName := os.Getenv("FLY_SSH_PRIVATE_KEY_NAME")
@@ -200,7 +200,7 @@ func Cmd(
 }
 
 // Handler
-func processWebhook(c echo.Context, path string, webhookService flycd.WebHookService) error {
+func processWebhook(c echo.Context, path string, webhookService domain.WebHookService) error {
 
 	body := c.Request().Body
 	bodyBytes, err := io.ReadAll(body)
@@ -236,7 +236,7 @@ func processWebhook(c echo.Context, path string, webhookService flycd.WebHookSer
 	case result := <-ch:
 		if result != nil {
 			fmt.Printf("ERROR: handling github webhook: %v\n", result)
-			return c.String(http.StatusInternalServerError, "something went wrong - check flycd server logs!")
+			return c.String(http.StatusInternalServerError, "something went wrong - check domain server logs!")
 		} else {
 			return c.String(http.StatusAccepted, "Too fast... something could be wrong")
 		}
