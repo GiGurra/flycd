@@ -141,7 +141,9 @@ func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
 
 func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
 
-	result, err := util_cmd.NewCommandA("fly", "tokens", "create", "org", orgSlug).
+	result, err := util_cmd.
+		NewCommandA("fly", "tokens", "create", "org", orgSlug).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(1).
 		Run(ctx)
@@ -178,7 +180,9 @@ func (c FlyClientImpl) GetAppScale(
 	app string,
 ) ([]model.ScaleState, error) {
 
-	result, err := util_cmd.NewCommandA("fly", "scale", "show", "-a", app, "--json").
+	result, err := util_cmd.
+		NewCommandA("fly", "scale", "show", "-a", app, "--json").
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(2).
 		Run(ctx)
@@ -203,7 +207,9 @@ func (c FlyClientImpl) ScaleApp(
 	count int,
 ) error {
 
-	_, err := util_cmd.NewCommandA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
+	_, err := util_cmd.
+		NewCommandA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(120 * time.Second).
 		WithTimeoutRetries(1).
 		Run(ctx)
@@ -222,7 +228,9 @@ func (c FlyClientImpl) ExtendVolume(
 	gb int,
 ) error {
 
-	_, err := util_cmd.NewCommandA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
+	_, err := util_cmd.
+		NewCommandA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(60 * time.Second).
 		WithTimeoutRetries(2).
 		Run(ctx)
@@ -241,7 +249,9 @@ func (c FlyClientImpl) CreateVolume(
 	region string,
 ) (model.VolumeState, error) {
 
-	result, err := util_cmd.NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
+	result, err := util_cmd.
+		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(60 * time.Second).
 		WithTimeoutRetries(0).
 		Run(ctx)
@@ -281,7 +291,9 @@ func (c FlyClientImpl) SaveSecrets(
 		args = append(args, fmt.Sprintf("%s=%s", secret.Name, secret.Value))
 	}
 
-	_, err := util_cmd.NewCommandA("fly", args...).
+	_, err := util_cmd.
+		NewCommandA("fly", args...).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(30 * time.Second).
 		WithTimeoutRetries(2).
 		Run(ctx)
@@ -326,7 +338,9 @@ func (c FlyClientImpl) ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (b
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	res, err := util_cmd.NewCommandA("fly", args...).
+	res, err := util_cmd.
+		NewCommandA("fly", args...).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(5).
 		Run(ctx)
@@ -366,7 +380,9 @@ func (c FlyClientImpl) StoreSecret(ctx context.Context, cmd StoreSecretCmd) erro
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	_, err := util_cmd.NewCommandA("fly", args...).
+	_, err := util_cmd.
+		NewCommandA("fly", args...).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(240 * time.Second).
 		WithTimeoutRetries(5).
 		WithStdLogging().
@@ -379,7 +395,9 @@ func (c FlyClientImpl) StoreSecret(ctx context.Context, cmd StoreSecretCmd) erro
 }
 
 func (c FlyClientImpl) ExistsApp(ctx context.Context, name string) (bool, error) {
-	res, err := util_cmd.NewCommand("fly", "status", "-a", name).
+	res, err := util_cmd.
+		NewCommand("fly", "status", "-a", name).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(10 * time.Second).
 		WithTimeoutRetries(5).
 		Run(ctx)
@@ -397,7 +415,9 @@ func (c FlyClientImpl) GetAppVolumes(
 	name string,
 ) ([]model.VolumeState, error) {
 
-	res, err := util_cmd.NewCommand("fly", "volumes", "list", "-a", name, "--json").
+	res, err := util_cmd.
+		NewCommand("fly", "volumes", "list", "-a", name, "--json").
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(5).
 		Run(ctx)
@@ -417,7 +437,9 @@ func (c FlyClientImpl) GetAppVolumes(
 
 func (c FlyClientImpl) GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error) {
 
-	res, err := util_cmd.NewCommand("fly", "config", "show", "-a", name).
+	res, err := util_cmd.
+		NewCommand("fly", "config", "show", "-a", name).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(5).
 		Run(ctx)
@@ -455,6 +477,7 @@ func (c FlyClientImpl) CreateNewApp(
 	}
 	_, err := tempDir.
 		NewCommand("fly", allParams...).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(20 * time.Second).
 		WithTimeoutRetries(5).
 		WithStdLogging().
@@ -480,6 +503,7 @@ func (c FlyClientImpl) DeployExistingApp(
 
 	_, err := tempDir.
 		NewCommand("fly", allParams...).
+		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(deployCfg.AttemptTimeout).
 		WithTimeoutRetries(deployCfg.Retries).
 		WithStdLogging().
@@ -488,4 +512,23 @@ func (c FlyClientImpl) DeployExistingApp(
 		return fmt.Errorf("error deploying app %s: %w", cfg.App, err)
 	}
 	return nil
+}
+
+func accessTokenArgs(ctx context.Context) []string {
+	token := getAccessToken(ctx)
+	if token == "" {
+		return []string{}
+	}
+	return []string{"--access-token", token}
+}
+
+func getAccessToken(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	token, ok := ctx.Value("FLY_ACCESS_TOKEN").(string)
+	if !ok {
+		return ""
+	}
+	return token
 }

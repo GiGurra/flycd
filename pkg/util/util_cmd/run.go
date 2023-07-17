@@ -37,17 +37,6 @@ func defaultTimeout() time.Duration {
 	return 5 * time.Minute
 }
 
-func getAccessToken(ctx context.Context) string {
-	if ctx == nil {
-		return ""
-	}
-	token, ok := ctx.Value("FLY_ACCESS_TOKEN").(string)
-	if !ok {
-		return ""
-	}
-	return token
-}
-
 func NewCommand(appAndArgs ...string) Command {
 
 	result := Command{
@@ -83,6 +72,11 @@ func (c Command) WithCwd(cwd string) Command {
 func (c Command) WithApp(app string, args ...string) Command {
 	c.App = app
 	c.Args = args
+	return c
+}
+
+func (c Command) WithExtraArgs(args ...string) Command {
+	c.Args = append(c.Args, args...)
 	return c
 }
 
@@ -181,11 +175,6 @@ func (c Command) Run(ctx context.Context) (CommandResult, error) {
 func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error) error {
 
 	c.logBeforeRun()
-
-	accessToken := getAccessToken(ctx)
-	if accessToken != "" && (c.App == "fly" || c.App == "flyctl") {
-		c.Args = append(c.Args, "--access-token", accessToken)
-	}
 
 	for i := 0; i <= c.TimeoutRetries; i++ {
 
