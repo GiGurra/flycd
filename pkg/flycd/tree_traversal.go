@@ -33,7 +33,7 @@ func doTraverseDeepAppTree(
 	ctx model.TraverseAppTreeContext,
 ) error {
 
-	analysis, err := analyzeLocalFsTree(ctx, path)
+	analysis, err := analyzeFsTree(ctx, path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -192,7 +192,7 @@ func traverseProject(
 	return nil
 }
 
-func analyzeLocalFsTree(
+func analyzeFsTree(
 	ctx model.TraverseAppTreeContext,
 	inputPath string,
 ) (model.FsNode, error) {
@@ -208,7 +208,7 @@ func analyzeLocalFsTree(
 		return result, fmt.Errorf("error converting path to absolute path: %w", err)
 	}
 
-	nodeInfo, err := analyseTraversalCandidate(absPath)
+	nodeInfo, err := analyseFsShallow(absPath)
 	if err != nil {
 		return result, fmt.Errorf("error analysing node '%s': %w", absPath, err)
 	}
@@ -270,7 +270,7 @@ func analyzeLocalFsTree(
 
 	if nodeInfo.HasProjectsDir {
 
-		child, err := analyzeLocalFsTree(ctx, filepath.Join(path, "projects"))
+		child, err := analyzeFsTree(ctx, filepath.Join(path, "projects"))
 		if err != nil {
 			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -280,7 +280,7 @@ func analyzeLocalFsTree(
 
 		children := make([]model.FsNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := analyzeLocalFsTree(ctx, filepath.Join(path, entry.Name()))
+			child, err := analyzeFsTree(ctx, filepath.Join(path, entry.Name()))
 			if err != nil {
 				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
@@ -293,12 +293,12 @@ func analyzeLocalFsTree(
 	return result, nil
 }
 
-func analyseTraversalCandidate(path string) (model.ShallowFsNode, error) {
+func analyseFsShallow(path string) (model.FsNodeShallow, error) {
 
 	// check if path is file or dir
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return model.ShallowFsNode{}, fmt.Errorf("error stating path '%s': %w", path, err)
+		return model.FsNodeShallow{}, fmt.Errorf("error stating path '%s': %w", path, err)
 	}
 
 	if !fileInfo.IsDir() {
@@ -306,7 +306,7 @@ func analyseTraversalCandidate(path string) (model.ShallowFsNode, error) {
 			dirPath := filepath.Dir(path)
 			fileName := filepath.Base(path)
 			if fileName == "app.yaml" {
-				return model.ShallowFsNode{
+				return model.FsNodeShallow{
 					Path:                  dirPath,
 					HasAppYaml:            true,
 					HasProjectYaml:        false,
@@ -314,7 +314,7 @@ func analyseTraversalCandidate(path string) (model.ShallowFsNode, error) {
 					TraversableCandidates: []os.DirEntry{},
 				}, nil
 			} else if fileName == "project.yaml" {
-				return model.ShallowFsNode{
+				return model.FsNodeShallow{
 					Path:                  dirPath,
 					HasAppYaml:            false,
 					HasProjectYaml:        true,
@@ -322,21 +322,21 @@ func analyseTraversalCandidate(path string) (model.ShallowFsNode, error) {
 					TraversableCandidates: []os.DirEntry{},
 				}, nil
 			} else {
-				return model.ShallowFsNode{}, fmt.Errorf("unexpected yaml file '%s'", path)
+				return model.FsNodeShallow{}, fmt.Errorf("unexpected yaml file '%s'", path)
 			}
 		} else {
-			return model.ShallowFsNode{}, fmt.Errorf("unexpected file '%s'", path)
+			return model.FsNodeShallow{}, fmt.Errorf("unexpected file '%s'", path)
 		}
 	}
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return model.ShallowFsNode{}, fmt.Errorf("error reading directory: %w", err)
+		return model.FsNodeShallow{}, fmt.Errorf("error reading directory: %w", err)
 	}
 
 	// Collect potentially traversable dirs
 
-	result := model.ShallowFsNode{
+	result := model.FsNodeShallow{
 		Path:                  path,
 		HasAppYaml:            false,
 		HasProjectYaml:        false,
@@ -348,7 +348,7 @@ func analyseTraversalCandidate(path string) (model.ShallowFsNode, error) {
 		if entry.IsDir() {
 			shouldTraverse, err := canTraverseDir(entry)
 			if err != nil {
-				return model.ShallowFsNode{}, fmt.Errorf("error checking for symlink: %w", err)
+				return model.FsNodeShallow{}, fmt.Errorf("error checking for symlink: %w", err)
 			}
 			if !shouldTraverse {
 				continue

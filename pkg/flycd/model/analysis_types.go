@@ -26,7 +26,7 @@ type TraverseAppTreeContext struct {
 // provet that TraverseAppTreeContext implements the context interface
 var _ context.Context = TraverseAppTreeContext{}
 
-type ShallowFsNode struct {
+type FsNodeShallow struct {
 	Path                  string
 	HasAppYaml            bool
 	HasProjectYaml        bool
