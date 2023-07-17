@@ -31,6 +31,7 @@ func (f *Flags) Init(cmd *cobra.Command) {
 }
 
 func Cmd(
+	ctx context.Context,
 	packagedFs util_packaged.PackagedFileSystem,
 	flyClient fly_client.FlyClient,
 	deployService domain.DeployService,
@@ -98,8 +99,6 @@ func Cmd(
 				}
 
 				fmt.Printf("Installing domain with app-name='%s', org='%s' \n", appName, orgSlug)
-
-				ctx := context.Background()
 
 				fmt.Printf("Check if app named '%s' already exists\n", appName)
 				appExists, err := flyClient.ExistsApp(ctx, appName)

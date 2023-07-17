@@ -57,9 +57,9 @@ func main() {
 
 	// prepare cli
 	rootCmd.AddCommand(
-		deploy.Cmd(deployService),
-		monitor.Cmd(deployService, webhookService),
-		install.Cmd(PackagedFileSystem, flyClient, deployService),
+		deploy.Cmd(appCtx, deployService),
+		monitor.Cmd(appCtx, flyClient, deployService, webhookService),
+		install.Cmd(appCtx, PackagedFileSystem, flyClient, deployService),
 		convert.Cmd,
 		repos.Cmd,
 	)

@@ -20,7 +20,10 @@ func (f *flags) Init(cmd *cobra.Command) {
 	f.abortEarly = cmd.Flags().BoolP("abort-early", "a", false, "Abort on first error")
 }
 
-func Cmd(deployService domain.DeployService) *cobra.Command {
+func Cmd(
+	ctx context.Context,
+	deployService domain.DeployService,
+) *cobra.Command {
 	flags := flags{}
 	return util_cobra.CreateCmd(&flags, func() *cobra.Command {
 		return &cobra.Command{
@@ -36,8 +39,6 @@ func Cmd(deployService domain.DeployService) *cobra.Command {
 					WithRetries(1).
 					WithForce(*flags.force).
 					WithAbortOnFirstError(*flags.abortEarly)
-
-				ctx := context.Background()
 
 				result, err := deployService.DeployAll(ctx, path, deployCfg)
 				if err != nil {

@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/pkg/domain"
 	"github.com/gigurra/flycd/pkg/domain/model"
+	"github.com/gigurra/flycd/pkg/ext/fly_client"
 	"github.com/gigurra/flycd/pkg/ext/github"
-	"github.com/gigurra/flycd/pkg/util/util_cmd"
 	"github.com/gigurra/flycd/pkg/util/util_cobra"
-	"github.com/gigurra/flycd/pkg/util/util_tab_table"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -51,6 +50,8 @@ func defaultWhPort() int {
 }
 
 func Cmd(
+	ctx context.Context,
+	flyClient fly_client.FlyClient,
 	deployService domain.DeployService,
 	webhookService domain.WebHookService,
 ) *cobra.Command {
@@ -73,8 +74,6 @@ func Cmd(
 				}
 
 				fmt.Printf("Monitoring: %s\n", path)
-
-				ctx := context.Background()
 
 				// Get access token from env var
 				accessToken := os.Getenv("FLY_ACCESS_TOKEN")
@@ -132,25 +131,16 @@ func Cmd(
 					}
 				}
 
-				// ensure we have a token loaded for the org we are monitoring
-				res, err := util_cmd.NewCommand("fly", "apps", "list").Run(ctx)
+				// ensure we have a token loaded for the org we are monitoring, by listing apps
+				appstList, err := flyClient.ListApps(ctx)
 				if err != nil {
-					fmt.Printf("Error getting apps list. Do you have a token loaded?: %v\n", err)
-					os.Exit(1)
-				}
-
-				appsTable, err := util_tab_table.ParseTable(res.StdOut)
-				if err != nil {
-					fmt.Printf("Error parsing apps list: %v\n", err)
+					fmt.Printf("Error listing apps (do you have a valid fly.io token loaded?): %v\n", err)
 					os.Exit(1)
 				}
 
 				fmt.Printf("Currently deployed apps: \n")
-				for _, appRow := range appsTable.RowMaps {
-					name := appRow["NAME"]
-					org := appRow["OWNER"]
-
-					fmt.Printf(" - name=%s, org=%s\n", name, org)
+				for _, app := range appstList {
+					fmt.Printf(" - name=%s, org=%s\n", app.Name, app.Org)
 				}
 
 				if *flags.startupSync {
