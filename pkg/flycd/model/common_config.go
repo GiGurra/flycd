@@ -28,8 +28,6 @@ func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 // from the parent projects and their CommonAppConfig's.
 func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppConfig, map[string]any, error) {
 
-	untypedLocal := make(map[string]any)
-
 	// Copy the bytes to a new slice to avoid modifying the original
 	// when we start doing substitutions
 	appYaml = append([]byte{}, appYaml...)
@@ -38,22 +36,26 @@ func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppCon
 	for from, to := range c.AppSubstitutions {
 		regex, err := regexp.Compile(from)
 		if err != nil {
-			return AppConfig{}, untypedLocal, fmt.Errorf("error compiling common substitution regex '%s': %w", from, err)
+			return AppConfig{}, map[string]any{}, fmt.Errorf("error compiling common substitution regex '%s': %w", from, err)
 		}
 		stringTo := fmt.Sprintf("%v", to)
 		appYaml = regex.ReplaceAll(appYaml, []byte(stringTo))
 	}
 
-	err := yaml.Unmarshal(appYaml, &untypedLocal)
+	// Unmarshal the app.yaml into a map[string]any
+	cfgInFile := make(map[string]any)
+	err := yaml.Unmarshal(appYaml, &cfgInFile)
 	if err != nil {
-		return AppConfig{}, untypedLocal, fmt.Errorf("error unmarshalling app.yaml: %w", err)
+		return AppConfig{}, cfgInFile, fmt.Errorf("error unmarshalling app.yaml: %w", err)
 	}
 
+	// Combine all the configuration sources into one map
 	untyped := map[string]any{}
 	untyped = util_cfg_merge.MergeMaps(untyped, c.AppDefaults)
-	untyped = util_cfg_merge.MergeMaps(untyped, untypedLocal)
+	untyped = util_cfg_merge.MergeMaps(untyped, cfgInFile)
 	untyped = util_cfg_merge.MergeMaps(untyped, c.AppOverrides)
 
+	// Convert the map to a typed AppConfig
 	typed, err := util_cvt.MapYamlToStruct[AppConfig](untyped)
 	if err != nil {
 		return typed, untyped, fmt.Errorf("error converting untyped app.yaml to typed: %w", err)
