@@ -83,39 +83,39 @@ func (s ProjectNode) ErrCause() error {
 	return nil
 }
 
-type SpecNode struct {
+type FsNode struct {
 	Path     string
 	App      *AppNode
 	Project  *ProjectNode
-	Children []SpecNode
+	Children []FsNode
 }
 
-func (s SpecNode) Apps() []AppNode {
+func (s FsNode) Apps() []AppNode {
 
 	nodeList := s.Flatten()
 
-	apps := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
+	apps := lo.Filter(nodeList, func(node FsNode, _ int) bool {
 		return node.HasAppNode()
 	})
 
-	return lo.Map(apps, func(item SpecNode, index int) AppNode {
+	return lo.Map(apps, func(item FsNode, index int) AppNode {
 		return *item.App
 	})
 }
 
-func (s SpecNode) Projects() []ProjectNode {
+func (s FsNode) Projects() []ProjectNode {
 
 	nodeList := s.Flatten()
-	projects := lo.Filter(nodeList, func(node SpecNode, _ int) bool {
+	projects := lo.Filter(nodeList, func(node FsNode, _ int) bool {
 		return node.HasProjectNode()
 	})
 
-	return lo.Map(projects, func(item SpecNode, index int) ProjectNode {
+	return lo.Map(projects, func(item FsNode, index int) ProjectNode {
 		return *item.Project
 	})
 }
 
-func (s SpecNode) Traverse(t func(node SpecNode) error) error {
+func (s FsNode) Traverse(t func(node FsNode) error) error {
 	err := t(s)
 	if err != nil {
 		return fmt.Errorf("error traversing node '%s': %w", s.Path, err)
@@ -129,34 +129,34 @@ func (s SpecNode) Traverse(t func(node SpecNode) error) error {
 	return nil
 }
 
-func (s SpecNode) TraverseNoErr(t func(node SpecNode)) {
+func (s FsNode) TraverseNoErr(t func(node FsNode)) {
 	t(s)
 	for _, child := range s.Children {
 		child.TraverseNoErr(t)
 	}
 }
 
-func (s SpecNode) Flatten() []SpecNode {
-	var result []SpecNode
-	s.TraverseNoErr(func(node SpecNode) {
+func (s FsNode) Flatten() []FsNode {
+	var result []FsNode
+	s.TraverseNoErr(func(node FsNode) {
 		result = append(result, node)
 	})
 	return result
 }
 
-func (s SpecNode) HasAppNode() bool {
+func (s FsNode) HasAppNode() bool {
 	return s.App != nil && s.App.IsAppNode()
 }
 
-func (s SpecNode) HasProjectNode() bool {
+func (s FsNode) HasProjectNode() bool {
 	return s.Project != nil && s.Project.IsProjectNode()
 }
 
-func (s SpecNode) IsAppSyntaxValid() bool {
+func (s FsNode) IsAppSyntaxValid() bool {
 	return s.App != nil && s.App.IsAppSyntaxValid()
 }
 
-func (s SpecNode) IsValidApp() bool {
+func (s FsNode) IsValidApp() bool {
 	return s.App != nil && s.App.IsValidApp()
 }
 

@@ -33,7 +33,7 @@ func doTraverseDeepAppTree(
 	ctx model.TraverseAppTreeContext,
 ) error {
 
-	analysis, err := scan(ctx, path)
+	analysis, err := scanFsNode(ctx, path)
 	if err != nil {
 		return fmt.Errorf("error analysing %s: %w", path, err)
 	}
@@ -192,14 +192,14 @@ func traverseProject(
 	return nil
 }
 
-func scan(
+func scanFsNode(
 	ctx model.TraverseAppTreeContext,
 	inputPath string,
-) (model.SpecNode, error) {
+) (model.FsNode, error) {
 
-	result := model.SpecNode{
+	result := model.FsNode{
 		Path:     inputPath,
-		Children: []model.SpecNode{},
+		Children: []model.FsNode{},
 	}
 
 	// convert path to absolut path
@@ -270,7 +270,7 @@ func scan(
 
 	if nodeInfo.HasProjectsDir {
 
-		child, err := scan(ctx, filepath.Join(path, "projects"))
+		child, err := scanFsNode(ctx, filepath.Join(path, "projects"))
 		if err != nil {
 			return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 		}
@@ -278,9 +278,9 @@ func scan(
 		result.Children = append(result.Children, child)
 	} else {
 
-		children := make([]model.SpecNode, len(nodeInfo.TraversableCandidates))
+		children := make([]model.FsNode, len(nodeInfo.TraversableCandidates))
 		for i, entry := range nodeInfo.TraversableCandidates {
-			child, err := scan(ctx, filepath.Join(path, entry.Name()))
+			child, err := scanFsNode(ctx, filepath.Join(path, entry.Name()))
 			if err != nil {
 				return result, fmt.Errorf("error analysing children of node '%s': %w", path, err)
 			}
