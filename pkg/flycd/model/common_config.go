@@ -30,7 +30,8 @@ func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppCon
 
 	untypedLocal := make(map[string]any)
 
-	// Copy the bytes to a new slice to avoid problems when doing regex matching
+	// Copy the bytes to a new slice to avoid modifying the original
+	// when we start doing substitutions
 	appYaml = append([]byte{}, appYaml...)
 
 	// Run all substitutions
