@@ -8,12 +8,14 @@ import (
 	"regexp"
 )
 
+// CommonAppConfig is configuration defined in project.yaml files that applies to all apps in the project
 type CommonAppConfig struct {
 	AppDefaults      map[string]any `yaml:"app_defaults" toml:"app_defaults"`   // default yaml tree for all apps
 	AppSubstitutions map[string]any `yaml:"substitutions" toml:"substitutions"` // raw text substitution regexes
 	AppOverrides     map[string]any `yaml:"app_overrides" toml:"app_overrides"` // yaml overrides for all apps
 }
 
+// Plus merges two CommonAppConfig's, used when traversing the project tree with projects-in-projects.
 func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	return CommonAppConfig{
 		AppDefaults:      util_cfg_merge.MergeMaps(c.AppDefaults, other.AppDefaults),
@@ -22,10 +24,8 @@ func (c CommonAppConfig) Plus(other CommonAppConfig) CommonAppConfig {
 	}
 }
 
-// Maybe later we will use this
-// var mergeKeys = []string{"internal_port", "id", "port", "name", "source"}
-// var mergeConf = util_cfg_merge.MergeConf{...}
-
+// MakeAppConfig creates an AppConfig from a raw app.yaml file, applying all substitutions and overrides,
+// from the parent projects and their CommonAppConfig's.
 func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppConfig, map[string]any, error) {
 
 	untypedLocal := make(map[string]any)
@@ -67,3 +67,7 @@ func (c CommonAppConfig) MakeAppConfig(appYaml []byte, validate ...bool) (AppCon
 
 	return typed, untyped, nil
 }
+
+// Maybe later we will use this
+// var mergeKeys = []string{"internal_port", "id", "port", "name", "source"}
+// var mergeConf = util_cfg_merge.MergeConf{...}
