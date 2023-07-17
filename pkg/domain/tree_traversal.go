@@ -171,7 +171,7 @@ func traverseProject(
 				defer tempDir.RemoveAll() // this is ok. We can wait until the end of the function
 
 				// Clone to temp dir
-				cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source, tempDir)
+				cloneResult, err := util_git.CloneShallow(ctx, project.ProjectConfig.Source.AsGitCloneSource(), tempDir)
 				if err != nil {
 					return fmt.Errorf("cloning project %s: %w", project.ProjectConfig.Project, err)
 				} else {

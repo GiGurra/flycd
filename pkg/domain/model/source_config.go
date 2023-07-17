@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/gigurra/flycd/pkg/util/util_git"
 	"reflect"
 )
 
@@ -28,6 +29,15 @@ type Source struct {
 	Ref    GitRef     `yaml:"ref,omitempty" toml:"ref" json:"ref,omitempty"`
 	Type   SourceType `yaml:"type,omitempty" toml:"type" json:"type,omitempty"`
 	Inline string     `yaml:"inline,omitempty" toml:"inline" json:"inline,omitempty"`
+}
+
+func (s *Source) AsGitCloneSource() util_git.CloneSource {
+	return util_git.CloneSource{
+		Repo:   s.Repo,
+		Branch: s.Ref.Branch,
+		Tag:    s.Ref.Tag,
+		Commit: s.Ref.Commit,
+	}
 }
 
 func NewInlineDockerFileSource(inline string) Source {

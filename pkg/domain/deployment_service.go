@@ -534,7 +534,7 @@ func fetchAppFs(
 	switch cfgTyped.Source.Type {
 	case model.SourceTypeGit:
 
-		cloneResult, err := util_git.CloneShallow(ctx, cfgTyped.Source, *tempDir)
+		cloneResult, err := util_git.CloneShallow(ctx, cfgTyped.Source.AsGitCloneSource(), *tempDir)
 		if err != nil {
 			return "", fmt.Errorf("cloning git repo: %w", err)
 		}

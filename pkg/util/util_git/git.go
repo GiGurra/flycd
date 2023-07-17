@@ -3,7 +3,6 @@ package util_git
 import (
 	"context"
 	"fmt"
-	"github.com/gigurra/flycd/pkg/domain/model"
 	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"strings"
 )
@@ -13,19 +12,22 @@ type GitCloneResult struct {
 	Hash string
 }
 
+type CloneSource struct {
+	Repo   string
+	Branch string
+	Tag    string
+	Commit string
+}
+
 func CloneShallow(
 	ctx context.Context,
-	source model.Source,
+	source CloneSource,
 	workDir util_work_dir.WorkDir,
 ) (GitCloneResult, error) {
 
-	if source.Type != model.SourceTypeGit {
-		return GitCloneResult{}, fmt.Errorf("unsupported source type (must be git!): %s", source.Type)
-	}
-
 	var err error
 
-	if source.Ref.Commit != "" {
+	if source.Commit != "" {
 		// Shallow clone of specific commit
 		// https://stackoverflow.com/questions/31278902/how-to-shallow-clone-a-specific-commit-with-depth-1
 		_, err = workDir.
@@ -45,7 +47,7 @@ func CloneShallow(
 		}
 
 		_, err = workDir.
-			NewCommand("git", "fetch", "--depth", "1", "origin", source.Ref.Commit).
+			NewCommand("git", "fetch", "--depth", "1", "origin", source.Commit).
 			WithStdLogging().
 			Run(ctx)
 		if err != nil {
@@ -60,9 +62,9 @@ func CloneShallow(
 			return GitCloneResult{}, fmt.Errorf("error checking out git commit: %w", err)
 		}
 
-	} else if source.Ref.Tag != "" {
+	} else if source.Tag != "" {
 		_, err = workDir.
-			NewCommand("git", "clone", source.Repo, "repo", "--depth", "1", "--branch", source.Ref.Tag).
+			NewCommand("git", "clone", source.Repo, "repo", "--depth", "1", "--branch", source.Tag).
 			WithStdLogging().
 			Run(ctx)
 		if err != nil {
@@ -70,9 +72,9 @@ func CloneShallow(
 		}
 		workDir = workDir.WithChildCwd("repo")
 
-	} else if source.Ref.Branch != "" {
+	} else if source.Branch != "" {
 		_, err = workDir.
-			NewCommand("git", "clone", source.Repo, "repo", "--depth", "1", "--branch", source.Ref.Branch).
+			NewCommand("git", "clone", source.Repo, "repo", "--depth", "1", "--branch", source.Branch).
 			WithStdLogging().
 			Run(ctx)
 		if err != nil {
