@@ -227,6 +227,10 @@ build:
   builder: paketobuildpacks/builder:base
   buildpacks:
     - gcr.io/paketo-buildpacks/go
+  # optional, if you want to use a pre-built image instead of building from source.
+  # fly.io supports this only for public docker registries (e.g. dockerhub)
+  # probably best used in combination with source type: local
+  #image: some/docker-image:tag 
 
 # Optional config for secrets. Here you define what the secrets should be created in the fly.io app
 # and where to get the value from. Currently only supports getting the value from env vars on the host 
@@ -362,11 +366,6 @@ changes/webhooks to a single im-mem worker, so they are executed in order. This 
   trivial to create :S.
 * Security: Better/more secrets providers
 * Non-Github: It currently only supports webhooks from git repos at GitHub.
-* Non-Git sources: It might be useful to also support regular docker images and different docker registries (right now
-  to deploy from an image, you have to create a proxy Dockerfile, Or create a single line inline Dockerfile in your
-  app.yaml, which is a bit ugly).
-    * Currently, there is no support for private image registries. You have to point to a private git repo instead
-      containing a Dockerfile.
 * Authentication: It currently only supports authentication via git over ssh, and only a single private key can be
   loaded.
     * It would be nice to support other authentication methods, such tokens for https.

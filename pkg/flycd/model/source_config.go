@@ -49,8 +49,10 @@ type SourceType string
 const (
 	SourceTypeGit              SourceType = "git"
 	SourceTypeLocal            SourceType = "local"
-	SourceTypeDocker           SourceType = "docker"
 	SourceTypeInlineDockerFile SourceType = "inline-docker-file"
+
+	// Not much point in implementing SourceTypeDocker before fly.io supports private registries
+	// SourceTypeDocker           SourceType = "docker"
 )
 
 func (s *Source) Validate() error {
@@ -69,8 +71,6 @@ func (s *Source) Validate() error {
 		if s.Inline == "" {
 			return fmt.Errorf("inline docker file is required")
 		}
-	case SourceTypeDocker:
-		return fmt.Errorf("docker source type not implemented")
 	default:
 		return fmt.Errorf("invalid source type: '%s'", s.Type)
 	}
