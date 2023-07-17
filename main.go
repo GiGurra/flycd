@@ -61,7 +61,7 @@ func main() {
 		monitor.Cmd(appCtx, flyClient, deployService, webhookService),
 		install.Cmd(appCtx, PackagedFileSystem, flyClient, deployService),
 		convert.Cmd(appCtx),
-		repos.Cmd,
+		repos.Cmd(appCtx),
 	)
 
 	// run cli
