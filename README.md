@@ -357,7 +357,7 @@ changes/webhooks to a single im-mem worker, so they are executed in order. This 
   one at a time (they are queued to a single worker to avoid races)..
 * Performance: It needs some way of determining what parts of the config tree have changed, and only traverse and
   evaluate those parts. Right now it traverses the whole config tree every time when receiving a webhook and looks for
-  potential modifications. (it doesn't deploy everything, but it might need to traverse potentially the whole tree)
+  potential modifications. (it doesn't deploy everything, but it need to traverse the whole tree)
 * Consistency: It needs some persistence of incoming webhooks. Right now if FlyCD goes down during a deployment, the
   deployment will be lost.
 * Consistency: It needs regular jobs/auto sync for apps that don't send webhooks, like's ArgoCD's 3-minute polling.
