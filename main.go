@@ -60,7 +60,7 @@ func main() {
 		deploy.Cmd(appCtx, deployService),
 		monitor.Cmd(appCtx, flyClient, deployService, webhookService),
 		install.Cmd(appCtx, PackagedFileSystem, flyClient, deployService),
-		convert.Cmd,
+		convert.Cmd(appCtx),
 		repos.Cmd,
 	)
 
