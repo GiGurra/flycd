@@ -16,6 +16,10 @@ func TraverseDeepAppTree(
 	path string,
 	ctx model.TraverseAppTreeContext,
 ) error {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path for %s: %w", path, err)
+	}
 	if ctx.Context == nil {
 		ctx.Context = context.Background()
 	}
