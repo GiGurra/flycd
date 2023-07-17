@@ -23,7 +23,7 @@ type TraverseAppTreeContext struct {
 	CommonAppCfg CommonAppConfig
 }
 
-// provet that TraverseAppTreeContext implements the context interface
+// prove that TraverseAppTreeContext implements the context interface
 var _ context.Context = TraverseAppTreeContext{}
 
 type FsNodeShallow struct {
