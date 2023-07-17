@@ -6,12 +6,18 @@ import (
 	"fmt"
 	"github.com/gigurra/flycd/pkg/domain/model"
 	"github.com/gigurra/flycd/pkg/util/util_cmd"
+	"github.com/gigurra/flycd/pkg/util/util_tab_table"
 	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"github.com/samber/lo"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type AppListItem struct {
+	Name string `json:"name"`
+	Org  string `json:"org"`
+}
 
 type FlyClient interface {
 	CreateOrgToken(
@@ -91,6 +97,10 @@ type FlyClient interface {
 		secrets []Secret,
 		stage bool,
 	) error
+
+	ListApps(
+		ctx context.Context,
+	) ([]AppListItem, error)
 }
 
 type FlyClientImpl struct{}
@@ -100,6 +110,34 @@ func NewFlyClient() FlyClient {
 }
 
 var _ FlyClient = FlyClientImpl{}
+
+func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
+
+	// ensure we have a token loaded for the org we are monitoring
+	res, err := util_cmd.NewCommand("fly", "apps", "list").Run(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting apps list. Do you have a token loaded?: %w", err)
+	}
+
+	// Prob chang this to use json instead
+	appsTable, err := util_tab_table.ParseTable(res.StdOut)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing apps list: %w", err)
+	}
+
+	result := make([]AppListItem, 0)
+	for _, appRow := range appsTable.RowMaps {
+		name := appRow["NAME"]
+		org := appRow["OWNER"]
+
+		result = append(result, AppListItem{
+			Name: name,
+			Org:  org,
+		})
+	}
+
+	return result, nil
+}
 
 func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
 
