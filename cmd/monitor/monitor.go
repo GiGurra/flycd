@@ -231,7 +231,7 @@ func processWebhook(c echo.Context, path string, webhookService domain.WebHookSe
 	case result := <-ch:
 		if result != nil {
 			fmt.Printf("ERROR: handling github webhook: %v\n", result)
-			return c.String(http.StatusInternalServerError, "something went wrong - check domain server logs!")
+			return c.String(http.StatusInternalServerError, "something went wrong - check flycd server logs!")
 		} else {
 			return c.String(http.StatusAccepted, "Too fast... something could be wrong")
 		}
