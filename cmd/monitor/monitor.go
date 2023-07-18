@@ -83,7 +83,7 @@ func Cmd(
 					ctx = context.WithValue(ctx, "FLY_ACCESS_TOKEN", accessToken)
 				}
 
-				// Get domain ssh key from env var
+				// Get flycd ssh key from env var
 				fmt.Printf("Checking if to store ssh... \n")
 				sshKey := os.Getenv("FLY_SSH_PRIVATE_KEY")
 				sshKeyName := os.Getenv("FLY_SSH_PRIVATE_KEY_NAME")
