@@ -394,7 +394,7 @@ changes/webhooks to a single im-mem worker, so they are executed in order. This 
 #### To build the application:
 
 ```
-go build ./...
+go build .
 ```
 
 #### To install `flycd` from source:
