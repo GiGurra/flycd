@@ -19,8 +19,8 @@ import (
 const Version = "v0.0.39"
 
 var rootCmd = &cobra.Command{
-	Use:   "domain",
-	Short: "domain deployment of fly apps entirely from code, without manual fly.io cli commands... I hope :D",
+	Use:   "flycd",
+	Short: "flycd deployment of fly apps entirely from code, without manual fly.io cli commands... I hope :D",
 	Long:  `Complete documentation is available at https://github.com/gigurra/flycd`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
