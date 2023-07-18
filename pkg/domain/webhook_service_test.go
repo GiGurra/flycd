@@ -36,7 +36,11 @@ func TestWebHookService(t *testing.T) {
 			defer cancelFunc()
 
 			fakeDeployService := domain.NewMockDeployService(t)
-			webhookService := NewWebHookService(ctx, fakeDeployService)
+			webhookService := NewWebHookService(fakeDeployService)
+			err := webhookService.Start(ctx)
+			if err != nil {
+				t.Fatalf("Failed to start webhook service: %v", err)
+			}
 
 			fmt.Printf("webhookService: %v\n", webhookService)
 

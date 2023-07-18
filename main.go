@@ -53,7 +53,7 @@ func main() {
 	appCtx := context.Background() // TODO: make cancellable later on signals
 	flyClient := fly_client.NewFlyClient()
 	deployService := domain.NewDeployService(flyClient)
-	webhookService := domain.NewWebHookService(appCtx, deployService)
+	webhookService := domain.NewWebHookService(deployService)
 
 	// prepare cli
 	rootCmd.AddCommand(

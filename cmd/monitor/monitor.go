@@ -143,6 +143,12 @@ func Cmd(
 					fmt.Printf(" - name=%s, org=%s\n", app.Name, app.Org)
 				}
 
+				err = webhookService.Start(ctx)
+				if err != nil {
+					fmt.Printf("Error starting webhook service: %v\n", err)
+					os.Exit(1)
+				}
+
 				if *flags.startupSync {
 					fmt.Printf("Syncing/Deploying all apps in %s\n", path)
 
@@ -153,7 +159,6 @@ func Cmd(
 					_, err := deployService.DeployAll(ctx, path, deployCfg)
 					if err != nil {
 						fmt.Printf("Error deploying: %v\n", err)
-						return
 					}
 
 				}

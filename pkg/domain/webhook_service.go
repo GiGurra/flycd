@@ -11,7 +11,8 @@ import (
 
 type WebHookService interface {
 	HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error
-	Close()
+	Start(ctx context.Context) error
+	Stop()
 }
 
 type WebHookServiceImpl struct {
@@ -19,24 +20,22 @@ type WebHookServiceImpl struct {
 	workQueue     chan func()
 }
 
-// Close An alternative to cancelling the context itself
-func (w WebHookServiceImpl) Close() {
+// Stop An alternative to cancelling the context itself
+func (w *WebHookServiceImpl) Stop() {
 	fmt.Printf("Closing webhook service\n")
 	close(w.workQueue)
 }
 
-func NewWebHookService(ctx context.Context, deployService DeployService) WebHookService {
+// Start Starts the internal worker
+func (w *WebHookServiceImpl) Start(ctx context.Context) error {
 	fmt.Printf("Creating webhook service & worker\n")
 
-	result := &WebHookServiceImpl{
-		deployService: deployService,
-		workQueue:     make(chan func(), 100),
-	}
+	// Prob add some way of preventing multiple workers from being started...
 
 	go func() {
 		for {
 			select {
-			case work, isOpen := <-result.workQueue:
+			case work, isOpen := <-w.workQueue:
 				if isOpen {
 					work()
 				} else {
@@ -49,7 +48,15 @@ func NewWebHookService(ctx context.Context, deployService DeployService) WebHook
 			}
 		}
 	}()
-	return result
+
+	return nil
+}
+
+func NewWebHookService(deployService DeployService) WebHookService {
+	return &WebHookServiceImpl{
+		deployService: deployService,
+		workQueue:     make(chan func(), 100),
+	}
 }
 
 func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
