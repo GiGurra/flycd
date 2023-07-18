@@ -28,7 +28,7 @@ func Cmd(
 	return util_cobra.CreateCmd(&flags, func() *cobra.Command {
 		return &cobra.Command{
 			Use:   "deploy <path>",
-			Short: "Manually deploy a single domain app, or all domain apps inside a folder",
+			Short: "Manually deploy a single app, or all apps inside a folder",
 			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
 				path := args[0]
