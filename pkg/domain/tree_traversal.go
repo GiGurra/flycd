@@ -164,7 +164,7 @@ func traverseProject(
 			err := func() error {
 
 				// Clone to a temp folder
-				tempDir, err := util_work_dir.NewTempDir("domain-temp-cloned-project", "")
+				tempDir, err := util_work_dir.NewTempDir("flycd-temp-cloned-project", "")
 				if err != nil {
 					return fmt.Errorf("creating temp dir for project %s: %w", project.ProjectConfig.Project, err)
 				}
