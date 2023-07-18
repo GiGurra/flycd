@@ -59,7 +59,7 @@ func Cmd(
 	return util_cobra.CreateCmd(&flags, func() *cobra.Command {
 		return &cobra.Command{
 			Use:   "monitor",
-			Short: "(Used when installed in fly.io env) Monitors domain apps, listens to webhooks, grabs new states from git, etc",
+			Short: "(Used when installed in fly.io env) Monitors apps, listens to webhooks, grabs new states from git, etc",
 			Args:  cobra.RangeArgs(0, 1),
 			Run: func(cmd *cobra.Command, args []string) {
 
