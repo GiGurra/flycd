@@ -98,7 +98,7 @@ func Cmd(
 					}
 				}
 
-				fmt.Printf("Installing domain with app-name='%s', org='%s' \n", appName, orgSlug)
+				fmt.Printf("Installing flycd with app-name='%s', org='%s' \n", appName, orgSlug)
 
 				fmt.Printf("Check if app named '%s' already exists\n", appName)
 				appExists, err := flyClient.ExistsApp(ctx, appName)
@@ -163,7 +163,7 @@ func Cmd(
 
 				// Copy FlyCD sources etc. from embedded files to temp dir
 				// So we can add it to our docker image, and then build and deploy it
-				tempDir, err := util_work_dir.NewTempDir("domain-install", "")
+				tempDir, err := util_work_dir.NewTempDir("flycd-install", "")
 				if err != nil {
 					fmt.Printf("Error creating temp dir: %v\n", err)
 					os.Exit(1)
@@ -194,7 +194,7 @@ func Cmd(
 				}
 
 				// Deploy it!
-				fmt.Printf("Deploying domain in monitoring mode to fly.io\n")
+				fmt.Printf("Deploying flycd in monitoring mode to fly.io\n")
 				deployCfg := model.
 					NewDefaultDeployConfig().
 					WithForce(true).
@@ -209,7 +209,7 @@ func Cmd(
 					Services:      []model.Service{model.NewDefaultServiceConfig()},
 				})
 				if err != nil {
-					fmt.Printf("Error deploying domain in monitoring mode: %v\n", err)
+					fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
 					os.Exit(1)
 				}
 			},
