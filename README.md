@@ -158,7 +158,7 @@ These might look something like this:
 
 ```yaml
 # app.yaml containing the regular fly.io app config + FlyCD's additional fields
-# NOTE: Most of the below is optional! (essentially, fly.io dictates which fields are optional, and domain will try not to enforce too much)
+# NOTE: Most of the below is optional! (essentially, fly.io dictates which fields are optional, and FlyCD will try not to enforce too much)
 app: &app cloud-x--prod--some-backend # Unique dns name at <app>.fly.dev, as is the case with fly.io apps with automatic dns
 
 # All regular fly.io config file fields are supported (by preserving untyped config tree in parallel with typed).
@@ -214,7 +214,7 @@ volumes:
     # size_gb: can be increased later, but cannot be reduced (fly.io limitation)
     size_gb: 10
     # count: should be enough to cover the number of app instances.
-    # domain will automatically use actual app instance count if it's higher than this.
+    # FlyCD will automatically use actual app instance count if it's higher than this.
     # However, if fly.io wants to scale higher than this, it won't be able to until you increase the count.
     # For most applications you probably won't use fly.io auto-scaling in combination with volumes :S 
     count: 3
@@ -234,13 +234,13 @@ build:
 
 # Optional config for secrets. Here you define what the secrets should be created in the fly.io app
 # and where to get the value from. Currently only supports getting the value from env vars on the host 
-# running domain itself, or (for test purposes) as raw in-config/inline plaintext.
+# running FlyCD itself, or (for test purposes) as raw in-config/inline plaintext.
 # It works by creating a fly.io secret with the same name as the secret config entry.
 secrets:
-  # Secrets forwarded from env vars on the host running domain (e.g. your local machine or installed domain instance) 
+  # Secrets forwarded from env vars on the host running FlyCD (e.g. your local machine or installed FlyCD instance) 
   - name: SOME_SECRET_FWD # this is the name/key the secret will have in the fly.io app
-    type: env # this tells domain how to extract the secret value
-    env: SOME_SECRET # optional name of the source env var on the host running domain. Defaults to the name of the secret
+    type: env # this tells FlyCD how to extract the secret value
+    env: SOME_SECRET # optional name of the source env var on the host running FlyCD. Defaults to the name of the secret
   - name: SOME_SECRET_2
     type: env
   # unencrypted plaintext in config. NOT recommended. For testing only!
@@ -284,7 +284,7 @@ deploy_params:
 * Before installing it into your fly.io account with `flycd install --project-path .`
 
 FlyCD will convert the `app.yaml` back to `fly.toml` before deploying to fly.io, and will keep all fields you put in
-it (i.e. flycd doesn't have to implement the full fly.io domain model). There are several reasons flycd doesn't just use
+it (i.e. flycd doesn't have to implement the full fly.io FlyCD model). There are several reasons flycd doesn't just use
 a `fly.toml` instead of `app.yaml`. One reason is because `flycd` uses the fly.io cli (`fly`/`flyctl`) under the hood,
 and the fly.io cli actually modifies the `fly.toml` in place when deploying :S. Another is that we want to re-use data
 within the config, and `.toml` is not a very good format for that. There are probably more reasons, some
