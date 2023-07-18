@@ -49,7 +49,7 @@ func main() {
 		}
 	}
 
-	// Create services (sigh, feels like java again :S)
+	// Create di-ish separable components
 	appCtx := context.Background() // TODO: make cancellable later on signals
 	flyClient := fly_client.NewFlyClient()
 	deployService := domain.NewDeployService(flyClient)
