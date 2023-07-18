@@ -157,7 +157,7 @@ Tip: Easy ways to create your own app.yaml files:
 These might look something like this:
 
 ```yaml
-# app.yaml containing the regular fly.io app config + domain's additional fields
+# app.yaml containing the regular fly.io app config + FlyCD's additional fields
 # NOTE: Most of the below is optional! (essentially, fly.io dictates which fields are optional, and domain will try not to enforce too much)
 app: &app cloud-x--prod--some-backend # Unique dns name at <app>.fly.dev, as is the case with fly.io apps with automatic dns
 
