@@ -21,7 +21,7 @@ The illustration below gives an idea of FlyCD enabled configuration:
 
 ### Installation
 
-1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.38`)
+1. Run `go install github.com/gigurra/flycd@<version>` (currently `v0.0.39`)
 2. Run `flycd deploy <fs path>` to deploy a configuration (single app or structure with many projects and apps, you
    decide)
 3. (Optional) Installing flycd as an app in your fly.io account or as a daemon somewhere else where you prefer to have
@@ -48,7 +48,7 @@ The best is probably to check the `--help` output:
 ```
 $flycd --help
 
-Starting FlyCD v0.0.38...
+Starting FlyCD v0.0.39...
 Complete documentation is available at https://github.com/gigurra/flycd
 
 Usage:
