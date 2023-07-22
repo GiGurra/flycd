@@ -260,7 +260,7 @@ func NewDefaultServiceConfig() Service {
 		ForceHttps:         false,
 		AutoStopMachines:   true,
 		AutoStartMachines:  true,
-		MinMachinesRunning: 0,
+		MinMachinesRunning: 1,
 		Concurrency: Concurrency{
 			Type:      "requests",
 			SoftLimit: 1_000_000_000,
