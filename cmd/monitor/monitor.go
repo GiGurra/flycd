@@ -15,8 +15,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -47,6 +49,26 @@ func defaultWhPort() int {
 	}
 
 	return port
+}
+
+func handleShutdown(shutdownHandler func()) {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(
+		sig,
+		// Possible fly.io shutdown signals
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+		syscall.SIGUSR1,
+		syscall.SIGUSR2,
+		syscall.SIGKILL,
+		syscall.SIGSTOP,
+	)
+	select {
+	case s := <-sig:
+		fmt.Printf("Received signal: %s\n", s.String())
+		shutdownHandler()
+	}
 }
 
 func Cmd(
@@ -162,6 +184,12 @@ func Cmd(
 					}
 
 				}
+
+				// Install shutdown signal handler
+				handleShutdown(func() {
+					webhookService.WaitUntilZeroLocalJobsLeft()
+					os.Exit(0)
+				})
 
 				// Echo instance
 				e := echo.New()

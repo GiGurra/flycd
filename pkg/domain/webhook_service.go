@@ -7,12 +7,14 @@ import (
 	"github.com/gigurra/flycd/pkg/ext/github"
 	"github.com/samber/lo"
 	"strings"
+	"time"
 )
 
 type WebHookService interface {
 	HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error
 	Start(ctx context.Context) error
 	Stop()
+	WaitUntilZeroLocalJobsLeft()
 }
 
 type WebHookServiceImpl struct {
@@ -59,7 +61,17 @@ func NewWebHookService(deployService DeployService) WebHookService {
 	}
 }
 
-func (w WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
+func (w *WebHookServiceImpl) WaitUntilZeroLocalJobsLeft() {
+	fmt.Printf("Received shutdown signal: Stopping webhook worker when job count reaches 0... \n")
+	fmt.Printf("Current job count: %d\n", len(w.workQueue))
+	for len(w.workQueue) > 0 {
+		fmt.Printf("Current job count: %d, sleeping some more...\n", len(w.workQueue))
+		time.Sleep(1 * time.Second)
+	}
+	fmt.Printf("Job count is now zero! Stopping work\n")
+}
+
+func (w *WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
 
 	ch := make(chan error, 1)
 
