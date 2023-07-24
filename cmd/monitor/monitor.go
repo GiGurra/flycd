@@ -187,8 +187,12 @@ func Cmd(
 
 				// Install shutdown signal handler
 				handleShutdown(func() {
-					webhookService.WaitUntilZeroLocalJobsLeft()
-					os.Exit(0)
+					fmt.Printf("Placing 'shutdown-application' job at the end of the current local job queue\n")
+					webhookService.EnqueueJob(func() {
+						fmt.Printf("Reached end of job queue, shutting down!\n")
+						os.Exit(0)
+					})
+					webhookService.CloseJobQueue()
 				})
 
 				// Echo instance

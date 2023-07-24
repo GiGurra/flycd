@@ -7,14 +7,13 @@ import (
 	"github.com/gigurra/flycd/pkg/ext/github"
 	"github.com/samber/lo"
 	"strings"
-	"time"
 )
 
 type WebHookService interface {
 	HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error
 	Start(ctx context.Context) error
-	Stop()
-	WaitUntilZeroLocalJobsLeft()
+	CloseJobQueue()
+	EnqueueJob(job func())
 }
 
 type WebHookServiceImpl struct {
@@ -23,8 +22,8 @@ type WebHookServiceImpl struct {
 }
 
 // Stop An alternative to cancelling the context itself
-func (w *WebHookServiceImpl) Stop() {
-	fmt.Printf("Closing webhook service\n")
+func (w *WebHookServiceImpl) CloseJobQueue() {
+	fmt.Printf("Closing webhook service's job queue\n")
 	close(w.workQueue)
 }
 
@@ -61,14 +60,8 @@ func NewWebHookService(deployService DeployService) WebHookService {
 	}
 }
 
-func (w *WebHookServiceImpl) WaitUntilZeroLocalJobsLeft() {
-	fmt.Printf("Received shutdown signal: Stopping webhook worker when job count reaches 0... \n")
-	fmt.Printf("Current job count: %d\n", len(w.workQueue))
-	for len(w.workQueue) > 0 {
-		fmt.Printf("Current job count: %d, sleeping some more...\n", len(w.workQueue))
-		time.Sleep(1 * time.Second)
-	}
-	fmt.Printf("Job count is now zero! Stopping work\n")
+func (w *WebHookServiceImpl) EnqueueJob(job func()) {
+	w.workQueue <- job
 }
 
 func (w *WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPayload, path string) <-chan error {
@@ -135,7 +128,7 @@ func (w *WebHookServiceImpl) HandleGithubWebhook(payload github.PushWebhookPaylo
 
 	}
 
-	w.workQueue <- task
+	w.EnqueueJob(task)
 
 	return ch
 }
