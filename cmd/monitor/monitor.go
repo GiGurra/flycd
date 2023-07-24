@@ -188,6 +188,7 @@ func Cmd(
 				}
 
 				// Install shutdown signal handler
+				fmt.Printf("Installing shutdown signal handler\n")
 				handleShutdown(func() {
 					fmt.Printf("Placing 'shutdown-application' job at the end of the current local job queue\n")
 					webhookService.EnqueueJob(func() {
@@ -198,6 +199,7 @@ func Cmd(
 				})
 
 				// Echo instance
+				fmt.Printf("Starting echo http server\n")
 				e := echo.New()
 
 				// Middleware
