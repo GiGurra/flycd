@@ -17,11 +17,12 @@ import (
 )
 
 type Flags struct {
-	appName     *string
-	orgSlug     *string
-	region      *string
-	projectPath *string
-	scaleToZero *bool
+	appName           *string
+	orgSlug           *string
+	region            *string
+	projectPath       *string
+	scaleToZero       *bool
+	shutdownGraceTime *int
 }
 
 func (f *Flags) Init(cmd *cobra.Command) {
@@ -30,6 +31,7 @@ func (f *Flags) Init(cmd *cobra.Command) {
 	f.region = cmd.Flags().StringP("region", "r", "", "Region of the fly.io app to install")
 	f.projectPath = cmd.Flags().StringP("project-path", "p", "projects", "Path to the projects folder to use. This can contain both projects (project.yaml) and apps (app.yaml)")
 	f.scaleToZero = cmd.Flags().BoolP("scale-to-zero", "", false, "scale instances to zero when not in use")
+	f.shutdownGraceTime = cmd.Flags().IntP("shutdown-grace-time", "", 300, "how long to wait for graceful shutdown of instances before killing them")
 }
 
 func Cmd(
@@ -215,7 +217,7 @@ func Cmd(
 					LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
 					DeployParams:  model.NewDefaultDeployParams(),
 					Services:      []model.Service{model.NewDefaultServiceConfig().WithMinScale(minScale)},
-				}.WithKillTimeout(300))
+				}.WithKillTimeout(*flags.shutdownGraceTime))
 				if err != nil {
 					fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
 					os.Exit(1)
