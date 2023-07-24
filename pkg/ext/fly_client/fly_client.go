@@ -125,8 +125,21 @@ func NewFlyClient() FlyClient {
 var _ FlyClient = FlyClientImpl{}
 
 func (c FlyClientImpl) ListIps(ctx context.Context, app string) ([]IpListItem, error) {
-	//TODO implement me
-	panic("implement me")
+
+	// ensure we have a token loaded for the org we are monitoring
+	res, err := util_cmd.NewCommand("fly", "ips", "list", "-a", app, "--json").Run(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting ips list. Do you have a token loaded?: %w", err)
+	}
+
+	// Prob chang this to use json instead
+	items := make([]IpListItem, 0)
+	err = json.Unmarshal([]byte(res.StdOut), &items)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing ips list: %w", err)
+	}
+
+	return items, nil
 }
 
 func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
