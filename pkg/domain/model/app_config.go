@@ -93,6 +93,12 @@ type AppConfig struct {
 	Machines      MachineConfig     `yaml:"machines,omitempty" toml:"machines,omitempty"`
 	Secrets       []SecretRef       `yaml:"secrets,omitempty" toml:"secrets,omitempty"`
 	NetworkConfig NetworkConfig     `yaml:"network,omitempty" toml:"network,omitempty"`
+	KillTimeout   *int              `yaml:"kill_timeout,omitempty" toml:"kill_timeout,omitempty"`
+}
+
+func (a AppConfig) WithKillTimeout(seconds int) AppConfig {
+	a.KillTimeout = &seconds
+	return a
 }
 
 func (a *AppConfig) RegionsWPrimaryLast() []string {

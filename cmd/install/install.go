@@ -207,7 +207,7 @@ func Cmd(
 					LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
 					DeployParams:  model.NewDefaultDeployParams(),
 					Services:      []model.Service{model.NewDefaultServiceConfig()},
-				})
+				}.WithKillTimeout(300))
 				if err != nil {
 					fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
 					os.Exit(1)
