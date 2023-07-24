@@ -112,10 +112,6 @@ func Cmd(
 				if !appExists {
 
 					deployCfg := model.NewDefaultDeployConfig().WithRetries(0)
-					minScale := 1
-					if *flags.scaleToZero {
-						minScale = 0
-					}
 
 					fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
 					_, err := deployService.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
@@ -125,7 +121,7 @@ func Cmd(
 						Source:        model.NewInlineDockerFileSource("FROM nginx:latest"),
 						LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
 						DeployParams:  model.NewDefaultDeployParams(),
-						Services:      []model.Service{model.NewDefaultServiceConfig().WithMinScale(minScale)},
+						Services:      []model.Service{model.NewDefaultServiceConfig()},
 					})
 					if err != nil {
 						fmt.Printf("Error creating dummy app: %v\n", err)
@@ -205,6 +201,12 @@ func Cmd(
 					NewDefaultDeployConfig().
 					WithForce(true).
 					WithRetries(0)
+
+				minScale := 1
+				if *flags.scaleToZero {
+					minScale = 0
+				}
+
 				_, err = deployService.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
 					App:           appName,
 					Org:           orgSlug,
@@ -212,7 +214,7 @@ func Cmd(
 					Source:        model.NewLocalFolderSource(tempDir.Cwd()),
 					LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
 					DeployParams:  model.NewDefaultDeployParams(),
-					Services:      []model.Service{model.NewDefaultServiceConfig()},
+					Services:      []model.Service{model.NewDefaultServiceConfig().WithMinScale(minScale)},
 				}.WithKillTimeout(300))
 				if err != nil {
 					fmt.Printf("Error deploying flycd in monitoring mode: %v\n", err)
