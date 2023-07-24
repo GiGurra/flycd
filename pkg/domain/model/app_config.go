@@ -92,6 +92,7 @@ type AppConfig struct {
 	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
 	Machines      MachineConfig     `yaml:"machines,omitempty" toml:"machines,omitempty"`
 	Secrets       []SecretRef       `yaml:"secrets,omitempty" toml:"secrets,omitempty"`
+	NetworkConfig *NetworkConfig    `yaml:"network,omitempty" toml:"network,omitempty"`
 }
 
 func (a *AppConfig) RegionsWPrimaryLast() []string {
@@ -156,6 +157,67 @@ func (s SecretRef) GetSecretValue() (string, error) {
 	default:
 		return "", fmt.Errorf("unknown secret type: %s", s.Type)
 	}
+}
+
+type NetworkConfig struct {
+	Ips          []IpConfig `yaml:"ips" toml:"ips"`
+	AutoPruneIps bool       `yaml:"auto_prune_ips" toml:"auto_prune_ips"`
+}
+
+func (c NetworkConfig) Validate() error {
+	for _, ip := range c.Ips {
+		err := ip.Validate()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type Ipv string
+
+const (
+	IpV4 Ipv = "v4"
+	IpV6 Ipv = "v6"
+)
+
+type IpConfig struct {
+	V       Ipv    `yaml:"v" toml:"v"`
+	Network string `yaml:"network" toml:"network"`
+	Org     string `yaml:"org" toml:"org"`
+	Private bool   `yaml:"private" toml:"private"`
+	Shared  bool   `yaml:"shared" toml:"shared"`
+	Region  string `yaml:"region" toml:"region"`
+}
+
+func (c IpConfig) Validate() error {
+	if c.V == "" {
+		return fmt.Errorf("ip config missing v")
+	}
+	if c.V != IpV4 && c.V != IpV6 {
+		return fmt.Errorf("ip config v must be either v4 or v6")
+	}
+
+	if c.V == IpV4 && c.Private {
+		return fmt.Errorf("ip config v4 cannot be private")
+	}
+
+	if c.V == IpV4 && c.Network != "" {
+		return fmt.Errorf("ip config v4 cannot have network")
+	}
+
+	if c.V == IpV4 && c.Org != "" {
+		return fmt.Errorf("ip config v4 cannot have org")
+	}
+
+	if c.V == IpV4 && c.Region != "" {
+		return fmt.Errorf("ip config v4 cannot have region")
+	}
+
+	if c.V == IpV6 && c.Shared {
+		return fmt.Errorf("ip config v6 cannot be shared")
+	}
+	return nil
 }
 
 type ValidateAppConfigOptions struct {
@@ -225,6 +287,13 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 
 	if a.ExtraRegions == nil {
 		a.ExtraRegions = []string{}
+	}
+
+	if a.NetworkConfig != nil {
+		err := a.NetworkConfig.Validate()
+		if err != nil {
+			return fmt.Errorf("network config validation failed: %w", err)
+		}
 	}
 
 	// only permit apps that are valid dns names
