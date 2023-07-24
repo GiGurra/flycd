@@ -254,9 +254,11 @@ network:
   ips:
     - v: v6
       Private: true
+      #Network: ...
+      #Region: ... #default = global
     - v: v4
       Shared: true
-      
+
 vm_size: &vm_size "shared-cpu-1x"
 
 org: &org personal
