@@ -24,7 +24,22 @@ type IpListItem struct {
 	Address   string    `json:"Address"`
 	Type      string    `json:"Type"`
 	Region    string    `json:"Region"`
+	Network   string    `json:"Network"`
 	CreatedAt time.Time `json:"CreatedAt"`
+}
+
+func (i IpListItem) IsPrivate() bool {
+	return strings.Contains(strings.ToLower(i.Type), "private")
+}
+
+func (i IpListItem) Ipv() model.Ipv {
+	if strings.Contains(strings.ToLower(i.Type), "v6") {
+		return model.IpV6
+	} else if strings.Contains(strings.ToLower(i.Type), "v4") {
+		return model.IpV4
+	} else {
+		return model.IpVUkn
+	}
 }
 
 type FlyClient interface {
@@ -114,6 +129,19 @@ type FlyClient interface {
 		ctx context.Context,
 		app string,
 	) ([]IpListItem, error)
+
+	DeleteIp(
+		ctx context.Context,
+		app string,
+		id string,
+		address string,
+	) error
+
+	CreateIp(
+		ctx context.Context,
+		app string,
+		ip model.IpConfig,
+	) error
 }
 
 type FlyClientImpl struct{}
@@ -124,10 +152,82 @@ func NewFlyClient() FlyClient {
 
 var _ FlyClient = FlyClientImpl{}
 
+func (c FlyClientImpl) CreateIp(
+	ctx context.Context,
+	app string,
+	ip model.IpConfig,
+) error {
+
+	allocateString := "allocate-v6"
+	if ip.V == model.IpV4 {
+		allocateString = "allocate-v4"
+	}
+
+	params := []string{"fly", "ips", allocateString, "-a", app}
+
+	if ip.Private {
+		params = append(params, "--private")
+	}
+
+	if ip.Region != "" {
+		params = append(params, "--region", ip.Region)
+	}
+
+	if ip.Network != "" {
+		params = append(params, "--network", ip.Network)
+	}
+
+	if ip.Org != "" {
+		params = append(params, "--org", ip.Org)
+	}
+
+	if ip.Shared {
+		params = append(params, "--shared")
+	}
+
+	_, err := util_cmd.
+		NewCommand(params...).
+		WithExtraArgs(accessTokenArgs(ctx)...).
+		WithTimeout(1 * time.Minute).
+		WithTimeoutRetries(1).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error allocating ip %+v for app %s: %w", ip, app, err)
+	} else {
+		return nil
+	}
+}
+
+func (c FlyClientImpl) DeleteIp(
+	ctx context.Context,
+	app string,
+	id string,
+	address string,
+) error {
+
+	_, err := util_cmd.
+		NewCommand("fly", "ips", "release", address, "-a", app).
+		WithExtraArgs(accessTokenArgs(ctx)...).
+		WithTimeout(1 * time.Minute).
+		WithTimeoutRetries(1).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error releasing ip %s for app %s: %w", address, app, err)
+	} else {
+		return nil
+	}
+}
+
 func (c FlyClientImpl) ListIps(ctx context.Context, app string) ([]IpListItem, error) {
 
-	// ensure we have a token loaded for the org we are monitoring
-	res, err := util_cmd.NewCommand("fly", "ips", "list", "-a", app, "--json").Run(ctx)
+	res, err := util_cmd.
+		NewCommand("fly", "ips", "list", "-a", app, "--json").
+		WithExtraArgs(accessTokenArgs(ctx)...).
+		WithTimeout(1 * time.Minute).
+		WithTimeoutRetries(1).
+		Run(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting ips list. Do you have a token loaded?: %w", err)
 	}
@@ -145,7 +245,12 @@ func (c FlyClientImpl) ListIps(ctx context.Context, app string) ([]IpListItem, e
 func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
 
 	// ensure we have a token loaded for the org we are monitoring
-	res, err := util_cmd.NewCommand("fly", "apps", "list").Run(ctx)
+	res, err := util_cmd.
+		NewCommand("fly", "apps", "list").
+		WithExtraArgs(accessTokenArgs(ctx)...).
+		WithTimeout(2 * time.Minute).
+		WithTimeoutRetries(1).
+		Run(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting apps list. Do you have a token loaded?: %w", err)
 	}

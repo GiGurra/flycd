@@ -273,6 +273,11 @@ func runIntermediateSteps(input deployInput) error {
 		return fmt.Errorf("error running intermediate secrets steps: %w", err)
 	}
 
+	err = runIntermediateNetworkingSteps(input)
+	if err != nil {
+		return fmt.Errorf("error running intermediate networking steps: %w", err)
+	}
+
 	// add intermediate steps here
 
 	return nil
@@ -353,6 +358,85 @@ func runIntermediateSecretsSteps(input deployInput) error {
 	if err != nil {
 		return fmt.Errorf("error saving secrets for app %s: %w", input.cfgTyped.App, err)
 	}
+	return nil
+}
+
+// runIntermediateSecretsSteps Here we extract and deploy all secrets
+func runIntermediateNetworkingSteps(input deployInput) error {
+
+	networkCfg := input.cfgTyped.NetworkConfig
+
+	if networkCfg.IsEmpty() {
+		return nil
+	}
+
+	currentIps, err := input.flyClient.ListIps(input.ctx, input.cfgTyped.App)
+	if err != nil {
+		return fmt.Errorf("error getting ips for app %s: %w", input.cfgTyped.App, err)
+	}
+
+	toBeKept := map[string]bool{}
+
+	// First, add all missing IPs
+	for _, cfgIp := range networkCfg.Ips {
+		err := cfgIp.Validate()
+		if err != nil {
+			return fmt.Errorf("error validating ip config %+v: %w", cfgIp, err)
+		}
+		needCreate := true
+		for _, existIp := range currentIps {
+
+			if existIp.Ipv() != cfgIp.V {
+				continue
+			}
+
+			if existIp.IsPrivate() != cfgIp.Private {
+				continue
+			}
+
+			if strings.ToLower(existIp.Network) != strings.ToLower(cfgIp.Network) {
+				continue
+			}
+
+			if strings.ToLower(existIp.Region) != strings.ToLower(cfgIp.Region) {
+				if cfgIp.Region == "" && strings.ToLower(existIp.Region) == "global" {
+					// this is fine
+				} else {
+					continue
+				}
+			}
+
+			// Found an IP we should keep. No need to create it.
+			toBeKept[existIp.Id] = true
+			needCreate = false
+			break
+		}
+
+		if needCreate {
+			fmt.Printf("Creating ip %+v for app %s\n", cfgIp, input.cfgTyped.App)
+			err := input.flyClient.CreateIp(input.ctx, input.cfgTyped.App, cfgIp)
+			if err != nil {
+				return fmt.Errorf("error creating ip %+v for app %s: %w", cfgIp, input.cfgTyped.App, err)
+			}
+		}
+	}
+
+	// Release/prune unspecified IPs
+	if networkCfg.AutoPruneIps {
+		fmt.Printf("Pruning ips for app %s\n", input.cfgTyped.App)
+		for _, ip := range currentIps {
+			if !toBeKept[ip.Id] {
+				fmt.Printf("Removing ip %s for app %s\n", ip.Id, input.cfgTyped.App)
+				err = input.flyClient.DeleteIp(input.ctx, input.cfgTyped.App, ip.Id, ip.Address)
+				if err != nil {
+					return fmt.Errorf("error pruning ip %s for app %s: %w", ip.Address, input.cfgTyped.App, err)
+				}
+			}
+		}
+	} else {
+		fmt.Printf("Not pruning ips for app %s\n", input.cfgTyped.App)
+	}
+
 	return nil
 }
 

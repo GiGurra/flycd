@@ -174,11 +174,16 @@ func (c NetworkConfig) Validate() error {
 	return nil
 }
 
+func (c NetworkConfig) IsEmpty() bool {
+	return len(c.Ips) == 0 && !c.AutoPruneIps
+}
+
 type Ipv string
 
 const (
-	IpV4 Ipv = "v4"
-	IpV6 Ipv = "v6"
+	IpV4   Ipv = "v4"
+	IpV6   Ipv = "v6"
+	IpVUkn Ipv = "unknown"
 )
 
 type IpConfig struct {
