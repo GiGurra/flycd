@@ -19,6 +19,14 @@ type AppListItem struct {
 	Org  string `json:"org"`
 }
 
+type IpListItem struct {
+	Id        string    `json:"ID"`
+	Address   string    `json:"Address"`
+	Type      string    `json:"Type"`
+	Region    string    `json:"Region"`
+	CreatedAt time.Time `json:"CreatedAt"`
+}
+
 type FlyClient interface {
 	CreateOrgToken(
 		ctx context.Context,
@@ -101,6 +109,11 @@ type FlyClient interface {
 	ListApps(
 		ctx context.Context,
 	) ([]AppListItem, error)
+
+	ListIps(
+		ctx context.Context,
+		app string,
+	) ([]IpListItem, error)
 }
 
 type FlyClientImpl struct{}
@@ -110,6 +123,11 @@ func NewFlyClient() FlyClient {
 }
 
 var _ FlyClient = FlyClientImpl{}
+
+func (c FlyClientImpl) ListIps(ctx context.Context, app string) ([]IpListItem, error) {
+	//TODO implement me
+	panic("implement me")
+}
 
 func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
 
