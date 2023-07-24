@@ -21,6 +21,7 @@ type Flags struct {
 	orgSlug     *string
 	region      *string
 	projectPath *string
+	scaleToZero *bool
 }
 
 func (f *Flags) Init(cmd *cobra.Command) {
@@ -28,6 +29,7 @@ func (f *Flags) Init(cmd *cobra.Command) {
 	f.orgSlug = cmd.Flags().StringP("org", "o", "", "Slug of the fly.io org to install to")
 	f.region = cmd.Flags().StringP("region", "r", "", "Region of the fly.io app to install")
 	f.projectPath = cmd.Flags().StringP("project-path", "p", "projects", "Path to the projects folder to use. This can contain both projects (project.yaml) and apps (app.yaml)")
+	f.scaleToZero = cmd.Flags().BoolP("scale-to-zero", "", false, "scale instances to zero when not in use")
 }
 
 func Cmd(
@@ -110,6 +112,10 @@ func Cmd(
 				if !appExists {
 
 					deployCfg := model.NewDefaultDeployConfig().WithRetries(0)
+					minScale := 1
+					if *flags.scaleToZero {
+						minScale = 0
+					}
 
 					fmt.Printf("Creating a dummy app '%s' to reserve the name\n", appName)
 					_, err := deployService.DeployAppFromInlineConfig(ctx, deployCfg, model.AppConfig{
@@ -119,7 +125,7 @@ func Cmd(
 						Source:        model.NewInlineDockerFileSource("FROM nginx:latest"),
 						LaunchParams:  model.NewDefaultLaunchParams(appName, orgSlug),
 						DeployParams:  model.NewDefaultDeployParams(),
-						Services:      []model.Service{model.NewDefaultServiceConfig()},
+						Services:      []model.Service{model.NewDefaultServiceConfig().WithMinScale(minScale)},
 					})
 					if err != nil {
 						fmt.Printf("Error creating dummy app: %v\n", err)

@@ -32,6 +32,11 @@ type Service struct {
 	Processes          []string    `yaml:"processes" toml:"processes,omitempty"`
 }
 
+func (s Service) WithMinScale(minScale int) Service {
+	s.MinMachinesRunning = minScale
+	return s
+}
+
 type HttpService struct {
 	InternalPort       int         `yaml:"internal_port" toml:"internal_port"`
 	ForceHttps         bool        `yaml:"force_https" toml:"force_https"`
