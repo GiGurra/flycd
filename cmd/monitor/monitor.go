@@ -52,19 +52,19 @@ func defaultWhPort() int {
 }
 
 func handleShutdown(shutdownHandler func()) {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(
+		sig,
+		// Possible fly.io shutdown signals
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+		syscall.SIGUSR1,
+		syscall.SIGUSR2,
+		syscall.SIGKILL,
+		syscall.SIGSTOP,
+	)
 	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(
-			sig,
-			// Possible fly.io shutdown signals
-			syscall.SIGINT,
-			syscall.SIGTERM,
-			syscall.SIGQUIT,
-			syscall.SIGUSR1,
-			syscall.SIGUSR2,
-			syscall.SIGKILL,
-			syscall.SIGSTOP,
-		)
 		select {
 		case s := <-sig:
 			fmt.Printf("Received signal: %s\n", s.String())
