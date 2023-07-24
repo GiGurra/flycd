@@ -165,6 +165,10 @@ func (c FlyClientImpl) CreateIp(
 
 	params := []string{"fly", "ips", allocateString, "-a", app}
 
+	if ip.V == model.IpV4 {
+		params = append(params, "--yes")
+	}
+
 	if ip.Private {
 		params = append(params, "--private")
 	}

@@ -248,6 +248,15 @@ secrets:
     type: raw
     raw: secret
 
+# Optional networking config
+network:
+  auto_prune_ips: true # deletes all ips for this app not listed below
+  ips:
+    - v: v6
+      Private: true
+    - v: v4
+      Shared: true
+      
 vm_size: &vm_size "shared-cpu-1x"
 
 org: &org personal
