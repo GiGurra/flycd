@@ -293,7 +293,7 @@ func runPostDeploySteps(input deployInput) error {
 func runScaleAllRegionsPostDeployStep(input deployInput) error {
 
 	fmt.Printf("Checking if we need to scale up instance count in any region\n")
-	minSvcReq := input.cfgTyped.MinMachinesFromSvcs()
+	minSvcReq := input.cfgTyped.MinMachinesFromServices()
 	if len(input.cfgTyped.ExtraRegions) == 0 &&
 		minSvcReq <= 1 &&
 		len(input.cfgTyped.Machines.CountPerRegion) == 0 &&
@@ -429,7 +429,7 @@ func runIntermediateVolumeSteps(input deployInput) error {
 func getMinimumVolumeCountPerRegion(input deployInput) (map[string]int, error) {
 	// We need at least as many volumes as the minimum number of app instances.
 	// In the fly.io configuration, this is given by the `min_instances` field.
-	minReqBase := util_math.Max(1, input.cfgTyped.MinMachinesFromSvcs())
+	minReqBase := util_math.Max(1, input.cfgTyped.MinMachinesFromServices())
 
 	// We also need at least as many volumes as the minimum number of app instances
 	machineCfg := input.cfgTyped.Machines

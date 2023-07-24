@@ -92,7 +92,7 @@ type AppConfig struct {
 	Volumes       []VolumeConfig    `yaml:"volumes,omitempty" toml:"volumes,omitempty"`
 	Machines      MachineConfig     `yaml:"machines,omitempty" toml:"machines,omitempty"`
 	Secrets       []SecretRef       `yaml:"secrets,omitempty" toml:"secrets,omitempty"`
-	NetworkConfig *NetworkConfig    `yaml:"network,omitempty" toml:"network,omitempty"`
+	NetworkConfig NetworkConfig     `yaml:"network,omitempty" toml:"network,omitempty"`
 }
 
 func (a *AppConfig) RegionsWPrimaryLast() []string {
@@ -102,7 +102,7 @@ func (a *AppConfig) RegionsWPrimaryLast() []string {
 	return lo.Uniq(result)
 }
 
-func (a *AppConfig) MinMachinesFromSvcs() int {
+func (a *AppConfig) MinMachinesFromServices() int {
 	return util_math.Max(
 		func() int {
 			if a.HttpService != nil {
@@ -124,7 +124,7 @@ type SecretSourceType string
 const (
 	SecretSourceTypeEnv SecretSourceType = "env"
 	SecretSourceTypeRaw SecretSourceType = "raw" // not recommended
-	// Add more as needed
+	// Add more when needed
 )
 
 type SecretRef struct {
@@ -289,11 +289,9 @@ func (a *AppConfig) Validate(options ...ValidateAppConfigOptions) error {
 		a.ExtraRegions = []string{}
 	}
 
-	if a.NetworkConfig != nil {
-		err := a.NetworkConfig.Validate()
-		if err != nil {
-			return fmt.Errorf("network config validation failed: %w", err)
-		}
+	err := a.NetworkConfig.Validate()
+	if err != nil {
+		return fmt.Errorf("network config validation failed: %w", err)
 	}
 
 	// only permit apps that are valid dns names
