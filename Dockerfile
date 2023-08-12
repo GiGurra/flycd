@@ -30,6 +30,9 @@ COPY --from=builder /flycd/flycd /flycd/flycd
 WORKDIR /flycd
 ENV PATH="/flycd:${PATH}"
 
+# Copy the projects folder
+COPY ./projects /flycd/projects
+
 # Install flycd cli last to ensure it's the latest version
 RUN curl -L https://fly.io/install.sh | sh
 ENV FLYCTL_INSTALL="/root/.fly"
