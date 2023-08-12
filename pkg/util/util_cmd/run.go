@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gigurra/flycd/pkg/util/util_context"
 	"io"
 	"os"
 	"os/exec"
@@ -132,24 +133,30 @@ func (c Command) Run(ctx context.Context) (CommandResult, error) {
 	combinedBuffer := &bytes.Buffer{}
 	attempts := 0
 
-	err := c.doRun(ctx, func(cmd *exec.Cmd) error {
+	// This channel is used to signal that the timeout should be reset
+	resetChan := make(chan any, 1)
+	defer close(resetChan)
+
+	err := c.withRetries(ctx, resetChan, func(cmd *exec.Cmd) error {
 
 		// Reset these each time, because they could internally
 		attempts++
 		stdoutBuffer = &bytes.Buffer{}
 		stderrBuffer = &bytes.Buffer{}
 		combinedBuffer = &bytes.Buffer{}
+		// create a writer that writes to buffer, but also sends a signal to reset the timeout
+		combinedWriter := util_context.NewResetWriterCh(combinedBuffer, resetChan)
 
 		cmd.Stdin = os.Stdin
 		if c.LogStdOut {
-			cmd.Stdout = io.MultiWriter(os.Stdout, stdoutBuffer, combinedBuffer)
+			cmd.Stdout = io.MultiWriter(os.Stdout, stdoutBuffer, combinedWriter)
 		} else {
-			cmd.Stdout = io.MultiWriter(stdoutBuffer, combinedBuffer)
+			cmd.Stdout = io.MultiWriter(stdoutBuffer, combinedWriter)
 		}
 		if c.LogStdErr {
-			cmd.Stderr = io.MultiWriter(os.Stderr, stderrBuffer, combinedBuffer)
+			cmd.Stderr = io.MultiWriter(os.Stderr, stderrBuffer, combinedWriter)
 		} else {
-			cmd.Stderr = io.MultiWriter(stderrBuffer, combinedBuffer)
+			cmd.Stderr = io.MultiWriter(stderrBuffer, combinedWriter)
 		}
 
 		return cmd.Run()
@@ -172,7 +179,7 @@ func (c Command) Run(ctx context.Context) (CommandResult, error) {
 	}, err
 }
 
-func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error) error {
+func (c Command) withRetries(ctx context.Context, recvSignal <-chan any, processor func(cmd *exec.Cmd) error) error {
 
 	c.logBeforeRun()
 
@@ -180,11 +187,26 @@ func (c Command) doRun(ctx context.Context, processor func(cmd *exec.Cmd) error)
 
 		ctx := ctx // needed so we don't cancel the parent context
 
+		// Every retry needs its own timeout context
 		err := func() error {
 			if c.Timeout > 0 {
 				var cancel context.CancelFunc
-				ctx, cancel = context.WithTimeout(ctx, c.Timeout)
+				var resetTimeout util_context.ResetFunc
+				ctx, cancel, resetTimeout = util_context.WithTimeoutAndReset(ctx, c.Timeout)
 				defer cancel()
+				go func() {
+					for {
+						select {
+						case <-ctx.Done():
+							return
+						case _, ok := <-recvSignal:
+							if !ok {
+								return
+							}
+							resetTimeout()
+						}
+					}
+				}()
 			}
 
 			cmd := exec.CommandContext(ctx, c.App, c.Args...)
