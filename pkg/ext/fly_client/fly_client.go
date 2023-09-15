@@ -380,7 +380,7 @@ func (c FlyClientImpl) ScaleAppRam(
 ) error {
 
 	_, err := util_cmd.
-		NewCommandA("fly", "scale", "memory", fmt.Sprintf("%d", ramMb), "--app", app, "-y").
+		NewCommandA("fly", "scale", "memory", fmt.Sprintf("%d", ramMb), "--app", app).
 		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(360 * time.Second).
 		WithTimeoutRetries(1).
@@ -400,7 +400,7 @@ func (c FlyClientImpl) ScaleAppVm(
 ) error {
 
 	_, err := util_cmd.
-		NewCommandA("fly", "scale", "vm", vm, "--app", app, "-y").
+		NewCommandA("fly", "scale", "vm", vm, "--app", app).
 		WithExtraArgs(accessTokenArgs(ctx)...).
 		WithTimeout(360 * time.Second).
 		WithTimeoutRetries(1).

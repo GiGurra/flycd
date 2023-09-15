@@ -3,3 +3,9 @@ primary_region: arn
 org: personal
 source:
   type: local
+
+machines:
+  count: 1
+  ram_mb: 512
+  cpu_cores: 2
+  cpu_type: "shared"
