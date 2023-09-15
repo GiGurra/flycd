@@ -22,6 +22,11 @@ func TestDeployFromFolder_newApp(t *testing.T) {
 
 	flyClient.
 		EXPECT().
+		GetAppScale(mock.Anything, mock.Anything).
+		Return([]model.ScaleState{}, nil)
+
+	flyClient.
+		EXPECT().
 		ExistsApp(mock.Anything, mock.Anything).
 		Return(false, nil)
 
@@ -52,6 +57,11 @@ func TestDeployFromFolder_existingApp(t *testing.T) {
 		WithRetries(0)
 
 	fmt.Printf("flyClient: %+v\n", flyClient)
+
+	flyClient.
+		EXPECT().
+		GetAppScale(mock.Anything, mock.Anything).
+		Return([]model.ScaleState{}, nil)
 
 	flyClient.
 		EXPECT().
@@ -86,6 +96,11 @@ func TestDeployFromFolder_appMergingConfig(t *testing.T) {
 
 	fmt.Printf("flyClient: %+v\n", flyClient)
 
+	flyClient.
+		EXPECT().
+		GetAppScale(mock.Anything, mock.Anything).
+		Return([]model.ScaleState{}, nil)
+	
 	flyClient.
 		EXPECT().
 		ExistsApp(mock.Anything, mock.Anything).
