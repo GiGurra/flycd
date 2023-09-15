@@ -285,9 +285,24 @@ func runIntermediateSteps(input deployInput) error {
 
 func runPostDeploySteps(input deployInput) error {
 
-	err := runScaleAllRegionsPostDeployStep(input)
+	deployedScales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
 	if err != nil {
-		return fmt.Errorf("error running post deploy scale-all-regions steps: %w", err)
+		return fmt.Errorf("error getting app scale for app %s: %w", input.cfgTyped.App, err)
+	}
+
+	err = runScaleCountAllRegionsPostDeployStep(input, deployedScales)
+	if err != nil {
+		return fmt.Errorf("error during runScaleCountAllRegionsPostDeployStep step: %w", err)
+	}
+
+	err = runScaleRamPostDeployStep(input, deployedScales)
+	if err != nil {
+		return fmt.Errorf("error during runScaleRamPostDeployStep step: %w", err)
+	}
+
+	err = runScaleVmPostDeployStep(input, deployedScales)
+	if err != nil {
+		return fmt.Errorf("error during runScaleVmPostDeployStep step: %w", err)
 	}
 
 	// add post-deploy steps here
@@ -295,7 +310,7 @@ func runPostDeploySteps(input deployInput) error {
 	return nil
 }
 
-func runScaleAllRegionsPostDeployStep(input deployInput) error {
+func runScaleCountAllRegionsPostDeployStep(input deployInput, deployedScales []model.ScaleState) error {
 
 	fmt.Printf("Checking if we need to scale up instance count in any region\n")
 	minSvcReq := input.cfgTyped.MinMachinesFromServices()
@@ -307,10 +322,7 @@ func runScaleAllRegionsPostDeployStep(input deployInput) error {
 		return nil // nothing to do
 	}
 
-	deployedScales, err := input.flyClient.GetAppScale(input.ctx, input.cfgTyped.App)
-	if err != nil {
-		return fmt.Errorf("error getting app scale for app %s: %w", input.cfgTyped.App, err)
-	}
+	var err error
 
 	currentCountPerRegion := model.CountDeployedAppsPerRegion(deployedScales)
 	wantedRegions := input.cfgTyped.RegionsWPrimaryLast()
@@ -333,6 +345,85 @@ func runScaleAllRegionsPostDeployStep(input deployInput) error {
 	}
 
 	return err
+}
+
+func runScaleVmPostDeployStep(input deployInput, deployedScales []model.ScaleState) error {
+
+	fmt.Printf("Checking if we need to change vm type\n")
+	if input.cfgTyped.Machines.CpuCores <= 0 {
+		fmt.Printf("No need to change vm type, no vm type specified\n")
+		return nil
+	}
+
+	cpuType := input.cfgTyped.Machines.CpuType
+	if cpuType == "" {
+		fmt.Printf("Cpu type unspecified, defaulting to whatever is already deployed\n")
+	}
+
+	currentScalesByName := lo.GroupBy(deployedScales, func(scale model.ScaleState) string {
+		return scale.Process
+	})
+
+	needToScale := false
+	for _, scale := range currentScalesByName["app"] {
+		if (cpuType != "" && scale.CPUKind != cpuType) || scale.CPUs != input.cfgTyped.Machines.CpuCores {
+			needToScale = true
+			if cpuType == "" {
+				cpuType = scale.CPUKind
+			}
+			break
+		}
+	}
+
+	if needToScale {
+		fmt.Printf("Scaling app %s to %s with %d cores\n", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores)
+		vmString := fmt.Sprintf("%s-cpu-%dx", cpuType, input.cfgTyped.Machines.CpuCores)
+		err := input.flyClient.ScaleAppVm(input.ctx, input.cfgTyped.App, vmString)
+		if err != nil {
+			return fmt.Errorf("error scaling app %s to %s with %d cores: %w", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores, err)
+		} else {
+			fmt.Printf("scaled app %s to %s with %d cores: %v\n", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores, err)
+		}
+	} else {
+		fmt.Printf("No need to scale app %s to %s with %d cores, either already at that level, or 'app' process not found\n", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores)
+	}
+
+	return nil
+}
+
+func runScaleRamPostDeployStep(input deployInput, deployedScales []model.ScaleState) error {
+
+	fmt.Printf("Checking if we need to change amount of ram per instance\n")
+	if input.cfgTyped.Machines.RamMB <= 0 {
+		fmt.Printf("No need to change ram per instance, no ram specified\n")
+		return nil
+	}
+
+	currentScalesByName := lo.GroupBy(deployedScales, func(scale model.ScaleState) string {
+		return scale.Process
+	})
+
+	needToScale := false
+	for _, scale := range currentScalesByName["app"] {
+		if scale.MemoryMB != input.cfgTyped.Machines.RamMB {
+			needToScale = true
+			break
+		}
+	}
+
+	if needToScale {
+		fmt.Printf("Scaling app %s to %d ram\n", input.cfgTyped.App, input.cfgTyped.Machines.RamMB)
+		err := input.flyClient.ScaleAppRam(input.ctx, input.cfgTyped.App, input.cfgTyped.Machines.RamMB)
+		if err != nil {
+			return fmt.Errorf("error scaling app %s to %d ram: %w", input.cfgTyped.App, input.cfgTyped.Machines.RamMB, err)
+		} else {
+			fmt.Printf("scaled app %s to %d ram: %v\n", input.cfgTyped.App, input.cfgTyped.Machines.RamMB, err)
+		}
+	} else {
+		fmt.Printf("No need to scale app %s to %d ram, either already at that level, or 'app' process not found\n", input.cfgTyped.App, input.cfgTyped.Machines.RamMB)
+	}
+
+	return nil
 }
 
 // runIntermediateSecretsSteps Here we extract and deploy all secrets

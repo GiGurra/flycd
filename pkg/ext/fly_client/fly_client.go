@@ -114,6 +114,18 @@ type FlyClient interface {
 		count int,
 	) error
 
+	ScaleAppRam(
+		ctx context.Context,
+		app string,
+		ramMb int,
+	) error
+
+	ScaleAppVm(
+		ctx context.Context,
+		app string,
+		vm string,
+	) error
+
 	SaveSecrets(
 		ctx context.Context,
 		app string,
@@ -356,6 +368,46 @@ func (c FlyClientImpl) ScaleApp(
 
 	if err != nil {
 		return fmt.Errorf("error running 'fly scale count %d --app %s --region %s -y': %w", count, app, region, err)
+	}
+
+	return nil
+}
+
+func (c FlyClientImpl) ScaleAppRam(
+	ctx context.Context,
+	app string,
+	ramMb int,
+) error {
+
+	_, err := util_cmd.
+		NewCommandA("fly", "scale", "memory", fmt.Sprintf("%d", ramMb), "--app", app, "-y").
+		WithExtraArgs(accessTokenArgs(ctx)...).
+		WithTimeout(360 * time.Second).
+		WithTimeoutRetries(1).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error running 'fly scale memory %d --app %s -y': %w", ramMb, app, err)
+	}
+
+	return nil
+}
+
+func (c FlyClientImpl) ScaleAppVm(
+	ctx context.Context,
+	app string,
+	vm string,
+) error {
+
+	_, err := util_cmd.
+		NewCommandA("fly", "scale", "vm", vm, "--app", app, "-y").
+		WithExtraArgs(accessTokenArgs(ctx)...).
+		WithTimeout(360 * time.Second).
+		WithTimeoutRetries(1).
+		Run(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error running 'fly scale vm %s --app %s -y': %w", vm, app, err)
 	}
 
 	return nil

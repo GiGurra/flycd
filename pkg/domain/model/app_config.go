@@ -70,6 +70,9 @@ type PreCalculatedAppConfig struct {
 type MachineConfig struct {
 	Count          int            `yaml:"count" toml:"count"` // default
 	CountPerRegion map[string]int `yaml:"count_per_region" toml:"count_per_region"`
+	RamMB          int            `yaml:"ram_mb" toml:"ram_mb"`
+	CpuCores       int            `yaml:"cpu_cores" toml:"cpu_cores"`
+	CpuType        string         `yaml:"cpu_type" toml:"cpu_type"`
 }
 
 func (m MachineConfig) CountInRegion(region string) int {
