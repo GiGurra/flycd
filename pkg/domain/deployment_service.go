@@ -382,7 +382,7 @@ func runScaleVmPostDeployStep(input deployInput, deployedScales []model.ScaleSta
 		if err != nil {
 			return fmt.Errorf("error scaling app %s to %s with %d cores: %w", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores, err)
 		} else {
-			fmt.Printf("scaled app %s to %s with %d cores: %v\n", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores, err)
+			fmt.Printf("scaled app %s to %s with %d cores\n", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores)
 		}
 	} else {
 		fmt.Printf("No need to scale app %s to %s with %d cores, either already at that level, or 'app' process not found\n", input.cfgTyped.App, cpuType, input.cfgTyped.Machines.CpuCores)
@@ -417,7 +417,7 @@ func runScaleRamPostDeployStep(input deployInput, deployedScales []model.ScaleSt
 		if err != nil {
 			return fmt.Errorf("error scaling app %s to %d ram: %w", input.cfgTyped.App, input.cfgTyped.Machines.RamMB, err)
 		} else {
-			fmt.Printf("scaled app %s to %d ram: %v\n", input.cfgTyped.App, input.cfgTyped.Machines.RamMB, err)
+			fmt.Printf("scaled app %s to %d ram\n", input.cfgTyped.App, input.cfgTyped.Machines.RamMB)
 		}
 	} else {
 		fmt.Printf("No need to scale app %s to %d ram, either already at that level, or 'app' process not found\n", input.cfgTyped.App, input.cfgTyped.Machines.RamMB)

@@ -6,6 +6,6 @@ source:
 
 machines:
   count: 1
-  ram_mb: 512
-  cpu_cores: 2
+  ram_mb: 256
+  cpu_cores: 1
   cpu_type: "shared"
