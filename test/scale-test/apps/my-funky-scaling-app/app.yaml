@@ -1,0 +1,5 @@
+app: my-funky-scaling-app
+primary_region: arn
+org: personal
+source:
+  type: local
