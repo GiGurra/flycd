@@ -198,7 +198,10 @@ machines:
   count: 2 # default count for all regions
   count_per_region:
     ams: 3 # override count for a specific region
-
+  ram_mb: 256 # override the setting that the app was created with. Only works for process 'app'
+  cpu_cores: 1 # override the setting that the app was created with. Only works for process 'app'
+  cpu_type: "shared" # override the setting that the app was created with. Only works for process 'app'
+  
 ## Optional env vars
 env:
   PORT: "8081"
