@@ -567,6 +567,11 @@ func runIntermediateVolumeSteps(input deployInput) error {
 
 			deployedVolumesThisRegion := deployedVolumesByNameAndRegion[wantedVolume.Name+region]
 
+			fmt.Printf("Currently deployed volumes: %d\n", len(deployedVolumesThisRegion))
+			for _, deployedVolume := range deployedVolumesThisRegion {
+				fmt.Printf(" - %s (%d GB)\n", deployedVolume.Name, deployedVolume.SizeGb)
+			}
+
 			// First bring all deployed volumes up to our required size
 			for _, currentVolume := range deployedVolumesThisRegion {
 				if currentVolume.SizeGb < wantedVolume.SizeGb {

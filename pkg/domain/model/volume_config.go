@@ -4,12 +4,12 @@ import "time"
 
 type VolumeState struct {
 	ID        string    `json:"id"`
-	Name      string    `json:"Name"`
-	SizeGb    int       `json:"SizeGb"`
-	State     string    `json:"State"`
-	Region    string    `json:"Region"`
-	Encrypted bool      `json:"Encrypted"`
-	CreatedAt time.Time `json:"CreatedAt"`
+	Name      string    `json:"name"`
+	SizeGb    int       `json:"size_gb"`
+	State     string    `json:"state"`
+	Region    string    `json:"region"`
+	Encrypted bool      `json:"encrypted"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// TODO: later:
 	//  App               App          `json:"App"`
