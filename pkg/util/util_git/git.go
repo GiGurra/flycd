@@ -30,68 +30,68 @@ func CloneShallow(
 	if source.Commit != "" {
 		// Shallow clone of specific commit
 		// https://stackoverflow.com/questions/31278902/how-to-shallow-clone-a-specific-commit-with-depth-1
-		_, err = workDir.
+		res := workDir.
 			NewCommand("git", "init").
-			WithStdLogging().
+			WithStdOutErrForwarded().
 			Run(ctx)
-		if err != nil {
+		if res.Err != nil {
 			return GitCloneResult{}, fmt.Errorf("error initializing git repo: %w", err)
 		}
 
-		_, err = workDir.
+		res = workDir.
 			NewCommand("git", "remote", "add", "origin", source.Repo).
-			WithStdLogging().
+			WithStdOutErrForwarded().
 			Run(ctx)
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error adding git remote: %w", err)
 		}
 
-		_, err = workDir.
+		res = workDir.
 			NewCommand("git", "fetch", "--depth", "1", "origin", source.Commit).
-			WithStdLogging().
+			WithStdOutErrForwarded().
 			Run(ctx)
-		if err != nil {
+		if res.Err != nil {
 			return GitCloneResult{}, fmt.Errorf("error fetching git commit: %w", err)
 		}
 
-		_, err = workDir.
+		res = workDir.
 			NewCommand("git", "checkout", "FETCH_HEAD").
-			WithStdLogging().
+			WithStdOutErrForwarded().
 			Run(ctx)
 		if err != nil {
 			return GitCloneResult{}, fmt.Errorf("error checking out git commit: %w", err)
 		}
 
 	} else if source.Tag != "" {
-		_, err = workDir.
+		res := workDir.
 			NewCommand("git", "clone", source.Repo, "repo", "--depth", "1", "--branch", source.Tag).
-			WithStdLogging().
+			WithStdOutErrForwarded().
 			Run(ctx)
-		if err != nil {
+		if res.Err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
 		workDir = workDir.WithChildCwd("repo")
 
 	} else if source.Branch != "" {
-		_, err = workDir.
+		res := workDir.
 			NewCommand("git", "clone", source.Repo, "repo", "--depth", "1", "--branch", source.Branch).
-			WithStdLogging().
+			WithStdOutErrForwarded().
 			Run(ctx)
-		if err != nil {
+		if res.Err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
 		workDir = workDir.WithChildCwd("repo")
 	} else {
-		_, err = workDir.NewCommand("git", "clone", source.Repo, "repo", "--depth", "1").
-			WithStdLogging().
+		res := workDir.NewCommand("git", "clone", source.Repo, "repo", "--depth", "1").
+			WithStdOutErrForwarded().
 			Run(ctx)
-		if err != nil {
+		if res.Err != nil {
 			return GitCloneResult{}, fmt.Errorf("error cloning git repo %s: %w", source.Repo, err)
 		}
 		workDir = workDir.WithChildCwd("repo")
 	}
 
-	res, err := workDir.
+	res := workDir.
 		NewCommand("git", "rev-parse", "HEAD").
 		Run(ctx)
 	if err != nil {

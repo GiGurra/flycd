@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/GiGurra/cmder"
 	"github.com/gigurra/flycd/pkg/domain/model"
-	"github.com/gigurra/flycd/pkg/util/util_cmd"
 	"github.com/gigurra/flycd/pkg/util/util_tab_table"
 	"github.com/gigurra/flycd/pkg/util/util_work_dir"
 	"github.com/samber/lo"
@@ -201,15 +201,15 @@ func (c FlyClientImpl) CreateIp(
 		params = append(params, "--shared")
 	}
 
-	_, err := util_cmd.
-		NewCommand(params...).
+	res := cmder.
+		New(params...).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(1 * time.Minute).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(1 * time.Minute).
+		WithRetries(1).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error allocating ip %+v for app %s: %w", ip, app, err)
+	if res.Err != nil {
+		return fmt.Errorf("error allocating ip %+v for app %s: %w", ip, app, res.Err)
 	} else {
 		return nil
 	}
@@ -218,19 +218,19 @@ func (c FlyClientImpl) CreateIp(
 func (c FlyClientImpl) DeleteIp(
 	ctx context.Context,
 	app string,
-	id string,
+	_ string,
 	address string,
 ) error {
 
-	_, err := util_cmd.
-		NewCommand("fly", "ips", "release", address, "-a", app).
+	res := cmder.
+		New("fly", "ips", "release", address, "-a", app).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(1 * time.Minute).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(1 * time.Minute).
+		WithRetries(1).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error releasing ip %s for app %s: %w", address, app, err)
+	if res.Err != nil {
+		return fmt.Errorf("error releasing ip %s for app %s: %w", address, app, res.Err)
 	} else {
 		return nil
 	}
@@ -238,19 +238,19 @@ func (c FlyClientImpl) DeleteIp(
 
 func (c FlyClientImpl) ListIps(ctx context.Context, app string) ([]IpListItem, error) {
 
-	res, err := util_cmd.
-		NewCommand("fly", "ips", "list", "-a", app, "--json").
+	res := cmder.
+		New("fly", "ips", "list", "-a", app, "--json").
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(1 * time.Minute).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(1 * time.Minute).
+		WithRetries(1).
 		Run(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting ips list. Do you have a token loaded?: %w", err)
+	if res.Err != nil {
+		return nil, fmt.Errorf("error getting ips list. Do you have a token loaded?: %w", res.Err)
 	}
 
 	// Prob chang this to use json instead
 	items := make([]IpListItem, 0)
-	err = json.Unmarshal([]byte(res.StdOut), &items)
+	err := json.Unmarshal([]byte(res.StdOut), &items)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing ips list: %w", err)
 	}
@@ -261,14 +261,14 @@ func (c FlyClientImpl) ListIps(ctx context.Context, app string) ([]IpListItem, e
 func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
 
 	// ensure we have a token loaded for the org we are monitoring
-	res, err := util_cmd.
-		NewCommand("fly", "apps", "list").
+	res := cmder.
+		New("fly", "apps", "list").
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(2 * time.Minute).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(2 * time.Minute).
+		WithRetries(1).
 		Run(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting apps list. Do you have a token loaded?: %w", err)
+	if res.Err != nil {
+		return nil, fmt.Errorf("error getting apps list. Do you have a token loaded?: %w", res.Err)
 	}
 
 	// Prob chang this to use json instead
@@ -293,19 +293,19 @@ func (c FlyClientImpl) ListApps(ctx context.Context) ([]AppListItem, error) {
 
 func (c FlyClientImpl) CreateOrgToken(ctx context.Context, orgSlug string) (string, error) {
 
-	result, err := util_cmd.
-		NewCommandA("fly", "tokens", "create", "org", orgSlug).
+	res := cmder.
+		NewA("fly", "tokens", "create", "org", orgSlug).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(10 * time.Second).
+		WithRetries(1).
 		Run(ctx)
 
-	if err != nil {
-		return "", fmt.Errorf("error running 'fly tokens create org': %w", err)
+	if res.Err != nil {
+		return "", fmt.Errorf("error running 'fly tokens create org': %w", res.Err)
 	}
 
 	// Run the command
-	stdOut := result.StdOut
+	stdOut := res.StdOut
 
 	// split stdout by lines, in an os agnostic way
 	lines := strings.Split(stdOut, "\n")
@@ -332,19 +332,19 @@ func (c FlyClientImpl) GetAppScale(
 	app string,
 ) ([]model.ScaleState, error) {
 
-	result, err := util_cmd.
-		NewCommandA("fly", "scale", "show", "-a", app, "--json").
+	res := cmder.
+		NewA("fly", "scale", "show", "-a", app, "--json").
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(2).
+		WithAttemptTimeout(20 * time.Second).
+		WithRetries(2).
 		Run(ctx)
 
-	if err != nil {
-		return nil, fmt.Errorf("error running 'fly scale show -a %s --json': %w", app, err)
+	if res.Err != nil {
+		return nil, fmt.Errorf("error running 'fly scale show -a %s --json': %w", app, res.Err)
 	}
 
 	var scaleStates []model.ScaleState
-	err = json.Unmarshal([]byte(result.StdOut), &scaleStates)
+	err := json.Unmarshal([]byte(res.StdOut), &scaleStates)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing fly scale show output for app %s: %w", app, err)
 	}
@@ -359,15 +359,15 @@ func (c FlyClientImpl) ScaleApp(
 	count int,
 ) error {
 
-	_, err := util_cmd.
-		NewCommandA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
+	res := cmder.
+		NewA("fly", "scale", "count", strconv.FormatInt(int64(count), 10), "--app", app, "--region", region, "-y").
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(120 * time.Second).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(120 * time.Second).
+		WithRetries(1).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error running 'fly scale count %d --app %s --region %s -y': %w", count, app, region, err)
+	if res.Err != nil {
+		return fmt.Errorf("error running 'fly scale count %d --app %s --region %s -y': %w", count, app, region, res.Err)
 	}
 
 	return nil
@@ -379,15 +379,15 @@ func (c FlyClientImpl) ScaleAppRam(
 	ramMb int,
 ) error {
 
-	_, err := util_cmd.
-		NewCommandA("fly", "scale", "memory", fmt.Sprintf("%d", ramMb), "--app", app).
+	res := cmder.
+		NewA("fly", "scale", "memory", fmt.Sprintf("%d", ramMb), "--app", app).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(360 * time.Second).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(360 * time.Second).
+		WithRetries(1).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error running 'fly scale memory %d --app %s -y': %w", ramMb, app, err)
+	if res.Err != nil {
+		return fmt.Errorf("error running 'fly scale memory %d --app %s -y': %w", ramMb, app, res.Err)
 	}
 
 	return nil
@@ -399,15 +399,15 @@ func (c FlyClientImpl) ScaleAppVm(
 	vm string,
 ) error {
 
-	_, err := util_cmd.
-		NewCommandA("fly", "scale", "vm", vm, "--app", app).
+	res := cmder.
+		NewA("fly", "scale", "vm", vm, "--app", app).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(360 * time.Second).
-		WithTimeoutRetries(1).
+		WithAttemptTimeout(360 * time.Second).
+		WithRetries(1).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error running 'fly scale vm %s --app %s -y': %w", vm, app, err)
+	if res.Err != nil {
+		return fmt.Errorf("error running 'fly scale vm %s --app %s -y': %w", vm, app, res.Err)
 	}
 
 	return nil
@@ -420,15 +420,15 @@ func (c FlyClientImpl) ExtendVolume(
 	gb int,
 ) error {
 
-	_, err := util_cmd.
-		NewCommandA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
+	res := cmder.
+		NewA("fly", "volume", "extend", volumeId, "-a", appName, "-s", strconv.FormatInt(int64(gb), 10)).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(60 * time.Second).
-		WithTimeoutRetries(2).
+		WithAttemptTimeout(60 * time.Second).
+		WithRetries(2).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error running 'fly volume extend %s -a %s': %w", volumeId, appName, err)
+	if res.Err != nil {
+		return fmt.Errorf("error running 'fly volume extend %s -a %s': %w", volumeId, appName, res.Err)
 	}
 
 	return nil
@@ -441,19 +441,19 @@ func (c FlyClientImpl) CreateVolume(
 	region string,
 ) (model.VolumeState, error) {
 
-	result, err := util_cmd.
-		NewCommandA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
+	res := cmder.
+		NewA("fly", "volumes", "create", cfg.Name, "--region", region, "-s", strconv.FormatInt(int64(cfg.SizeGb), 10), "--app", app, "-y", "--json").
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(60 * time.Second).
-		WithTimeoutRetries(0).
+		WithAttemptTimeout(60 * time.Second).
+		WithRetries(0).
 		Run(ctx)
 
-	if err != nil {
-		return model.VolumeState{}, fmt.Errorf("error running 'fly volumes create' for app %s: %w", app, err)
+	if res.Err != nil {
+		return model.VolumeState{}, fmt.Errorf("error running 'fly volumes create' for app %s: %w", app, res.Err)
 	}
 
 	var volumeState model.VolumeState
-	err = json.Unmarshal([]byte(result.StdOut), &volumeState)
+	err := json.Unmarshal([]byte(res.StdOut), &volumeState)
 	if err != nil {
 		return model.VolumeState{}, fmt.Errorf("error parsing fly volumes create output for app %s: %w", app, err)
 	}
@@ -483,15 +483,15 @@ func (c FlyClientImpl) SaveSecrets(
 		args = append(args, fmt.Sprintf("%s=%s", secret.Name, secret.Value))
 	}
 
-	_, err := util_cmd.
-		NewCommandA("fly", args...).
+	res := cmder.
+		NewA("fly", args...).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(30 * time.Second).
-		WithTimeoutRetries(2).
+		WithAttemptTimeout(30 * time.Second).
+		WithRetries(2).
 		Run(ctx)
 
-	if err != nil {
-		return fmt.Errorf("error running 'fly secrets set' for app %s: %w", app, err)
+	if res.Err != nil {
+		return fmt.Errorf("error running 'fly secrets set' for app %s: %w", app, res.Err)
 	}
 
 	return nil
@@ -530,19 +530,19 @@ func (c FlyClientImpl) ExistsSecret(ctx context.Context, cmd ExistsSecretCmd) (b
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	res, err := util_cmd.
-		NewCommandA("fly", args...).
+	res := cmder.
+		NewA("fly", args...).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(5).
+		WithAttemptTimeout(10 * time.Second).
+		WithRetries(5).
 		Run(ctx)
-	if err != nil {
-		return false, fmt.Errorf("error running fly secrets list for '%s': %w", cmd.AppName, err)
+	if res.Err != nil {
+		return false, fmt.Errorf("error running fly secrets list for '%s': %w", cmd.AppName, res.Err)
 	}
 
 	// Parse strResp as json array of flySecretListItem
 	var secrets []flySecretListItem
-	err = json.Unmarshal([]byte(res.StdOut), &secrets)
+	err := json.Unmarshal([]byte(res.StdOut), &secrets)
 	if err != nil {
 		return false, fmt.Errorf("error parsing fly secrets list for '%s': %w", cmd.AppName, err)
 	}
@@ -572,32 +572,32 @@ func (c FlyClientImpl) StoreSecret(ctx context.Context, cmd StoreSecretCmd) erro
 		args = append(args, "-a", cmd.AppName)
 	}
 
-	_, err := util_cmd.
-		NewCommandA("fly", args...).
+	res := cmder.
+		NewA("fly", args...).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(240 * time.Second).
-		WithTimeoutRetries(5).
-		WithStdLogging().
+		WithAttemptTimeout(240 * time.Second).
+		WithRetries(5).
+		WithStdOutErrForwarded().
 		Run(ctx)
-	if err != nil {
-		return fmt.Errorf("error running fly secrets set for '%s': %w", cmd.SecretName, err)
+	if res.Err != nil {
+		return fmt.Errorf("error running fly secrets set for '%s': %w", cmd.SecretName, res.Err)
 	}
 
 	return nil
 }
 
 func (c FlyClientImpl) ExistsApp(ctx context.Context, name string) (bool, error) {
-	res, err := util_cmd.
-		NewCommand("fly", "status", "-a", name).
+	res := cmder.
+		New("fly", "status", "-a", name).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(10 * time.Second).
-		WithTimeoutRetries(5).
+		WithAttemptTimeout(10 * time.Second).
+		WithRetries(5).
 		Run(ctx)
-	if err != nil {
+	if res.Err != nil {
 		if strings.Contains(strings.ToLower(res.Combined), "could not find app") {
 			return false, nil
 		}
-		return false, err
+		return false, res.Err
 	}
 	return true, nil
 }
@@ -607,19 +607,19 @@ func (c FlyClientImpl) GetAppVolumes(
 	name string,
 ) ([]model.VolumeState, error) {
 
-	res, err := util_cmd.
-		NewCommand("fly", "volumes", "list", "-a", name, "--json").
+	res := cmder.
+		New("fly", "volumes", "list", "-a", name, "--json").
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(5).
+		WithAttemptTimeout(20 * time.Second).
+		WithRetries(5).
 		Run(ctx)
 
-	if err != nil {
-		return []model.VolumeState{}, fmt.Errorf("error running fly volumes list for app %s: %w", name, err)
+	if res.Err != nil {
+		return []model.VolumeState{}, fmt.Errorf("error running fly volumes list for app %s: %w", name, res.Err)
 	}
 
 	var volumes []model.VolumeState
-	err = json.Unmarshal([]byte(res.StdOut), &volumes)
+	err := json.Unmarshal([]byte(res.StdOut), &volumes)
 	if err != nil {
 		return []model.VolumeState{}, fmt.Errorf("error parsing fly volumes list for app %s: %w", name, err)
 	}
@@ -629,23 +629,23 @@ func (c FlyClientImpl) GetAppVolumes(
 
 func (c FlyClientImpl) GetDeployedAppConfig(ctx context.Context, name string) (model.AppConfig, error) {
 
-	res, err := util_cmd.
-		NewCommand("fly", "config", "show", "-a", name).
+	res := cmder.
+		New("fly", "config", "show", "-a", name).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(5).
+		WithAttemptTimeout(20 * time.Second).
+		WithRetries(5).
 		Run(ctx)
-	if err != nil {
+	if res.Err != nil {
 
-		if strings.Contains(strings.ToLower(err.Error()), "no machines configured for this app") {
+		if strings.Contains(strings.ToLower(res.Err.Error()), "no machines configured for this app") {
 			return model.AppConfig{Env: map[string]string{}}, nil
 		}
 
-		return model.AppConfig{}, fmt.Errorf("error running fly config show for app %s: %w", name, err)
+		return model.AppConfig{}, fmt.Errorf("error running fly config show for app %s: %w", name, res.Err)
 	}
 
 	var deployedCfg model.AppConfig
-	err = json.Unmarshal([]byte(res.StdOut), &deployedCfg)
+	err := json.Unmarshal([]byte(res.StdOut), &deployedCfg)
 	if err != nil {
 		return model.AppConfig{}, fmt.Errorf("error unmarshalling fly config for app %s: %w", name, err)
 	}
@@ -667,15 +667,15 @@ func (c FlyClientImpl) CreateNewApp(
 	if !lo.Contains(allParams, "--region") && !lo.Contains(allParams, "-r") {
 		allParams = append(allParams, "--region", cfg.PrimaryRegion)
 	}
-	_, err := tempDir.
+	res := tempDir.
 		NewCommand("fly", allParams...).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(20 * time.Second).
-		WithTimeoutRetries(5).
-		WithStdLogging().
+		WithAttemptTimeout(20 * time.Second).
+		WithRetries(5).
+		WithStdOutErrForwarded().
 		Run(ctx)
-	if err != nil {
-		return fmt.Errorf("error creating app %s: %w", cfg.App, err)
+	if res.Err != nil {
+		return fmt.Errorf("error creating app %s: %w", cfg.App, res.Err)
 	}
 	return nil
 }
@@ -693,15 +693,15 @@ func (c FlyClientImpl) DeployExistingApp(
 		allParams = append(allParams, "--region", region)
 	}
 
-	_, err := tempDir.
+	res := tempDir.
 		NewCommand("fly", allParams...).
 		WithExtraArgs(accessTokenArgs(ctx)...).
-		WithTimeout(deployCfg.AttemptTimeout).
-		WithTimeoutRetries(deployCfg.Retries).
-		WithStdLogging().
+		WithAttemptTimeout(deployCfg.AttemptTimeout).
+		WithRetries(deployCfg.Retries).
+		WithStdOutErrForwarded().
 		Run(ctx)
-	if err != nil {
-		return fmt.Errorf("error deploying app %s: %w", cfg.App, err)
+	if res.Err != nil {
+		return fmt.Errorf("error deploying app %s: %w", cfg.App, res.Err)
 	}
 	return nil
 }

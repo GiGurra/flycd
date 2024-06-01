@@ -2,7 +2,7 @@ package util_work_dir
 
 import (
 	"fmt"
-	"github.com/gigurra/flycd/pkg/util/util_cmd"
+	"github.com/GiGurra/cmder"
 	cp "github.com/otiai10/copy"
 	"os"
 	"path/filepath"
@@ -38,8 +38,8 @@ func NewWorkDir(path string) WorkDir {
 	}
 }
 
-func (t WorkDir) NewCommand(command string, args ...string) util_cmd.Command {
-	return util_cmd.NewCommandA(command, args...).WithCwd(t.Cwd())
+func (t WorkDir) NewCommand(command string, args ...string) cmder.Spec {
+	return cmder.NewA(command, args...).WithWorkingDirectory(t.Cwd())
 }
 
 func (t WorkDir) ReadFile(name string) (string, error) {

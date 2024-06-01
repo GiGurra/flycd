@@ -1,9 +1,10 @@
 module github.com/gigurra/flycd
 
-go 1.20
+go 1.22.3
 
 require (
 	github.com/BurntSushi/toml v1.3.2
+	github.com/GiGurra/cmder v0.0.1
 	github.com/google/go-cmp v0.6.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/mitchellh/mapstructure v1.5.0
